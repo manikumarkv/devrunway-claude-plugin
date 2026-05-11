@@ -1,0 +1,224 @@
+# Approved Package List
+
+One approved choice per problem. No alternatives unless documented here.
+
+---
+
+## Frontend
+
+### Core
+
+| Package | Version | Purpose | Never use instead |
+|---|---|---|---|
+| `react` | 18+ | UI framework | — |
+| `react-dom` | 18+ | DOM renderer | — |
+| `typescript` | 5+ | Type system | — |
+| `vite` | 5+ | Build tool | CRA, webpack, parcel |
+
+### Styling
+
+| Package | Purpose | Notes |
+|---|---|---|
+| `tailwindcss` | Utility CSS | Primary styling approach |
+| `clsx` | Conditional class names | `clsx('a', condition && 'b')` |
+| `tailwind-merge` | Merge conflicting Tailwind classes | Always pair with clsx |
+
+```ts
+// src/utils/cn.ts — always use this helper
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
+```
+
+### Data fetching & state
+
+| Package | Purpose | Never use instead |
+|---|---|---|
+| `@tanstack/react-query` v5 | Server state, caching, sync | Redux for server data, useEffect fetch |
+| `zustand` | Global client state (UI only) | Redux, Context for simple state |
+
+### Routing
+
+| Package | Purpose |
+|---|---|
+| `react-router-dom` v6 | Client-side routing |
+
+### Forms & validation
+
+| Package | Purpose |
+|---|---|
+| `react-hook-form` | Form state management |
+| `@hookform/resolvers` | Bridge react-hook-form ↔ Zod |
+| `zod` | Schema validation (shared FE + BE) |
+
+```ts
+// Always use together
+const form = useForm<FormData>({
+  resolver: zodResolver(schema),
+})
+```
+
+### Authentication
+
+| Package | Purpose |
+|---|---|
+| `aws-amplify` | Cognito auth (sign in, tokens, refresh) |
+| `@aws-amplify/ui-react` | Pre-built auth UI components (optional) |
+
+### HTTP
+
+Use native `fetch` via the project API client — do NOT add axios.
+
+```ts
+// src/lib/apiClient.ts
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const session = await fetchAuthSession()
+  const token = session.tokens?.accessToken.toString()
+
+  const res = await fetch(`${import.meta.env.VITE_API_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...options?.headers,
+    },
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}))
+    throw new ApiError(res.status, error.error?.message ?? 'Request failed')
+  }
+
+  return res.json()
+}
+```
+
+### Dates
+
+| Package | Purpose | Never use |
+|---|---|---|
+| `date-fns` | Date formatting and manipulation | `moment` (large bundle), `dayjs` |
+
+```ts
+import { format, formatDistanceToNow, parseISO } from 'date-fns'
+format(parseISO(createdAt), 'dd MMM yyyy')
+formatDistanceToNow(parseISO(createdAt), { addSuffix: true }) // "3 days ago"
+```
+
+### UI components
+
+| Package | Purpose |
+|---|---|
+| `lucide-react` | Icons (tree-shakeable) |
+| `@radix-ui/*` | Accessible headless primitives (dialog, dropdown, tooltip) |
+| `@tanstack/react-table` | Headless table with sorting/filtering/pagination |
+| `framer-motion` | Animations |
+| `react-hot-toast` | Toast notifications |
+
+### Testing
+
+| Package | Purpose |
+|---|---|
+| `vitest` | Unit test runner |
+| `@testing-library/react` | Component testing |
+| `@testing-library/user-event` | User interaction simulation |
+| `@testing-library/jest-dom` | Custom matchers (`toBeInTheDocument`) |
+| `msw` | API mocking at network level |
+| `@playwright/test` | E2E testing |
+
+---
+
+## Backend
+
+### Core
+
+| Package | Purpose | Never use instead |
+|---|---|---|
+| `express` | HTTP framework | Fastify (unless perf critical), NestJS |
+| `typescript` | Type system | — |
+| `tsx` | TypeScript execution in dev | `ts-node` |
+
+### Validation
+
+| Package | Purpose |
+|---|---|
+| `zod` | Request validation (shared with frontend) |
+
+### Logging
+
+| Package | Purpose |
+|---|---|
+| `pino` | Structured JSON logger |
+| `pino-http` | HTTP request logging middleware |
+| `pino-pretty` | Human-readable logs in development |
+
+```ts
+// src/lib/logger.ts
+import pino from 'pino'
+export const logger = pino({
+  level: process.env.LOG_LEVEL ?? 'info',
+  ...(process.env.NODE_ENV === 'development' && {
+    transport: { target: 'pino-pretty' },
+  }),
+})
+```
+
+### Authentication
+
+| Package | Purpose | Never use instead |
+|---|---|---|
+| `aws-jwt-verify` | Verify Cognito JWTs server-side | `jsonwebtoken`, `passport`, manual decode |
+
+### Database — SQL
+
+| Package | Purpose | Never use instead |
+|---|---|---|
+| `prisma` | ORM + migrations | `sequelize`, `typeorm`, `knex` raw |
+| `@prisma/client` | Generated query client | — |
+
+### Database — NoSQL
+
+| Package | Purpose |
+|---|---|
+| `@aws-sdk/client-dynamodb` | DynamoDB client |
+| `@aws-sdk/lib-dynamodb` | DocumentClient (auto-marshall) |
+
+### Security
+
+| Package | Purpose |
+|---|---|
+| `helmet` | Security headers (CSP, HSTS, etc.) |
+| `express-rate-limit` | Rate limiting |
+| `bcryptjs` | Password hashing |
+
+### Infrastructure
+
+| Package | Purpose |
+|---|---|
+| `aws-cdk-lib` | CDK infrastructure as code |
+| `constructs` | CDK construct base classes |
+
+### Testing
+
+| Package | Purpose |
+|---|---|
+| `vitest` | Unit + integration test runner |
+| `@usebruno/cli` | Bruno API test runner in CI |
+
+---
+
+## Never install these
+
+| Package | Use instead | Reason |
+|---|---|---|
+| `moment` | `date-fns` | 300 KB bundle, deprecated |
+| `lodash` | Native JS | Unnecessary — ES2022+ covers it |
+| `axios` | Native `fetch` | Unnecessary extra dependency |
+| `jest` | `vitest` | Slower, no ESM support |
+| `passport` | `aws-jwt-verify` | Overkill for Cognito JWT |
+| `jsonwebtoken` | `aws-jwt-verify` | Does not verify Cognito properly |
+| `sequelize` | `prisma` | Poor TypeScript support |
+| `typeorm` | `prisma` | Complex, decorator-heavy |
+| `node-fetch` | Native `fetch` | Node 18+ has fetch built in |
+| `express-validator` | `zod` | Not shared with frontend |
+| `cors` | `helmet` + manual config | `helmet` handles CORS headers |
