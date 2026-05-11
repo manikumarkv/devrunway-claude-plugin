@@ -754,6 +754,103 @@ tests {
 
 ---
 
+## Database scaffold
+
+### Prisma model — append to `prisma/schema.prisma`
+
+```prisma
+model <PascalName> {
+  id        String    @id @default(uuid())
+  userId    String
+  // TODO: add domain fields
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("<kebabNames>")
+}
+```
+
+Also add the reverse relation to the `User` model:
+
+```prisma
+// In the existing User model — add this line
+<camelNames>  <PascalName>[]
+```
+
+After appending the model, remind the user to run:
+
+```bash
+npx prisma migrate dev --name add-<kebabName>
+npx prisma generate
+```
+
+---
+
+## Infra scaffold
+
+### CDK — Lambda IAM grant in `infra/lib/api-stack.ts`
+
+If the API Lambda already exists in the stack, add the table grant and
+environment variable after the Prisma model is created. Show the user
+where to add it (do not overwrite the whole file — read it first and
+insert at the right location):
+
+```typescript
+// Grant Lambda read/write access to the new table
+// (if using DynamoDB — skip for Prisma/RDS which uses a connection string)
+<camelName>Table.grantReadWriteData(apiLambda)
+
+// Pass table name as env var to Lambda
+apiLambda.addEnvironment('<PASCAL_NAME>_TABLE_NAME', <camelName>Table.tableName)
+```
+
+If DynamoDB is used instead of Prisma (check whether the repository file
+uses `@aws-sdk/lib-dynamodb` or `prisma`), also add the table construct
+to the relevant stack:
+
+```typescript
+// infra/lib/database-stack.ts — add alongside other tables
+const <camelName>Table = new dynamodb.Table(this, '<PascalName>Table', {
+  tableName: `${props.appName}-<kebabNames>-${props.environment}`,
+  partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
+  sortKey:      { name: 'sk', type: dynamodb.AttributeType.STRING },
+  billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+  encryption: dynamodb.TableEncryption.AWS_MANAGED,
+  pointInTimeRecovery: true,
+  removalPolicy: props.environment === 'prod'
+    ? cdk.RemovalPolicy.RETAIN
+    : cdk.RemovalPolicy.DESTROY,
+})
+
+// Export name for ApiStack to consume via SSM
+new ssm.StringParameter(this, '<PascalName>TableNameParam', {
+  parameterName: `/${props.appName}/${props.environment}/<kebabName>-table-name`,
+  stringValue: <camelName>Table.tableName,
+})
+```
+
+### API Gateway route — add to `infra/lib/api-stack.ts`
+
+If API Gateway routes are defined in CDK (not just in Express), add:
+
+```typescript
+const <camelNames>Resource = api.root.resourceForPath('/<kebabNames>')
+<camelNames>Resource.addMethod('GET',  lambdaIntegration, defaultMethodOptions)
+<camelNames>Resource.addMethod('POST', lambdaIntegration, defaultMethodOptions)
+
+const <camelName>Resource = <camelNames>Resource.addResource('{id}')
+<camelName>Resource.addMethod('GET',    lambdaIntegration, defaultMethodOptions)
+<camelName>Resource.addMethod('PATCH',  lambdaIntegration, defaultMethodOptions)
+<camelName>Resource.addMethod('DELETE', lambdaIntegration, defaultMethodOptions)
+```
+
+---
+
 ## After writing all files
 
 Print a summary:
@@ -778,6 +875,13 @@ Backend:
   src/services/<kebabName>.service.ts
   src/controllers/<kebabName>.controller.ts
 
+Database:
+  prisma/schema.prisma  ← <PascalName> model appended
+
+Infra:
+  infra/lib/api-stack.ts       ← IAM grant + env var added
+  infra/lib/database-stack.ts  ← table construct added (DynamoDB only)
+
 Bruno (bruno/<kebabName>/):
   list-<kebabNames>.bru
   create-<kebabName>.bru
@@ -786,8 +890,9 @@ Bruno (bruno/<kebabName>/):
   delete-<kebabName>.bru
 
 Next steps:
-  1. Add domain fields to src/features/<kebabName>/types.ts and src/types/<kebabName>.types.ts
-  2. Add Prisma model for <camelName> in prisma/schema.prisma
-  3. Fill in Bruno request bodies with real field values
-  4. Run: npx prisma migrate dev --name add-<kebabName>
+  1. Add domain fields to src/features/<kebabName>/types.ts
+     and src/types/<kebabName>.types.ts + prisma/schema.prisma
+  2. Fill in Bruno request bodies with real field values
+  3. Run: npx prisma migrate dev --name add-<kebabName> && npx prisma generate
+  4. Run: npx cdk diff to verify infra changes before deploy
 ```
