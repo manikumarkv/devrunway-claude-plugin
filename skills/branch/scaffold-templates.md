@@ -1,5 +1,9 @@
 # Branch Scaffold Templates
 
+> **Note:** The canonical scaffold templates live in `skills/scaffold/SKILL.md`.
+> When `/branch create` triggers scaffolding, read that skill for the full
+> up-to-date templates. The summaries below are kept for quick reference only.
+
 Used by `/branch create` to generate boilerplate for new features and API endpoints.
 
 ---
