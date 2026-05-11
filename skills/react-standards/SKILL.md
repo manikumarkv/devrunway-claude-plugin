@@ -1,40 +1,44 @@
 ---
 name: react-standards
-description: React and frontend coding standards, patterns, approved libraries, and anti-patterns. Load when writing, reviewing, or discussing any React/TypeScript frontend code, components, hooks, or state management.
+description: React best practices, performance rules, and anti-patterns. Load when writing, reviewing, or discussing any React/TypeScript frontend code, components, hooks, or state management.
 user-invocable: false
 ---
 
-For the full reference see [react.md](react.md). Summary of rules that must always apply:
+Full rules in [react.md](react.md). Always-on summary:
 
-**Libraries (use these, no alternatives):**
-- Vite + React 18 + TypeScript (strict)
-- Styling: Tailwind CSS (utility-first) + CSS Modules when needed
-- Server state: `@tanstack/react-query` v5
-- Client state: Zustand (simple) or Redux Toolkit (complex shared state)
+**Stack (no alternatives):**
+- React 18 + TypeScript strict + Vite + Tailwind CSS
+- Server state: React Query v5 — never `fetch` in `useEffect`
 - Routing: React Router v6
-- Forms: React Hook Form + Zod resolver
-- Validation: Zod (shared schemas with backend)
-- HTTP: native `fetch` via the project API client (not axios)
-- Testing: Vitest + React Testing Library + MSW
-- E2E: Playwright
+- Forms: React Hook Form + Zod
+- Testing: Vitest + React Testing Library + MSW + Playwright
 
-**Component rules:**
-- Functional only, TypeScript, explicit `interface` props
-- Max ~150 lines; split if larger
-- Named exports in feature folders; barrel `index.ts`
-- Co-located test file `Component.test.tsx`
+**Components:**
+- Functional only · explicit `interface` props · max ~150 lines
+- Named exports · barrel `index.ts` per feature · co-located `.test.tsx`
 
-**State rules:**
-- ALL server data via React Query — never `fetch` in `useEffect`
-- Never store API responses in Redux/Zustand
-- Loading + error + empty states always handled
-
-**Anti-patterns (never do):**
+**Never:**
 - `any` type
 - `console.log` in production code
 - `useEffect` for data fetching
-- Class components
+- Components defined inside components
 - Default exports inside feature folders
 - Inline `style={{}}` for static values
-- Business logic inside component body (goes in a hook)
-- CSS overriding third-party components globally
+- Business logic in component body (belongs in a hook)
+- Server state stored in Zustand/Redux
+
+**Re-render rules (see react.md for full examples):**
+- Hoist static JSX and non-primitive defaults outside components
+- Functional `setState` for stable callback refs
+- Primitive useEffect dependencies, never objects
+- `useMemo` only for genuinely expensive computations
+- `startTransition` for non-urgent updates
+- `useRef` for values that change without needing re-renders
+
+**Performance rules (see react.md for full examples):**
+- `Promise.all()` for independent async operations — never sequential awaits
+- `React.lazy` + `Suspense` for heavy components
+- Direct imports, never barrel imports
+- Map/Set for O(1) lookups instead of array.find/includes
+- Hoist RegExp to module scope
+- `{ passive: true }` on touch/wheel listeners
