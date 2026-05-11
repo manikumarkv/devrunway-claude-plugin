@@ -258,10 +258,163 @@ export { <PascalName>List } from './<PascalName>List'
 
 ---
 
+### `src/features/<kebabName>/components/<PascalName>Form/<PascalName>Form.tsx`
+
+```tsx
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import toast from 'react-hot-toast'
+import { useCreate<PascalName> } from '../../api/<kebabName>.api'
+import { create<PascalName>Schema, type Create<PascalName>Input } from '../../types'
+import { ApiError } from '@/utils/errors'
+
+interface <PascalName>FormProps {
+  onSuccess?: () => void
+}
+
+export function <PascalName>Form({ onSuccess }: <PascalName>FormProps) {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<Create<PascalName>Input>({
+    resolver: zodResolver(create<PascalName>Schema),
+  })
+
+  const { mutate, isPending } = useCreate<PascalName>()
+
+  function onSubmit(data: Create<PascalName>Input) {
+    mutate(data, {
+      onSuccess: () => {
+        reset()
+        onSuccess?.()
+      },
+      onError: (error) => {
+        if (error instanceof ApiError && error.details) {
+          Object.entries(error.details).forEach(([field, message]) => {
+            setError(field as keyof Create<PascalName>Input, { message })
+          })
+          return
+        }
+        toast.error(error instanceof ApiError ? error.message : 'Something went wrong')
+      },
+    })
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      {/* TODO: add form fields */}
+      {/* Example field:
+      <div>
+        <label htmlFor="fieldName">Field Label</label>
+        <input id="fieldName" {...register('fieldName')} aria-describedby={errors.fieldName ? 'fieldName-error' : undefined} />
+        {errors.fieldName && (
+          <p id="fieldName-error" role="alert" className="text-red-600 text-sm">
+            {errors.fieldName.message}
+          </p>
+        )}
+      </div>
+      */}
+
+      <button type="submit" disabled={isPending || isSubmitting}>
+        {isPending ? 'Saving...' : 'Create <PascalName>'}
+      </button>
+    </form>
+  )
+}
+```
+
+---
+
+### `src/features/<kebabName>/components/<PascalName>Form/<PascalName>Form.test.tsx`
+
+```tsx
+import { screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, it, expect, vi } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { <PascalName>Form } from './<PascalName>Form'
+import { renderWithWrapper } from '@/test/utils'
+import { server } from '@/test/server'
+
+describe('<PascalName>Form', () => {
+  it('renders the form', () => {
+    renderWithWrapper(<<PascalName>Form />)
+    expect(screen.getByRole('button', { name: /create/i })).toBeInTheDocument()
+  })
+
+  it('submits valid data and calls onSuccess', async () => {
+    const user = userEvent.setup()
+    const onSuccess = vi.fn()
+
+    server.use(
+      http.post('/api/v1/<kebabNames>', () =>
+        HttpResponse.json({
+          success: true,
+          data: { id: 'new-id', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        }, { status: 201 })
+      )
+    )
+
+    renderWithWrapper(<<PascalName>Form onSuccess={onSuccess} />)
+
+    // TODO: fill in form fields
+    // await user.type(screen.getByLabelText('Field Label'), 'value')
+
+    await user.click(screen.getByRole('button', { name: /create/i }))
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce())
+  })
+
+  it('shows server field errors inline', async () => {
+    const user = userEvent.setup()
+
+    server.use(
+      http.post('/api/v1/<kebabNames>', () =>
+        HttpResponse.json({
+          error: { message: 'Validation failed', code: 'VALIDATION_ERROR', details: { fieldName: 'Already taken' } },
+        }, { status: 400 })
+      )
+    )
+
+    renderWithWrapper(<<PascalName>Form />)
+    await user.click(screen.getByRole('button', { name: /create/i }))
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+  })
+
+  it('disables submit button while pending', async () => {
+    const user = userEvent.setup()
+
+    server.use(
+      http.post('/api/v1/<kebabNames>', () => new Promise(() => {}))
+    )
+
+    renderWithWrapper(<<PascalName>Form />)
+    await user.click(screen.getByRole('button', { name: /create/i }))
+
+    expect(await screen.findByRole('button', { name: /saving/i })).toBeDisabled()
+  })
+})
+```
+
+---
+
+### `src/features/<kebabName>/components/<PascalName>Form/index.ts`
+
+```typescript
+export { <PascalName>Form } from './<PascalName>Form'
+```
+
+---
+
 ### `src/features/<kebabName>/index.ts`
 
 ```typescript
 export { <PascalName>List } from './components/<PascalName>List'
+export { <PascalName>Form } from './components/<PascalName>Form'
 export { use<PascalNames>, use<PascalName>, useCreate<PascalName>, useUpdate<PascalName>, useDelete<PascalName> } from './api/<kebabName>.api'
 export type { <PascalName>, Create<PascalName>Input, Update<PascalName>Input } from './types'
 ```
@@ -614,6 +767,9 @@ Frontend (src/features/<kebabName>/):
   components/<PascalName>List/<PascalName>List.tsx
   components/<PascalName>List/<PascalName>List.test.tsx
   components/<PascalName>List/index.ts
+  components/<PascalName>Form/<PascalName>Form.tsx
+  components/<PascalName>Form/<PascalName>Form.test.tsx
+  components/<PascalName>Form/index.ts
   index.ts
 
 Backend:
