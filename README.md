@@ -44,7 +44,8 @@ flowchart TD
     T -- Yes --> V["/pr merge"]
     V --> W["/deploy prod"]
     W --> X([Production])
-    X --> Y["/evolve"]
+    X --> A
+    X -.->|"end of sprint"| Y["/evolve"]
     Y --> Z{Gaps or\nrecurring issues?}
     Z -- Yes --> AA[Skills and agents\nimproved]
     AA --> B
