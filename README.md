@@ -44,6 +44,47 @@ flowchart TD
     T -- Yes --> V["/pr merge"]
     V --> W["/deploy prod"]
     W --> X([Production])
+    X --> Y["/evolve"]
+    Y --> Z{Gaps or\nrecurring issues?}
+    Z -- Yes --> AA[Skills and agents\nimproved]
+    AA --> B
+    Z -- No --> B
+```
+
+---
+
+## Compounding Loop
+
+The plugin improves itself. After every sprint, `/evolve` analyses review reports,
+debug reports, and design docs to find recurring gaps — then updates the skills and
+agents that caused them. Each cycle makes the next sprint faster.
+
+```mermaid
+flowchart LR
+    subgraph Evidence["Evidence collected"]
+        E1["REVIEW-*.md\nrecurring issues"]
+        E2["DEBUG-*.md\nroot cause patterns"]
+        E3["git log\nwhat changed most"]
+        E4["design docs\npatterns in use"]
+    end
+
+    subgraph Analysis["/evolve analysis"]
+        A1[Skill coverage audit\nagainst SDLC stages]
+        A2[Agent charter audit\ntriggers and outputs]
+        A3[Cross-reference gaps\nmissing Related links]
+        A4[New skill candidates\nfrom evidence]
+    end
+
+    subgraph Output["Output"]
+        O1["docs/evolve/EVOLVE-date.md\nprioritised improvement plan"]
+        O2[Skills updated]
+        O3[Agents sharpened]
+        O4[New skills added]
+    end
+
+    Evidence --> Analysis
+    Analysis --> Output
+    O2 & O3 & O4 -->|next sprint| E1
 ```
 
 ---

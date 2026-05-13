@@ -19,6 +19,20 @@ allowed-tools:
 
 # Deploy to AWS
 
+## Configuration — resolve these before running any command
+
+Before executing any command, look up the real values for these placeholders:
+
+| Placeholder | Where to find it |
+|---|---|
+| `<project>` | `package.json` → `.name` field (strip any `@scope/` prefix, e.g. `@acme/api` → `api`) |
+| `<DIST_ID>` | CloudFormation: `aws cloudformation describe-stacks --stack-name <project>-$ENV --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" --output text` — or SSM: `aws ssm get-parameter --name "/<project>/$ENV/cloudfront/distribution-id" --query Parameter.Value --output text` |
+| `<domain>` | SSM: `aws ssm get-parameter --name "/<project>/$ENV/domain" --query Parameter.Value --output text` — or CDK stack outputs / Route53 hosted zone name |
+
+Resolve all three at the start of every run. If any value cannot be found, **stop immediately** and tell the user which placeholder is missing and how to set it (SSM put-parameter or CDK output export).
+
+---
+
 **Sub-command dispatch:**
 - `$ARGUMENTS[0]` = `staging` or `prod` → run deploy for that environment
 - `$ARGUMENTS[0]` = `status` → run status check for `$ARGUMENTS[1]` (default: staging)
