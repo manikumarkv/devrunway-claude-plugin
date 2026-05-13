@@ -85,6 +85,36 @@ flowchart LR
 
 ---
 
+## Document Chain
+
+Every command reads the previous command's output. This is the full paper trail from idea to PR.
+
+```mermaid
+flowchart LR
+    subgraph PM["👤 PM"]
+        PB["docs/product-brainstorm/\n<slug>.md"]
+        PP["docs/product-plans/\n<slug>.md"]
+        PT["docs/product-tasks/\n<slug>.md + GitHub issues"]
+        PR["docs/product-tasks/\n<ticket>-refined.md"]
+    end
+
+    subgraph Dev["💻 Dev"]
+        DB["docs/dev-brainstorm/\n<ticket>.md"]
+        DD["docs/dev-tech-designs/\n<ticket>-design.md"]
+        RV["REVIEW-<branch>.md"]
+    end
+
+    PB -->|"/product-plan"| PP
+    PP -->|"/product-tasks"| PT
+    PT -->|"/product-refine"| PR
+    PR -->|"/dev-brainstorm"| DB
+    DB -->|"/dev-design"| DD
+    DD -->|"/dev-code"| RV
+    RV -->|"/pr create"| GH[GitHub PR]
+```
+
+---
+
 ## Workflows
 
 ### PM Tier — From idea to GitHub issues
@@ -161,7 +191,7 @@ flowchart TD
     D & E & F --> G[Root cause identified]
     G --> H[Minimal fix]
     H --> I[Failing test added]
-    I --> J["REVIEW-branch.md saved"]
+    I --> J["BUG-REPORT-date.md saved"]
     J --> K["/pr create"]
 ```
 
@@ -191,7 +221,7 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    A["/scaffold orders fullstack"] --> B{"Reads docs/design/orders.md?"}
+    A["/scaffold orders fullstack"] --> B{"Reads docs/dev-tech-designs/orders-design.md?"}
     B -->|Yes| C[Pre-filled with real field names]
     B -->|No| D[Placeholder TODOs]
     C & D --> E["Frontend: src/features/orders/"]
@@ -248,6 +278,15 @@ flowchart LR
 | `format` | `prettier --write` |
 | `types` | Show TS errors |
 | `all` | All three |
+
+### Remaining utilities
+
+| Command | Sub-commands | Action |
+|---|---|---|
+| `/task` | `create [title]` · `start <#>` · `list [mine]` · `close <#>` | GitHub issue management |
+| `/debug` | `this <description>` · `logs <env>` | Trigger debugger agent or tail error logs |
+| `/cognito-auth` | `frontend` · `backend` · `fullstack` | Scaffold full Cognito auth flow |
+| `/evolve` | `skills` · `agents` · `coverage` · `all` | End-of-sprint plugin self-improvement analysis |
 
 ---
 
