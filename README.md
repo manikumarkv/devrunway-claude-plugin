@@ -18,38 +18,33 @@ FIGMA_TOKEN    # optional — design file access
 
 ```mermaid
 flowchart TD
-    A(["💡 Idea · PM"]) --> B["PM · requirements-analyst agent"]
-    B --> C[GitHub Issues Created]
-    C --> D["Dev · /design feature-name"]
-    D --> E["docs/design/feature.md"]
-    E --> F["Dev · /scaffold feature-name"]
-    F --> G[All boilerplate files generated]
-    G --> H["Dev · /branch create ticket slug"]
-    H --> I["Dev · /task start ticket-num"]
-    I --> J["Dev · Write business logic"]
-    J --> K["Dev · /test unit"]
-    K --> L{Tests pass? · CI}
-    L -- No --> J
-    L -- Yes --> M["Dev · /review run"]
-    M --> N{Review clean? · CI}
-    N -- No --> O["Dev · /fix all"]
-    O --> J
-    N -- Yes --> P["Dev · /pr create"]
-    P --> Q[CI checks pass]
-    Q --> R["Dev · /deploy staging"]
-    R --> S["Dev · /logs health staging"]
-    S --> T{Healthy? · CI}
-    T -- No --> U["Dev · /debug logs staging"]
-    U --> J
-    T -- Yes --> V["Lead · /pr merge"]
-    V --> W["Lead · /deploy prod"]
-    W --> X([Production])
-    X --> A
-    X -.->|"end of sprint"| Y["Lead · /evolve"]
-    Y --> Z{Gaps or\nrecurring issues?}
-    Z -- Yes --> AA[Skills and agents\nimproved]
-    AA --> B
-    Z -- No --> B
+    A(["💡 Idea · PM"]) --> B["PM · /product-brainstorm"]
+    B --> C["PM · /product-plan"]
+    C --> D["PM · /product-tasks"]
+    D --> E[GitHub Issues + Milestones]
+    E --> F["PM + Dev · /product-refine"]
+    F --> G["Dev · /dev-brainstorm"]
+    G --> H["Dev · /dev-design"]
+    H --> I["Dev · /dev-code"]
+    I --> J["Dev · /dev-review"]
+    J --> K{All items resolved? · Dev}
+    K -- Fix selected --> J
+    K -- Done --> L["Dev · /pr create"]
+    L --> M[CI checks · CI]
+    M --> N["Dev · /deploy staging"]
+    N --> O["Dev · /logs health"]
+    O --> P{Healthy? · CI}
+    P -- No --> Q["Dev · /debug"]
+    Q --> I
+    P -- Yes --> R["Lead · /pr merge"]
+    R --> S["Lead · /deploy prod"]
+    S --> T([Production])
+    T --> A
+    T -.->|"end of sprint"| U["Lead · /evolve"]
+    U --> V{Gaps or\nrecurring issues?}
+    V -- Yes --> W[Skills improved]
+    W --> B
+    V -- No --> B
 ```
 
 ---
@@ -92,22 +87,32 @@ flowchart LR
 
 ## Workflows
 
-### New Feature
+### PM Tier — From idea to GitHub issues
 
 ```mermaid
 flowchart LR
-    A[Describe idea] -->|requirements-analyst| B[Issues]
-    B -->|design| C[Design doc]
-    C -->|scaffold| D[All files generated]
-    D -->|branch create| E[Feature branch]
-    E -->|Write logic| F[Code]
-    F -->|review run| G{Clean?}
-    G -->|No, fix all| F
-    G -->|Yes| H["/pr create"]
-    H -->|CI passes| I["/deploy staging"]
-    I -->|logs health| J{Healthy?}
-    J -->|No, debug| F
-    J -->|Yes| K["/pr merge then deploy prod"]
+    A(["💡 Idea"]) -->|"/product-brainstorm"| B["docs/product-brainstorm/"]
+    B -->|"/product-plan"| C["Personas · Flows · Stories"]
+    C -->|"/product-tasks"| D["GitHub Issues + Milestones"]
+    D -->|"/product-refine ticket"| E["Refined story · Q&A doc"]
+    E -->|Hand to Dev| F(["Dev picks up ticket"])
+```
+
+### Dev Tier — From ticket to production
+
+```mermaid
+flowchart LR
+    A(["Ticket"]) -->|"/dev-brainstorm"| B["Approaches + Decision matrix"]
+    B -->|"/dev-design"| C["Phased plan doc"]
+    C -->|"/dev-code"| D["Step-by-step build\n(confirm each step)"]
+    D -->|"/dev-review"| E["Review list · Fix selected"]
+    E -->|"/pr create"| F{CI}
+    F -->|Pass| G["/deploy staging"]
+    G --> H{Healthy?}
+    H -->|No| I["/debug"]
+    I --> D
+    H -->|Yes| J["Lead · /pr merge"]
+    J --> K["Lead · /deploy prod"]
 ```
 
 ### Bug Fix
@@ -164,18 +169,23 @@ flowchart TD
 
 ## Commands
 
-### `/task` — Issues
-| Command | Action |
-|---|---|
-| `create [title]` | New GitHub issue |
-| `start <#>` | Assign + label in-progress |
-| `list [mine]` | List open issues |
-| `close <#>` | Close issue |
+### PM Workflow
 
-### `/design` — Tech Design
-| Command | Action |
-|---|---|
-| `/design <feature> [description]` | Generate `docs/design/<feature>.md` — API contract, DB schema, component plan, security checklist, implementation phases |
+| Command | Input | Output |
+|---|---|---|
+| `/product-brainstorm <slug>` | Idea / feature description | `docs/product-brainstorm/<slug>.md` — UX exploration, open questions, scope thoughts |
+| `/product-plan <slug>` | Brainstorm doc | `docs/product-plans/<slug>.md` — personas, user flows, in/out of scope, epics, stories with AC |
+| `/product-tasks <slug>` | Plan doc | GitHub milestones + issues · `docs/product-tasks/<slug>.md` summary |
+| `/product-refine <ticket#>` | GitHub issue number | GitHub comment + `docs/product-tasks/<ticket>-refined.md` — Q&A, decisions, final AC |
+
+### Dev Workflow
+
+| Command | Input | Output |
+|---|---|---|
+| `/dev-brainstorm <ticket#>` | GitHub issue number | `docs/dev-brainstorm/<ticket>.md` — challenges, approaches, decision matrix, recommendation |
+| `/dev-design <ticket#>` | Issue or brainstorm doc | `docs/dev-tech-designs/<ticket>-design.md` — phased plan with numbered steps for `/dev-code` |
+| `/dev-code <ticket#>` | Design doc | Code built step by step with user confirmation · branch created · ticket updated |
+| `/dev-review` | Current branch | `REVIEW-<branch>.md` tracked list · user picks items to fix · status updated per item |
 
 ### `/scaffold` — Boilerplate
 
@@ -207,12 +217,6 @@ flowchart LR
 | `api [collection]` | Bruno |
 | `coverage` | Coverage ≥ 80% gate |
 | `generate [file]` | Stub missing tests |
-
-### `/review` — Code Review
-| Command | Action |
-|---|---|
-| `run` | Full audit against all standards → `REVIEW-<branch>.md` |
-| `fix` | ESLint + Prettier auto-fix |
 
 ### `/pr` — Pull Requests
 | Command | Action |
@@ -247,30 +251,27 @@ flowchart LR
 
 ---
 
-## Agents
+## Agent
+
+One autonomous agent remains — the **debugger**. All other workflows are interactive commands.
 
 ```mermaid
 flowchart LR
-    subgraph Triggers["Trigger phrases"]
-        T1["I want to build X\nbreak into stories\ncreate backlog"]
-        T2["design issue N\nhow should we build X"]
-        T3["implement issue N\nbuild this feature"]
-        T4["review the code\nis this ready to merge"]
-        T5["something is broken\ndebug this\ncheck production"]
+    subgraph Trigger["Trigger phrases"]
+        T["something is broken\ndebug this\ncheck production\nunexpected error in..."]
     end
 
-    T1 --> A1[requirements-analyst]
-    T2 --> A2[tech-designer]
-    T3 --> A3[developer]
-    T4 --> A4[reviewer]
-    T5 --> A5[debugger]
-
-    A1 -->|creates| G[GitHub Issues]
-    A2 -->|writes| D["docs/design/*.md"]
-    A3 -->|implements| C[Code + Tests]
-    A4 -->|writes| R["REVIEW-branch.md"]
-    A5 -->|writes| BF[Bug Fix Report]
+    T --> DBG[debugger agent]
+    DBG --> CW[CloudWatch logs]
+    DBG --> TR[Error traces]
+    DBG --> RC[Recent commits]
+    CW & TR & RC --> ROOT[Root cause identified]
+    ROOT --> FIX[Minimal fix + failing test]
+    FIX --> RPT["BUG-REPORT-<date>.md"]
+    RPT --> PR["/pr create"]
 ```
+
+The debugger is intentionally autonomous — it gathers all evidence before surfacing a root cause so you don't have to drive the investigation step by step.
 
 ---
 
@@ -397,23 +398,35 @@ flowchart TD
 
 ```
 .claude-plugin/plugin.json     ← manifest, MCP servers, install-time tokens
-agents/                        ← requirements-analyst, tech-designer, developer, reviewer, debugger
+agents/
+  └── debugger.md              ← autonomous debug agent (only remaining agent)
 skills/
-  ├── Commands (user-invocable)
+  ├── PM Workflow (user-invocable)
+  │   ├── product-brainstorm/  ← /product-brainstorm <slug>
+  │   ├── product-plan/        ← /product-plan <slug>
+  │   ├── product-tasks/       ← /product-tasks <slug>
+  │   └── product-refine/      ← /product-refine <ticket#>
+  │
+  ├── Dev Workflow (user-invocable)
+  │   ├── dev-brainstorm/      ← /dev-brainstorm <ticket#>
+  │   ├── dev-design/          ← /dev-design <ticket#>
+  │   ├── dev-code/            ← /dev-code <ticket#>
+  │   └── dev-review/          ← /dev-review
+  │
+  ├── Utility Commands (user-invocable)
   │   ├── task/                ← /task create|start|list|close
-  │   ├── design/              ← /design <feature>
   │   ├── scaffold/            ← /scaffold <feature> [frontend|backend|fullstack]
   │   ├── branch/              ← /branch create|switch|status|delete
   │   ├── test/                ← /test unit|e2e|api|coverage|generate
-  │   ├── review/              ← /review run|fix
   │   ├── pr/                  ← /pr create|merge|checks
   │   ├── deploy/              ← /deploy staging|prod|status|rollback
   │   ├── logs/                ← /logs health|errors|tail|search
   │   ├── fix/                 ← /fix lint|format|types|all
   │   ├── debug/               ← /debug this|logs
-  │   └── cognito-auth/        ← /cognito-auth frontend|backend|fullstack
+  │   ├── cognito-auth/        ← /cognito-auth frontend|backend|fullstack
+  │   └── evolve/              ← /evolve [skills|agents|coverage|all]
   │
-  └── Background knowledge (auto-loaded)
+  └── Background knowledge (auto-loaded, always on)
       ├── react-standards/       ├── composition-patterns/  ├── typescript-patterns/
       ├── testing-standards/     ├── accessibility/         ├── error-handling/
       ├── api-conventions/       ├── security/              ├── database-sql/
@@ -426,4 +439,12 @@ hooks/
   hooks.json
   scripts/
     tsc-check.sh · console-guard.sh · destructive-git-guard.sh · session-summary.sh
+
+docs/  (generated by commands — not committed as boilerplate)
+  product-brainstorm/   ← /product-brainstorm output
+  product-plans/        ← /product-plan output
+  product-tasks/        ← /product-tasks + /product-refine output
+  dev-brainstorm/       ← /dev-brainstorm output
+  dev-tech-designs/     ← /dev-design output
+  evolve/               ← /evolve output
 ```
