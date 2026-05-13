@@ -18,34 +18,34 @@ FIGMA_TOKEN    # optional — design file access
 
 ```mermaid
 flowchart TD
-    A([Idea]) --> B[requirements-analyst agent]
+    A(["💡 Idea · PM"]) --> B["PM · requirements-analyst agent"]
     B --> C[GitHub Issues Created]
-    C --> D["/design feature-name"]
+    C --> D["Dev · /design feature-name"]
     D --> E["docs/design/feature.md"]
-    E --> F["/scaffold feature-name"]
+    E --> F["Dev · /scaffold feature-name"]
     F --> G[All boilerplate files generated]
-    G --> H["/branch create ticket slug"]
-    H --> I["/task start ticket-num"]
-    I --> J[Write business logic only]
-    J --> K["/test unit"]
-    K --> L{Tests pass?}
+    G --> H["Dev · /branch create ticket slug"]
+    H --> I["Dev · /task start ticket-num"]
+    I --> J["Dev · Write business logic"]
+    J --> K["Dev · /test unit"]
+    K --> L{Tests pass? · CI}
     L -- No --> J
-    L -- Yes --> M["/review run"]
-    M --> N{Review clean?}
-    N -- No --> O["/fix all"]
+    L -- Yes --> M["Dev · /review run"]
+    M --> N{Review clean? · CI}
+    N -- No --> O["Dev · /fix all"]
     O --> J
-    N -- Yes --> P["/pr create"]
+    N -- Yes --> P["Dev · /pr create"]
     P --> Q[CI checks pass]
-    Q --> R["/deploy staging"]
-    R --> S["/logs health staging"]
-    S --> T{Healthy?}
-    T -- No --> U["/debug logs staging"]
+    Q --> R["Dev · /deploy staging"]
+    R --> S["Dev · /logs health staging"]
+    S --> T{Healthy? · CI}
+    T -- No --> U["Dev · /debug logs staging"]
     U --> J
-    T -- Yes --> V["/pr merge"]
-    V --> W["/deploy prod"]
+    T -- Yes --> V["Lead · /pr merge"]
+    V --> W["Lead · /deploy prod"]
     W --> X([Production])
     X --> A
-    X -.->|"end of sprint"| Y["/evolve"]
+    X -.->|"end of sprint"| Y["Lead · /evolve"]
     Y --> Z{Gaps or\nrecurring issues?}
     Z -- Yes --> AA[Skills and agents\nimproved]
     AA --> B
