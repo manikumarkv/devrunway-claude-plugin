@@ -22,6 +22,10 @@ allowed-tools:
 Generate all boilerplate files for a new feature so development starts with
 working, standards-compliant shells — not blank files.
 
+If `docs/design/<featureName>.md` exists, read it first and use the API
+schemas, DB model fields, and component list defined there to pre-fill the
+generated files rather than using placeholder TODOs.
+
 Parse `$ARGUMENTS`:
 - `featureName` = first arg (kebab-case, e.g. `order-items`)
 - `scope` = second arg: `frontend`, `backend`, or `fullstack` (default `fullstack`)
