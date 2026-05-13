@@ -1,177 +1,351 @@
 # my-dev-standards — Claude Code Plugin
 
-Full SDLC automation for React + Node.js + AWS + Cognito + GitHub teams.
+Full SDLC automation for React + Node.js + AWS + Cognito + GitHub.
 
 ---
 
 ## Setup
 
-Install the plugin in Claude Code, then provide your tokens when prompted:
+```bash
+# Install plugin, then provide tokens when prompted
+GITHUB_TOKEN   # required — fine-grained PAT (Contents, Issues, PRs, Metadata)
+FIGMA_TOKEN    # optional — design file access
+```
 
-| Token | Required | Purpose |
-|---|---|---|
-| `GITHUB_TOKEN` | Yes | Fine-grained PAT — Issues, PRs, repos |
-| `FIGMA_TOKEN` | No | Design file access for design-to-code workflows |
+---
 
-GitHub PAT scopes needed: **Contents** (read), **Issues** (read/write), **Pull Requests** (read/write), **Metadata** (read).
+## Full SDLC Flow
+
+```mermaid
+flowchart TD
+    A([💡 Idea]) --> B[requirements-analyst\nagent]
+    B --> C[GitHub Issues Created]
+    C --> D[/design feature-name]
+    D --> E[docs/design/feature.md]
+    E --> F[/scaffold feature-name]
+    F --> G[All boilerplate files\ngenerated]
+    G --> H[/branch create ticket slug]
+    H --> I[/task start ticket-num]
+    I --> J[🧑‍💻 Write business logic only]
+    J --> K[/test unit]
+    K --> L{Tests pass?}
+    L -- No --> J
+    L -- Yes --> M[/review run]
+    M --> N{Review clean?}
+    N -- No --> O[/fix all]
+    O --> J
+    N -- Yes --> P[/pr create]
+    P --> Q[CI checks pass]
+    Q --> R[/deploy staging]
+    R --> S[/logs health staging]
+    S --> T{Healthy?}
+    T -- No --> U[/debug logs staging]
+    U --> J
+    T -- Yes --> V[/pr merge]
+    V --> W[/deploy prod]
+    W --> X([✅ Production])
+```
+
+---
+
+## Workflows
+
+### New Feature
+
+```mermaid
+flowchart LR
+    A[Describe idea] -->|requirements-analyst| B[Issues]
+    B -->|/design| C[Design doc]
+    C -->|/scaffold| D[All files\ngenerated]
+    D -->|/branch create| E[Feature branch]
+    E -->|Write logic| F[Code]
+    F -->|/review run| G{Clean?}
+    G -->|No - /fix all| F
+    G -->|Yes| H[/pr create]
+    H -->|CI passes| I[/deploy staging]
+    I -->|/logs health| J{Healthy?}
+    J -->|No - /debug| F
+    J -->|Yes| K[/pr merge → /deploy prod]
+```
+
+### Bug Fix
+
+```mermaid
+flowchart LR
+    A([🐛 Bug reported]) -->|/debug this| B[Root cause\nidentified]
+    B --> C[Minimal fix\n+ failing test]
+    C -->|/pr create| D[Hotfix PR]
+    D -->|/deploy staging| E[/logs health]
+    E -->|Healthy| F[/deploy prod]
+    F --> G([✅ Fixed])
+```
+
+### Deploy Pipeline
+
+```mermaid
+flowchart TD
+    A[/deploy staging] --> B{Pre-flight checks}
+    B --> B1[tsc --noEmit ✓]
+    B --> B2[eslint . ✓]
+    B --> B3[vitest run ✓]
+    B --> B4[AWS creds ✓]
+    B1 & B2 & B3 & B4 --> C[cdk deploy ApiStack]
+    C --> D[CloudFront invalidation]
+    D --> E[Health check]
+    E --> F{Status}
+    F -->|🟢 Healthy| G([Done])
+    F -->|🔴 Unhealthy| H[/logs errors staging]
+    H --> I[/deploy rollback staging]
+
+    J[/deploy prod] --> K{Manual approval\nrequired}
+    K -->|Confirmed| L[Same as staging\n+ production gate]
+    L --> M([✅ Production live])
+```
+
+### Debug Flow
+
+```mermaid
+flowchart TD
+    A([Error/Incident]) --> B[/debug this description]
+    B --> C[debugger agent]
+    C --> D[CloudWatch logs]
+    C --> E[Error traces]
+    C --> F[Recent commits]
+    D & E & F --> G[Root cause\nidentified]
+    G --> H[Minimal fix]
+    H --> I[Failing test\nadded]
+    I --> J[REVIEW-branch.md\nsaved]
+    J --> K[/pr create]
+```
 
 ---
 
 ## Commands
 
-All commands follow the pattern `/my-dev-standards:<namespace> <sub-command> [args]`.
-
-### `/task` — GitHub Issues
-
-| Sub-command | What it does |
+### `/task` — Issues
+| Command | Action |
 |---|---|
-| `create [title]` | Create a new GitHub issue with the standard template |
-| `start <issue#>` | Assign issue to yourself, label `in-progress`, prompt to create branch |
-| `update <issue#>` | Edit title, labels, or assignee |
-| `list [mine\|label:X]` | List open issues |
-| `view <issue#>` | Show full issue with comments |
-| `close <issue#>` | Close an issue |
+| `create [title]` | New GitHub issue |
+| `start <#>` | Assign + label in-progress |
+| `list [mine]` | List open issues |
+| `close <#>` | Close issue |
 
-### `/branch` — Branch management + scaffolding
-
-| Sub-command | What it does |
+### `/design` — Tech Design
+| Command | Action |
 |---|---|
-| `create <ticket#> <slug> [frontend\|backend\|fullstack]` | Create `feature/<ticket>-<slug>` branch, optionally scaffold boilerplate |
-| `switch <name-or-issue#>` | Switch to a branch |
-| `list` | List local branches sorted by recency |
-| `delete <name>` | Delete branch (warns if unmerged) |
-| `status` | Show current branch: ahead/behind, uncommitted changes, linked issue |
+| `/design <feature> [description]` | Generate `docs/design/<feature>.md` — API contract, DB schema, component plan, security checklist, implementation phases |
 
-### `/pr` — Pull Requests
+### `/scaffold` — Boilerplate
+```mermaid
+flowchart LR
+    A["/scaffold orders fullstack"] --> B{Reads\ndocs/design/orders.md?}
+    B -->|Yes| C[Pre-filled with\nreal field names]
+    B -->|No| D[Placeholder TODOs]
+    C & D --> E[Frontend\nsrc/features/orders/]
+    C & D --> F[Backend\ncontroller+service\n+repository+types]
+    C & D --> G[Database\nprisma model appended]
+    C & D --> H[Infra\nCDK grants + routes]
+    C & D --> I[Bruno\n5 request stubs]
+```
 
-| Sub-command | What it does |
+### `/branch` — Branches
+| Command | Action |
 |---|---|
-| `create [target]` | Auto-fill PR from diff (title, body, checklist). Target defaults to `develop` |
-| `merge <pr#>` | Merge after confirming checks pass |
-| `list [mine\|review-requested]` | List open PRs |
-| `view <pr#>` | Full PR details + review status |
-| `checkout <pr#>` | Check out a PR's branch locally |
-| `checks <pr#>` | Show CI/CD check status |
-| `close <pr#>` | Close without merging |
-| `update <pr#>` | Sync branch with base |
+| `create <#> <slug> [fullstack]` | Branch + scaffold |
+| `switch <name-or-#>` | Switch branch |
+| `status` | Ahead/behind + uncommitted |
+| `delete <name>` | Safe delete |
 
 ### `/test` — Tests
-
-| Sub-command | What it does |
+| Command | Action |
 |---|---|
-| `unit [file]` | Run Vitest unit tests |
-| `e2e [spec]` | Run Playwright E2E tests |
-| `api [collection]` | Run Bruno API tests |
-| `coverage` | Run with coverage report, flag files < 80% |
-| `watch [file]` | Vitest watch mode |
-| `generate [file]` | Generate test stubs for existing code |
+| `unit [file]` | Vitest |
+| `e2e [spec]` | Playwright |
+| `api [collection]` | Bruno |
+| `coverage` | Coverage ≥ 80% gate |
+| `generate [file]` | Stub missing tests |
 
-### `/deploy` — AWS deployment
-
-| Sub-command | What it does |
+### `/review` — Code Review
+| Command | Action |
 |---|---|
-| `staging` | Pre-flight (tsc, lint, tests, AWS creds, SSM) → CDK deploy → health check |
-| `prod` | Same as staging with explicit confirmation gate |
-| `status [env]` | Health check: API endpoint + CloudWatch errors + p95 latency |
-| `rollback <env>` | Revert Lambda to previous version + CloudFront invalidation |
+| `run` | Full audit against all standards → `REVIEW-<branch>.md` |
+| `fix` | ESLint + Prettier auto-fix |
 
-### `/review` — Code review
-
-| Sub-command | What it does |
+### `/pr` — Pull Requests
+| Command | Action |
 |---|---|
-| `run` (default) | Full standards audit via reviewer agent → saves `REVIEW-<branch>.md` |
-| `fix` | Mechanical only: `eslint --fix` + `prettier --write` |
+| `create [target]` | Auto-filled PR → develop |
+| `merge <#>` | Merge after checks |
+| `checks <#>` | CI status |
 
-### `/fix` — Auto-fixers
-
-| Sub-command | What it does |
+### `/deploy` — AWS
+| Command | Action |
 |---|---|
-| `lint` | `eslint . --fix` |
-| `format` | `prettier --write` |
-| `types` | Show TypeScript errors (cannot auto-fix) |
-| `all` | lint + format + show types |
+| `staging` | Pre-flight → CDK → health check |
+| `prod` | Same + manual approval gate |
+| `status [env]` | API + CloudWatch + latency |
+| `rollback <env>` | Previous Lambda + CF invalidation |
 
 ### `/logs` — CloudWatch
-
-| Sub-command | What it does |
+| Command | Action |
 |---|---|
-| `health [env]` | Error count + auth failures + p95/p99 latency with 🟢/🟡/🔴 rating |
-| `errors [env] [window]` | Recent errors grouped by type |
+| `health [env]` | 🟢🟡🔴 error rate + p95/p99 |
+| `errors [env]` | Errors grouped by type |
 | `tail [env]` | Stream last 20 entries |
-| `search <keyword> [env]` | Search by error message, requestId, userId, or action |
+| `search <term>` | By message, requestId, userId |
 
-### `/debug` — Debugging
-
-| Sub-command | What it does |
+### `/fix` — Auto-fix
+| Command | Action |
 |---|---|
-| `this [description]` | Root-cause investigation → minimal fix → failing test → Bug Fix Report |
-| `logs [env]` | CloudWatch health check via debugger agent |
-
-### `/cognito-auth` — Auth scaffolding
-
-| Argument | What it does |
-|---|---|
-| `frontend` | Amplify config + `useAuth` hook + `LoginForm` + `AuthGuard` + API client |
-| `backend` | `authMiddleware` (JWT verify) + `requireGroup` + error classes |
-| `fullstack` | Both |
+| `lint` | `eslint --fix` |
+| `format` | `prettier --write` |
+| `types` | Show TS errors |
+| `all` | All three |
 
 ---
 
-## Agents (auto-invoked — no slash command needed)
+## Agents
 
-Tell Claude what you want to do and it picks the right agent:
+```mermaid
+flowchart LR
+    subgraph Trigger phrases
+        T1["I want to build X\nbreak into stories\ncreate backlog"]
+        T2["design issue #N\nhow should we build X"]
+        T3["implement issue #N\nbuild this feature"]
+        T4["review the code\nis this ready to merge"]
+        T5["something is broken\ndebug this\ncheck production"]
+    end
 
-| Agent | When Claude uses it | Trigger phrases |
-|---|---|---|
-| **requirements-analyst** | Turning ideas into GitHub issues | "I want to build X", "break this into stories", "create the backlog" |
-| **tech-designer** | Designing a feature before coding | "design issue #N", "how should we build X", "create a tech design" |
-| **developer** | Implementing a feature end-to-end | "implement issue #N", "build this feature", "code this up" |
-| **reviewer** | Code review before a PR | "review the code", "check before PR", "is this ready to merge" |
-| **debugger** | Investigating bugs or production issues | "something is broken", "debug this", "check production logs" |
+    T1 --> A1[requirements-analyst]
+    T2 --> A2[tech-designer]
+    T3 --> A3[developer]
+    T4 --> A4[reviewer]
+    T5 --> A5[debugger]
+
+    A1 -->|creates| G[GitHub Issues]
+    A2 -->|writes| D[docs/design/*.md]
+    A3 -->|implements| C[Code + Tests]
+    A4 -->|writes| R[REVIEW-branch.md]
+    A5 -->|writes| B[Bug Fix Report]
+```
 
 ---
 
-## Hooks (automatic — always on)
+## Background Skills (always loaded)
 
-| Hook | When | What it does |
-|---|---|---|
-| `tsc-check` | After any `.ts`/`.tsx` write | Runs `tsc --noEmit`, prints errors |
-| `console-guard` | After any `.ts`/`.tsx` write | Warns if `console.*` found |
-| `destructive-git-guard` | Before any Bash command | Blocks `--force`, `reset --hard`, `rm -rf` |
-| `session-summary` | End of every session | Prints branch, uncommitted count, commits ahead of develop |
+These apply automatically — no command needed. Claude checks them whenever writing code.
+
+```mermaid
+graph LR
+    subgraph Frontend
+        RS[react-standards]
+        CP[composition-patterns]
+        TP[typescript-patterns]
+        TS[testing-standards]
+        A11[accessibility]
+    end
+
+    subgraph Backend
+        AC[api-conventions]
+        EH[error-handling]
+        SC[security]
+        SQL[database-sql]
+        NOSQL[database-nosql]
+    end
+
+    subgraph Infrastructure
+        CDK[cdk]
+        PIPE[pipeline]
+        MON[monitoring]
+        LD[local-dev]
+    end
+
+    subgraph Process
+        PP[product-persona]
+        CC[conventional-commit]
+        SS[secret-scanning]
+        PKG[packages]
+        PS[project-structure]
+    end
+
+    RS --- CP
+    RS --- TP
+    RS --- TS
+    RS --- A11
+    TS --- A11
+    AC --- EH
+    EH --- SC
+    SQL --- EH
+    NOSQL --- CDK
+    CDK --- SC
+    CDK --- MON
+    PIPE --- SC
+    LD --- SQL
+    LD --- NOSQL
+```
 
 ---
 
-## Common workflows
+## Hooks (automatic)
 
-### New feature end-to-end
-```
-1. requirements-analyst  →  creates GitHub issues from your description
-2. tech-designer          →  designs the approach for a specific issue
-3. /branch create <#> <slug> fullstack  →  creates branch + scaffolds files
-4. /task start <#>       →  assigns issue, labels in-progress
-5. developer              →  implements from the tech design
-6. /test generate         →  fills in any missing tests
-7. /review run            →  full audit → saves REVIEW-<branch>.md
-8. /fix all               →  applies mechanical fixes
-9. /pr create             →  opens PR with auto-filled description
-10. /deploy staging       →  pre-flight + deploy + health check
-```
+```mermaid
+flowchart LR
+    subgraph After Write/Edit .ts/.tsx
+        W[File saved] --> H1[tsc-check.sh\nTypeScript errors]
+        W --> H2[console-guard.sh\nWarn on console.*]
+    end
 
-### Bug investigation
-```
-1. /debug this <error description>  →  root-cause + fix + test
-2. /pr create                        →  hotfix PR
-3. /deploy staging                   →  verify fix
-4. /logs health staging              →  confirm healthy after deploy
+    subgraph Before Bash command
+        B[Bash command] --> H3{destructive-git-guard.sh}
+        H3 -->|--force / reset --hard / rm -rf| BLOCK[❌ Blocked]
+        H3 -->|safe| ALLOW[✅ Allowed]
+    end
+
+    subgraph Session end
+        S[Claude stops] --> H4[session-summary.sh\nBranch · uncommitted · ahead of develop]
+    end
 ```
 
-### Post-deploy monitoring
-```
-/deploy status staging   →  quick health check
-/logs health staging     →  detailed error + latency report
-/logs tail staging       →  live log stream
-/debug logs staging      →  full incident report if unhealthy
+---
+
+## What gets generated by `/scaffold`
+
+```mermaid
+flowchart TD
+    CMD["/scaffold orders fullstack"] --> FE & BE & DB & INFRA & BRUNO
+
+    subgraph FE[Frontend — src/features/orders/]
+        F1[types.ts\nOrder · CreateOrderInput]
+        F2[api/orders.api.ts\nuseOrders · useCreateOrder ...]
+        F3[components/OrderList/\n.tsx + .test.tsx + index.ts]
+        F4[components/OrderForm/\n.tsx + .test.tsx + index.ts]
+        F5[index.ts — public API]
+    end
+
+    subgraph BE[Backend]
+        B1[src/types/orders.types.ts\nZod schemas]
+        B2[src/repositories/orders.repository.ts\nPrisma + cursor pagination]
+        B3[src/services/orders.service.ts\nOwnership checks + errors]
+        B4[src/controllers/orders.controller.ts\nasyncHandler + ok/created/paginated]
+    end
+
+    subgraph DB[Database]
+        D1[prisma/schema.prisma\nOrder model appended]
+        D2[npx prisma migrate dev]
+    end
+
+    subgraph INFRA[Infra — CDK]
+        I1[IAM grant\ntable.grantReadWriteData]
+        I2[API Gateway routes\nGET POST PATCH DELETE]
+    end
+
+    subgraph BRUNO[Bruno — bruno/orders/]
+        BR1[list-orders.bru]
+        BR2[create-order.bru]
+        BR3[get-order.bru]
+        BR4[update-order.bru]
+        BR5[delete-order.bru]
+    end
 ```
 
 ---
@@ -179,35 +353,34 @@ Tell Claude what you want to do and it picks the right agent:
 ## Plugin structure
 
 ```
-.claude-plugin/
-  plugin.json          ← manifest, MCP servers, userConfig
-agents/
-  requirements-analyst.md
-  tech-designer.md
-  developer.md
-  reviewer.md
-  debugger.md
+.claude-plugin/plugin.json     ← manifest, MCP servers, install-time tokens
+agents/                        ← requirements-analyst, tech-designer, developer, reviewer, debugger
 skills/
-  task/                ← /task commands
-  branch/              ← /branch commands + scaffold templates
-  pr/                  ← /pr commands
-  test/                ← /test commands
-  deploy/              ← /deploy commands
-  review/              ← /review commands
-  fix/                 ← /fix commands
-  logs/                ← /logs commands + CloudWatch query library
-  debug/               ← /debug commands
-  cognito-auth/        ← auth scaffolding
-  standards/           ← background: git, commit, quality rules
-  react-standards/     ← background: React + TypeScript rules
-  nodejs-standards/    ← background: Node.js architecture rules
-  security-standards/  ← background: JWT, input validation, secrets rules
-  logging-standards/   ← background: Pino, log fields, CloudWatch
+  ├── Commands (user-invocable)
+  │   ├── task/                ← /task create|start|list|close
+  │   ├── design/              ← /design <feature>
+  │   ├── scaffold/            ← /scaffold <feature> [frontend|backend|fullstack]
+  │   ├── branch/              ← /branch create|switch|status|delete
+  │   ├── test/                ← /test unit|e2e|api|coverage|generate
+  │   ├── review/              ← /review run|fix
+  │   ├── pr/                  ← /pr create|merge|checks
+  │   ├── deploy/              ← /deploy staging|prod|status|rollback
+  │   ├── logs/                ← /logs health|errors|tail|search
+  │   ├── fix/                 ← /fix lint|format|types|all
+  │   ├── debug/               ← /debug this|logs
+  │   └── cognito-auth/        ← /cognito-auth frontend|backend|fullstack
+  │
+  └── Background knowledge (auto-loaded)
+      ├── react-standards/     ├── composition-patterns/  ├── typescript-patterns/
+      ├── testing-standards/   ├── accessibility/         ├── error-handling/
+      ├── api-conventions/     ├── security/              ├── database-sql/
+      ├── database-nosql/      ├── project-structure/     ├── packages/
+      ├── pipeline/            ├── playwright/            ├── api-docs/
+      ├── monitoring/          ├── bruno/                 ├── cdk/
+      ├── product-persona/     ├── conventional-commit/   ├── secret-scanning/
+      └── local-dev/
 hooks/
-  hooks.json           ← hook definitions (call scripts below)
+  hooks.json
   scripts/
-    tsc-check.sh           ← TypeScript error check
-    console-guard.sh       ← console.log detection
-    destructive-git-guard.sh ← blocks dangerous git commands
-    session-summary.sh     ← end-of-session branch summary
+    tsc-check.sh · console-guard.sh · destructive-git-guard.sh · session-summary.sh
 ```
