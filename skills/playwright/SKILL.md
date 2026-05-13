@@ -23,3 +23,9 @@ Full standards in [playwright.md](playwright.md). Always-on summary:
 - Shared mutable state between tests
 - Assert in page objects
 - Hard-code URLs — use `baseURL` from config
+
+
+**Related skills — apply together:**
+- `testing-standards` — unit tests cover component logic; Playwright covers cross-page flows
+- `accessibility` — keyboard navigation and focus management verified in E2E specs
+- `api-conventions` — tests call real API endpoints; response shapes must match the contract

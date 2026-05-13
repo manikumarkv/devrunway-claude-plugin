@@ -29,3 +29,9 @@ Then <expected result>
 - [ ] Mobile responsive
 - [ ] No console errors
 - [ ] PR approved and merged to develop
+
+
+**Related skills — apply together:**
+- `accessibility` — definition of done includes keyboard navigable and screen reader tested
+- `testing-standards` — acceptance criteria map directly to test cases
+- `playwright` — E2E specs validate the critical user journeys defined in stories

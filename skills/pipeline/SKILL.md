@@ -28,3 +28,9 @@ Full standards in [pipeline.md](pipeline.md). Always-on summary:
 - Merge a PR with failing checks
 - Deploy without running tests
 - Store secrets in workflow files — use GitHub Secrets
+
+
+**Related skills — apply together:**
+- `testing-standards` — CI runs vitest; coverage ≥ 80% is a required check
+- `security` — npm audit --audit-level=high runs in CI; secrets never in workflow files
+- `cdk` — CDK deploy runs behind the environment approval gate

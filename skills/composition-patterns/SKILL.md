@@ -20,3 +20,9 @@ Full patterns in [patterns.md](patterns.md). Always-on summary:
 **React 19:**
 - No `forwardRef` — accept `ref` as a regular prop
 - `use(Context)` instead of `useContext()`
+
+
+**Related skills — apply together:**
+- `react-standards` — performance rules apply inside all composed components
+- `typescript-patterns` — type context interfaces, discriminated unions for compound state
+- `accessibility` — compound components must preserve keyboard navigation and ARIA roles

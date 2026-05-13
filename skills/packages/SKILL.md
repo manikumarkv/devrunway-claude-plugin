@@ -31,3 +31,8 @@ Full list in [packages.md](packages.md). Always-on summary:
 - Testing: `vitest`
 
 **Never use:** `moment`, `lodash` (use native JS), `axios` (use fetch), `passport` (use aws-jwt-verify), `jsonwebtoken` (use aws-jwt-verify), `sequelize`/`typeorm` (use prisma), `jest` (use vitest)
+
+
+**Related skills — apply together:**
+- `project-structure` — approved packages are placed in specific layers (lib/, utils/, features/)
+- `security` — helmet, express-rate-limit, and aws-jwt-verify are mandatory, not optional

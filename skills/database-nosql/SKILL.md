@@ -26,3 +26,9 @@ Full standards in [nosql.md](nosql.md). Always-on summary:
 - Use sequential numeric IDs as partition keys (hot partition)
 - Store unbounded lists in a single item (DynamoDB 400 KB item limit)
 - Mix unrelated domains in one table
+
+
+**Related skills — apply together:**
+- `error-handling` — DynamoDB ConditionalCheckFailed maps to ConflictError
+- `typescript-patterns` — type entity interfaces and key builder functions
+- `cdk` — DynamoDB table construct, IAM grants, and GSI definitions live in DatabaseStack

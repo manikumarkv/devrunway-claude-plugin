@@ -22,3 +22,9 @@ Full standards in [monitoring.md](monitoring.md). Always-on summary:
 - CloudWatch alarm on Lambda error rate > 1% for 5 minutes
 - CloudWatch alarm on API p99 latency > 2s
 - Sentry alert on new issue or error spike
+
+
+**Related skills — apply together:**
+- `error-handling` — Sentry.captureException in error boundaries; structured logs on 5xx backend errors
+- `cdk` — CloudWatch alarms and EMF metrics are defined in MonitoringStack
+- `security` — never log sensitive fields (tokens, passwords, PII) in Pino or CloudWatch

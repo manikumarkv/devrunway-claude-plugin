@@ -27,3 +27,10 @@ Full standards in [error-handling.md](error-handling.md). Always-on summary:
 - `res.status(500).json({ error: e.message })` — leaks internals
 - Generic "Something went wrong" for errors the user can fix
 - Silent catch blocks with no Sentry or UI feedback
+
+
+**Related skills — apply together:**
+- `api-conventions` — error response envelope shape, status code mapping
+- `typescript-patterns` — type AppError subclasses and discriminated error unions
+- `monitoring` — Sentry.captureException in boundaries, structured logs on 5xx
+- `security` — never expose err.message or stack traces to clients

@@ -22,3 +22,9 @@ Full rules in [accessibility.md](accessibility.md). Always-on summary:
 - `aria-live` for content that updates without a page reload
 - Focus trap inside modals/dialogs; restore focus on close
 - Error messages linked to their input with `aria-describedby`
+
+
+**Related skills — apply together:**
+- `react-standards` — semantic HTML is the foundation of accessible React
+- `testing-standards` — `getByRole`/`getByLabel` selectors enforce accessibility in tests
+- `playwright` — keyboard navigation and screen reader flows belong in E2E tests

@@ -32,3 +32,9 @@ bruno/
 - Hard-code tokens or IDs in request files
 - Commit `environments/local.bru` with real credentials
 - Skip the `tests {}` block — every request must assert something
+
+
+**Related skills — apply together:**
+- `api-conventions` — Bruno requests follow the same envelope, versioning, and status code rules
+- `error-handling` — test 4xx and 5xx responses, not just happy paths
+- `pipeline` — Bruno collection runs in CI after staging deploy as a required check

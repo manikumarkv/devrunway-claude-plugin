@@ -42,3 +42,11 @@ Full rules in [react.md](react.md). Always-on summary:
 - Map/Set for O(1) lookups instead of array.find/includes
 - Hoist RegExp to module scope
 - `{ passive: true }` on touch/wheel listeners
+
+
+**Related skills — apply together:**
+- `typescript-patterns` — type all props, events, and hook return values
+- `composition-patterns` — compound components, context shape, children over render props
+- `testing-standards` — every component needs loading/success/empty/error test states
+- `accessibility` — semantic elements, focus management, aria attributes
+- `error-handling` — error boundaries around every async feature, ApiError in mutations

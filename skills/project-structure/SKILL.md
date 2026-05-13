@@ -22,3 +22,9 @@ Full structure in [structure.md](structure.md). Always-on summary:
 - `src/types/` — Zod schemas + inferred TypeScript types
 - `src/utils/` — pure utility functions (no side effects)
 - `src/lib/` — third-party client setup (prisma, dynamo, logger)
+
+
+**Related skills — apply together:**
+- `packages` — use only approved packages; structure determines where each goes
+- `typescript-patterns` — naming conventions and file boundaries enforce TypeScript module isolation
+- `scaffold` — use `/scaffold` to generate the folder structure automatically

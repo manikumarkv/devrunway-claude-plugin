@@ -23,3 +23,10 @@ Full standards in [cdk.md](cdk.md). Always-on summary:
 - `--require-approval never` in prod CI without explicit env gate
 - Hard-code account IDs or region strings — use `Stack.of(this).account`
 - `cdk destroy` in CI on non-ephemeral environments
+
+
+**Related skills — apply together:**
+- `security` — IAM least-privilege, S3 block public access, Cognito auth on every route
+- `monitoring` — CloudWatch alarms and EMF metrics are CDK constructs in MonitoringStack
+- `database-nosql` — DynamoDB table construct, GSI, and removal policy live in DatabaseStack
+- `pipeline` — `cdk deploy` runs behind the environment approval gate in GitHub Actions

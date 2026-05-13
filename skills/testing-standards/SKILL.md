@@ -23,3 +23,10 @@ Full standards in [testing.md](testing.md). Always-on summary:
 - `userEvent.setup()` at the top of each test
 - Wrap with a custom `createWrapper()` that provides QueryClient + Router
 - MSW handlers in `server.use()` for per-test overrides
+
+
+**Related skills — apply together:**
+- `typescript-patterns` — type all test utilities, wrappers, and mock data
+- `accessibility` — prefer `getByRole` and `getByLabel` — they enforce accessible markup
+- `error-handling` — test all four states: loading, success, empty, error
+- `packages` — use vitest + @testing-library/react + msw, never jest

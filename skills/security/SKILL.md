@@ -31,3 +31,9 @@ Full standards in [security.md](security.md). Always-on summary:
 - Trusting `req.user.role` from the token claims for authorization — use Cognito groups
 - Wildcard CORS (`*`) in production
 - `eval()`, `Function()`, or `child_process.exec()` with user input
+
+
+**Related skills — apply together:**
+- `error-handling` — use AppError.code in responses, never err.message or stack traces
+- `api-conventions` — requireAuth and requireGroup belong on every route definition
+- `cdk` — IAM least-privilege, S3 block public access, secrets in SSM — infra enforces security too

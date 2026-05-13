@@ -21,3 +21,9 @@ Full standards in [api-docs.md](api-docs.md). Always-on summary:
 - Write OpenAPI YAML by hand — schema and code drift
 - Document responses that don't match actual Zod types
 - Expose `/api/docs` in production without auth
+
+
+**Related skills — apply together:**
+- `api-conventions` — OpenAPI paths must match the route naming and envelope conventions
+- `error-handling` — document all AppError-derived response codes (400/401/403/404/409/422/500)
+- `typescript-patterns` — Zod schemas registered in OpenAPI are the same types used for validation

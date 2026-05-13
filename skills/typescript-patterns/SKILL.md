@@ -19,3 +19,10 @@ Full patterns in [typescript.md](typescript.md). Always-on summary:
 - Branded types for IDs (never pass a `userId` where `postId` is expected)
 - Explicit return types on all exported functions
 - `const` assertions for static lookup objects
+
+
+**Related skills — apply together:**
+- `react-standards` — type all component props, events, and ref callbacks
+- `testing-standards` — type test utilities, mock factories, and MSW handlers
+- `error-handling` — type custom error classes and discriminated error unions
+- `api-conventions` — type request/response shapes with Zod inferred types
