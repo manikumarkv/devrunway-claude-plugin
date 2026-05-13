@@ -18,32 +18,32 @@ FIGMA_TOKEN    # optional — design file access
 
 ```mermaid
 flowchart TD
-    A([💡 Idea]) --> B[requirements-analyst\nagent]
+    A([Idea]) --> B[requirements-analyst agent]
     B --> C[GitHub Issues Created]
-    C --> D[/design feature-name]
-    D --> E[docs/design/feature.md]
-    E --> F[/scaffold feature-name]
-    F --> G[All boilerplate files\ngenerated]
-    G --> H[/branch create ticket slug]
-    H --> I[/task start ticket-num]
-    I --> J[🧑‍💻 Write business logic only]
-    J --> K[/test unit]
+    C --> D["/design feature-name"]
+    D --> E["docs/design/feature.md"]
+    E --> F["/scaffold feature-name"]
+    F --> G[All boilerplate files generated]
+    G --> H["/branch create ticket slug"]
+    H --> I["/task start ticket-num"]
+    I --> J[Write business logic only]
+    J --> K["/test unit"]
     K --> L{Tests pass?}
     L -- No --> J
-    L -- Yes --> M[/review run]
+    L -- Yes --> M["/review run"]
     M --> N{Review clean?}
-    N -- No --> O[/fix all]
+    N -- No --> O["/fix all"]
     O --> J
-    N -- Yes --> P[/pr create]
+    N -- Yes --> P["/pr create"]
     P --> Q[CI checks pass]
-    Q --> R[/deploy staging]
-    R --> S[/logs health staging]
+    Q --> R["/deploy staging"]
+    R --> S["/logs health staging"]
     S --> T{Healthy?}
-    T -- No --> U[/debug logs staging]
+    T -- No --> U["/debug logs staging"]
     U --> J
-    T -- Yes --> V[/pr merge]
-    V --> W[/deploy prod]
-    W --> X([✅ Production])
+    T -- Yes --> V["/pr merge"]
+    V --> W["/deploy prod"]
+    W --> X([Production])
 ```
 
 ---
@@ -55,67 +55,67 @@ flowchart TD
 ```mermaid
 flowchart LR
     A[Describe idea] -->|requirements-analyst| B[Issues]
-    B -->|/design| C[Design doc]
-    C -->|/scaffold| D[All files\ngenerated]
-    D -->|/branch create| E[Feature branch]
+    B -->|design| C[Design doc]
+    C -->|scaffold| D[All files generated]
+    D -->|branch create| E[Feature branch]
     E -->|Write logic| F[Code]
-    F -->|/review run| G{Clean?}
-    G -->|No - /fix all| F
-    G -->|Yes| H[/pr create]
-    H -->|CI passes| I[/deploy staging]
-    I -->|/logs health| J{Healthy?}
-    J -->|No - /debug| F
-    J -->|Yes| K[/pr merge → /deploy prod]
+    F -->|review run| G{Clean?}
+    G -->|No, fix all| F
+    G -->|Yes| H["/pr create"]
+    H -->|CI passes| I["/deploy staging"]
+    I -->|logs health| J{Healthy?}
+    J -->|No, debug| F
+    J -->|Yes| K["/pr merge then deploy prod"]
 ```
 
 ### Bug Fix
 
 ```mermaid
 flowchart LR
-    A([🐛 Bug reported]) -->|/debug this| B[Root cause\nidentified]
-    B --> C[Minimal fix\n+ failing test]
-    C -->|/pr create| D[Hotfix PR]
-    D -->|/deploy staging| E[/logs health]
-    E -->|Healthy| F[/deploy prod]
-    F --> G([✅ Fixed])
+    A([Bug reported]) -->|debug this| B[Root cause identified]
+    B --> C[Minimal fix + failing test]
+    C -->|pr create| D[Hotfix PR]
+    D -->|deploy staging| E["/logs health"]
+    E -->|Healthy| F["/deploy prod"]
+    F --> G([Fixed])
 ```
 
 ### Deploy Pipeline
 
 ```mermaid
 flowchart TD
-    A[/deploy staging] --> B{Pre-flight checks}
-    B --> B1[tsc --noEmit ✓]
-    B --> B2[eslint . ✓]
-    B --> B3[vitest run ✓]
-    B --> B4[AWS creds ✓]
+    A["/deploy staging"] --> B{Pre-flight checks}
+    B --> B1["tsc --noEmit"]
+    B --> B2["eslint ."]
+    B --> B3["vitest run"]
+    B --> B4[AWS creds]
     B1 & B2 & B3 & B4 --> C[cdk deploy ApiStack]
     C --> D[CloudFront invalidation]
     D --> E[Health check]
     E --> F{Status}
-    F -->|🟢 Healthy| G([Done])
-    F -->|🔴 Unhealthy| H[/logs errors staging]
-    H --> I[/deploy rollback staging]
+    F -->|Healthy| G([Done])
+    F -->|Unhealthy| H["/logs errors staging"]
+    H --> I["/deploy rollback staging"]
 
-    J[/deploy prod] --> K{Manual approval\nrequired}
-    K -->|Confirmed| L[Same as staging\n+ production gate]
-    L --> M([✅ Production live])
+    J["/deploy prod"] --> K{Manual approval required}
+    K -->|Confirmed| L[Same as staging + production gate]
+    L --> M([Production live])
 ```
 
 ### Debug Flow
 
 ```mermaid
 flowchart TD
-    A([Error/Incident]) --> B[/debug this description]
+    A([Error or Incident]) --> B["/debug this description"]
     B --> C[debugger agent]
     C --> D[CloudWatch logs]
     C --> E[Error traces]
     C --> F[Recent commits]
-    D & E & F --> G[Root cause\nidentified]
+    D & E & F --> G[Root cause identified]
     G --> H[Minimal fix]
-    H --> I[Failing test\nadded]
-    I --> J[REVIEW-branch.md\nsaved]
-    J --> K[/pr create]
+    H --> I[Failing test added]
+    I --> J["REVIEW-branch.md saved"]
+    J --> K["/pr create"]
 ```
 
 ---
@@ -136,16 +136,17 @@ flowchart TD
 | `/design <feature> [description]` | Generate `docs/design/<feature>.md` — API contract, DB schema, component plan, security checklist, implementation phases |
 
 ### `/scaffold` — Boilerplate
+
 ```mermaid
 flowchart LR
-    A["/scaffold orders fullstack"] --> B{Reads\ndocs/design/orders.md?}
-    B -->|Yes| C[Pre-filled with\nreal field names]
+    A["/scaffold orders fullstack"] --> B{"Reads docs/design/orders.md?"}
+    B -->|Yes| C[Pre-filled with real field names]
     B -->|No| D[Placeholder TODOs]
-    C & D --> E[Frontend\nsrc/features/orders/]
-    C & D --> F[Backend\ncontroller+service\n+repository+types]
-    C & D --> G[Database\nprisma model appended]
-    C & D --> H[Infra\nCDK grants + routes]
-    C & D --> I[Bruno\n5 request stubs]
+    C & D --> E["Frontend: src/features/orders/"]
+    C & D --> F["Backend: controller + service + repository + types"]
+    C & D --> G["Database: prisma model appended"]
+    C & D --> H["Infra: CDK grants + routes"]
+    C & D --> I["Bruno: 5 request stubs"]
 ```
 
 ### `/branch` — Branches
@@ -189,7 +190,7 @@ flowchart LR
 ### `/logs` — CloudWatch
 | Command | Action |
 |---|---|
-| `health [env]` | 🟢🟡🔴 error rate + p95/p99 |
+| `health [env]` | Error rate + p95/p99 |
 | `errors [env]` | Errors grouped by type |
 | `tail [env]` | Stream last 20 entries |
 | `search <term>` | By message, requestId, userId |
@@ -208,10 +209,10 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    subgraph Trigger phrases
+    subgraph Triggers["Trigger phrases"]
         T1["I want to build X\nbreak into stories\ncreate backlog"]
-        T2["design issue #N\nhow should we build X"]
-        T3["implement issue #N\nbuild this feature"]
+        T2["design issue N\nhow should we build X"]
+        T3["implement issue N\nbuild this feature"]
         T4["review the code\nis this ready to merge"]
         T5["something is broken\ndebug this\ncheck production"]
     end
@@ -223,10 +224,10 @@ flowchart LR
     T5 --> A5[debugger]
 
     A1 -->|creates| G[GitHub Issues]
-    A2 -->|writes| D[docs/design/*.md]
+    A2 -->|writes| D["docs/design/*.md"]
     A3 -->|implements| C[Code + Tests]
-    A4 -->|writes| R[REVIEW-branch.md]
-    A5 -->|writes| B[Bug Fix Report]
+    A4 -->|writes| R["REVIEW-branch.md"]
+    A5 -->|writes| BF[Bug Fix Report]
 ```
 
 ---
@@ -290,56 +291,56 @@ graph LR
 
 ```mermaid
 flowchart LR
-    subgraph After Write/Edit .ts/.tsx
-        W[File saved] --> H1[tsc-check.sh\nTypeScript errors]
-        W --> H2[console-guard.sh\nWarn on console.*]
+    subgraph PostWrite["After any .ts or .tsx write"]
+        W[File saved] --> H1["tsc-check.sh — TypeScript errors"]
+        W --> H2["console-guard.sh — Warn on console.*"]
     end
 
-    subgraph Before Bash command
+    subgraph PreBash["Before any Bash command"]
         B[Bash command] --> H3{destructive-git-guard.sh}
-        H3 -->|--force / reset --hard / rm -rf| BLOCK[❌ Blocked]
-        H3 -->|safe| ALLOW[✅ Allowed]
+        H3 -->|"force push, reset --hard, rm -rf"| BLOCK[Blocked]
+        H3 -->|safe| ALLOW[Allowed]
     end
 
-    subgraph Session end
-        S[Claude stops] --> H4[session-summary.sh\nBranch · uncommitted · ahead of develop]
+    subgraph OnStop["Session end"]
+        S[Claude stops] --> H4["session-summary.sh\nBranch · uncommitted · ahead of develop"]
     end
 ```
 
 ---
 
-## What gets generated by `/scaffold`
+## What `/scaffold` generates
 
 ```mermaid
 flowchart TD
     CMD["/scaffold orders fullstack"] --> FE & BE & DB & INFRA & BRUNO
 
-    subgraph FE[Frontend — src/features/orders/]
-        F1[types.ts\nOrder · CreateOrderInput]
-        F2[api/orders.api.ts\nuseOrders · useCreateOrder ...]
-        F3[components/OrderList/\n.tsx + .test.tsx + index.ts]
-        F4[components/OrderForm/\n.tsx + .test.tsx + index.ts]
-        F5[index.ts — public API]
+    subgraph FE["Frontend — src/features/orders/"]
+        F1["types.ts — Order, CreateOrderInput"]
+        F2["api/orders.api.ts — useOrders, useCreateOrder ..."]
+        F3["components/OrderList/ — .tsx + .test.tsx + index.ts"]
+        F4["components/OrderForm/ — .tsx + .test.tsx + index.ts"]
+        F5["index.ts — public API barrel"]
     end
 
-    subgraph BE[Backend]
-        B1[src/types/orders.types.ts\nZod schemas]
-        B2[src/repositories/orders.repository.ts\nPrisma + cursor pagination]
-        B3[src/services/orders.service.ts\nOwnership checks + errors]
-        B4[src/controllers/orders.controller.ts\nasyncHandler + ok/created/paginated]
+    subgraph BE["Backend"]
+        B1["src/types/orders.types.ts — Zod schemas"]
+        B2["src/repositories/orders.repository.ts — Prisma + cursor pagination"]
+        B3["src/services/orders.service.ts — Ownership checks + errors"]
+        B4["src/controllers/orders.controller.ts — asyncHandler + ok/created/paginated"]
     end
 
-    subgraph DB[Database]
-        D1[prisma/schema.prisma\nOrder model appended]
-        D2[npx prisma migrate dev]
+    subgraph DB["Database"]
+        D1["prisma/schema.prisma — Order model appended"]
+        D2["npx prisma migrate dev"]
     end
 
-    subgraph INFRA[Infra — CDK]
-        I1[IAM grant\ntable.grantReadWriteData]
-        I2[API Gateway routes\nGET POST PATCH DELETE]
+    subgraph INFRA["Infra — CDK"]
+        I1["IAM grant — table.grantReadWriteData"]
+        I2["API Gateway routes — GET POST PATCH DELETE"]
     end
 
-    subgraph BRUNO[Bruno — bruno/orders/]
+    subgraph BRUNO["Bruno — bruno/orders/"]
         BR1[list-orders.bru]
         BR2[create-order.bru]
         BR3[get-order.bru]
@@ -371,13 +372,13 @@ skills/
   │   └── cognito-auth/        ← /cognito-auth frontend|backend|fullstack
   │
   └── Background knowledge (auto-loaded)
-      ├── react-standards/     ├── composition-patterns/  ├── typescript-patterns/
-      ├── testing-standards/   ├── accessibility/         ├── error-handling/
-      ├── api-conventions/     ├── security/              ├── database-sql/
-      ├── database-nosql/      ├── project-structure/     ├── packages/
-      ├── pipeline/            ├── playwright/            ├── api-docs/
-      ├── monitoring/          ├── bruno/                 ├── cdk/
-      ├── product-persona/     ├── conventional-commit/   ├── secret-scanning/
+      ├── react-standards/       ├── composition-patterns/  ├── typescript-patterns/
+      ├── testing-standards/     ├── accessibility/         ├── error-handling/
+      ├── api-conventions/       ├── security/              ├── database-sql/
+      ├── database-nosql/        ├── project-structure/     ├── packages/
+      ├── pipeline/              ├── playwright/            ├── api-docs/
+      ├── monitoring/            ├── bruno/                 ├── cdk/
+      ├── product-persona/       ├── conventional-commit/   ├── secret-scanning/
       └── local-dev/
 hooks/
   hooks.json
