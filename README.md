@@ -35,18 +35,22 @@ flowchart TD
     L --> M[CI checks · CI]
     M --> N["Dev · /deploy staging"]
     N --> O["Dev · /logs health"]
-    O --> P{Healthy? · CI}
+    O --> P{Healthy? · Dev}
     P -- No --> Q["Dev · /debug"]
     Q --> I
     P -- Yes --> R["Lead · /pr merge"]
     R --> S["Lead · /deploy prod"]
-    S --> T([Production])
-    T --> A
-    T -.->|"end of sprint"| U["Lead · /evolve"]
-    U --> V{Gaps or\nrecurring issues?}
-    V -- Yes --> W[Skills improved]
-    W --> B
-    V -- No --> B
+    S --> T["Dev · /test-smoke prod"]
+    T --> U{Smoke pass? · Dev}
+    U -- No --> V["Dev · /deploy rollback prod"]
+    U -- Yes --> W(["✅ Production"])
+    W --> A
+    W -.->|"1h · 24h"| X["Dev · /validate <#>"]
+    W -.->|"end of sprint"| Y["Lead · /evolve"]
+    Y --> Z{Gaps or\nrecurring issues?}
+    Z -- Yes --> AA[Skills improved]
+    AA --> B
+    Z -- No --> B
 ```
 
 ---
@@ -61,7 +65,7 @@ agents that caused them. Each cycle makes the next sprint faster.
 flowchart LR
     subgraph Evidence["Evidence collected"]
         E1["REVIEW-*.md\nrecurring issues"]
-        E2["DEBUG-*.md\nroot cause patterns"]
+        E2["BUG-REPORT-*.md\nroot cause patterns"]
         E3["git log\nwhat changed most"]
         E4["design docs\npatterns in use"]
     end
@@ -93,17 +97,18 @@ Every command reads the previous command's output. This is the full paper trail 
 
 ```mermaid
 flowchart LR
-    subgraph PM["👤 PM"]
-        PB["docs/product-brainstorm/\n<slug>.md"]
-        PP["docs/product-plans/\n<slug>.md"]
-        PT["docs/product-tasks/\n<slug>.md + GitHub issues"]
-        PR["docs/product-tasks/\n<ticket>-refined.md"]
+    subgraph PM["👤 PM Tier"]
+        PB["docs/product-brainstorm/\n&lt;slug&gt;.md"]
+        PP["docs/product-plans/\n&lt;slug&gt;.md"]
+        PT["GitHub Issues\n+ Milestones"]
+        PR["docs/product-tasks/\n&lt;ticket&gt;-refined.md"]
     end
 
-    subgraph Dev["💻 Dev"]
-        DB["docs/dev-brainstorm/\n<ticket>.md"]
-        DD["docs/dev-tech-designs/\n<ticket>-design.md"]
-        RV["REVIEW-<branch>.md"]
+    subgraph Dev["💻 Dev Tier"]
+        DB["docs/dev-brainstorm/\n&lt;ticket&gt;.md"]
+        DD["docs/dev-tech-designs/\n&lt;ticket&gt;-design.md"]
+        RV["REVIEW-&lt;branch&gt;.md"]
+        GH["GitHub PR"]
     end
 
     PB -->|"/product-plan"| PP
@@ -112,7 +117,7 @@ flowchart LR
     PR -->|"/dev-brainstorm"| DB
     DB -->|"/dev-design"| DD
     DD -->|"/dev-code"| RV
-    RV -->|"/pr create"| GH[GitHub PR]
+    RV -->|"/pr create"| GH
 ```
 
 ---
@@ -126,7 +131,7 @@ flowchart LR
     A(["💡 Idea"]) -->|"/product-brainstorm"| B["docs/product-brainstorm/"]
     B -->|"/product-plan"| C["Personas · Flows · Stories"]
     C -->|"/product-tasks"| D["GitHub Issues + Milestones"]
-    D -->|"/product-refine ticket"| E["Refined story · Q&A doc"]
+    D -->|"/product-refine &lt;#&gt;"| E["Refined story · Q&A doc"]
     E -->|Hand to Dev| F(["Dev picks up ticket"])
 ```
 
@@ -149,18 +154,9 @@ flowchart LR
     J --> D
     I -->|Yes| K["Lead · /pr merge"]
     K --> L["Lead · /deploy prod"]
-```
-
-### Bug Fix
-
-```mermaid
-flowchart LR
-    A([Bug reported]) -->|debug this| B[Root cause identified]
-    B --> C[Minimal fix + failing test]
-    C -->|pr create| D[Hotfix PR]
-    D -->|deploy staging| E["/logs health"]
-    E -->|Healthy| F["/deploy prod"]
-    F --> G([Fixed])
+    L --> M["/test-smoke prod"]
+    M -->|Pass| N(["✅ Production"])
+    M -->|Fail| O["/deploy rollback prod"]
 ```
 
 ### Deploy Pipeline
@@ -182,14 +178,29 @@ flowchart TD
 
     J["/deploy prod"] --> K{Manual approval required}
     K -->|Confirmed| L[Same as staging + production gate]
-    L --> M([Production live])
+    L --> M["/test-smoke prod"]
+    M -->|Pass| N([Production live])
+    M -->|Fail| O["/deploy rollback prod"]
+    N -.->|"1h + 24h"| P["/validate &lt;issue#&gt;"]
+```
+
+### Bug Fix
+
+```mermaid
+flowchart LR
+    A([Bug reported]) -->|"debug this"| B[Root cause identified]
+    B --> C[Minimal fix + failing test]
+    C -->|"pr create"| D[Hotfix PR]
+    D -->|"deploy staging"| E["/logs health"]
+    E -->|Healthy| F["/deploy prod"]
+    F --> G([Fixed])
 ```
 
 ### Debug Flow
 
 ```mermaid
 flowchart TD
-    A([Error or Incident]) --> B["/debug this description"]
+    A([Error or Incident]) --> B["/debug this &lt;description&gt;"]
     B --> C[debugger agent]
     C --> D[CloudWatch logs]
     C --> E[Error traces]
@@ -197,7 +208,7 @@ flowchart TD
     D & E & F --> G[Root cause identified]
     G --> H[Minimal fix]
     H --> I[Failing test added]
-    I --> J["BUG-REPORT-date.md saved"]
+    I --> J["BUG-REPORT-&lt;date&gt;.md saved"]
     J --> K["/pr create"]
 ```
 
@@ -209,7 +220,7 @@ flowchart TD
 
 | Command | Input | Output |
 |---|---|---|
-| `/product-brainstorm <slug>` | Idea / feature description | `docs/product-brainstorm/<slug>.md` — UX exploration, open questions, scope thoughts |
+| `/product-brainstorm <slug>` | Idea / feature description | `docs/product-brainstorm/<slug>.md` — UX exploration, open questions, scope boundary |
 | `/product-plan <slug>` | Brainstorm doc | `docs/product-plans/<slug>.md` — personas, user flows, in/out of scope, epics, stories with AC |
 | `/product-tasks <slug>` | Plan doc | GitHub milestones + issues · `docs/product-tasks/<slug>.md` summary |
 | `/product-refine <ticket#>` | GitHub issue number | GitHub comment + `docs/product-tasks/<ticket>-refined.md` — Q&A, decisions, final AC |
@@ -218,112 +229,57 @@ flowchart TD
 
 | Command | Input | Output |
 |---|---|---|
-| `/dev-brainstorm <ticket#>` | GitHub issue number | `docs/dev-brainstorm/<ticket>.md` — challenges, approaches, decision matrix, recommendation |
+| `/dev-brainstorm <ticket#>` | GitHub issue number | `docs/dev-brainstorm/<ticket>.md` — challenges, 2–3 approaches, decision matrix, recommendation |
 | `/dev-design <ticket#>` | Issue or brainstorm doc | `docs/dev-tech-designs/<ticket>-design.md` — phased plan with numbered steps for `/dev-code` |
-| `/dev-code <ticket#>` | Design doc | Code built step by step with user confirmation · branch created · ticket updated |
-| `/dev-review` | Current branch | `REVIEW-<branch>.md` tracked list · user picks items to fix · status updated per item |
+| `/dev-code <ticket#>` | Design doc | Code built phase by phase with confirmation checkpoints · branch created · ticket status updated |
+| `/dev-review` | Current branch | `REVIEW-<branch>.md` tracked findings · user picks items to fix · status updated per item |
 
-### `/scaffold` — Boilerplate
-
-```mermaid
-flowchart LR
-    A["/scaffold orders fullstack"] --> B{"Reads docs/dev-tech-designs/orders-design.md?"}
-    B -->|Yes| C[Pre-filled with real field names]
-    B -->|No| D[Placeholder TODOs]
-    C & D --> E["Frontend: src/features/orders/"]
-    C & D --> F["Backend: controller + service + repository + types"]
-    C & D --> G["Database: prisma model appended"]
-    C & D --> H["Infra: CDK grants + routes"]
-    C & D --> I["Bruno: 5 request stubs"]
-```
-
-### `/branch` — Branches
-| Command | Action |
-|---|---|
-| `create <#> <slug> [fullstack]` | Branch + scaffold |
-| `switch <name-or-#>` | Switch branch |
-| `status` | Ahead/behind + uncommitted |
-| `delete <name>` | Safe delete |
-
-### `/test` — Tests
-| Command | Action |
-|---|---|
-| `unit [file]` | Vitest |
-| `e2e [spec]` | Playwright |
-| `api [collection]` | Bruno |
-| `coverage` | Coverage ≥ 80% gate |
-| `generate [file]` | Stub missing tests |
-
-### `/pr` — Pull Requests
-| Command | Action |
-|---|---|
-| `create [target]` | Auto-filled PR → develop |
-| `merge <#>` | Merge after checks |
-| `checks <#>` | CI status |
-
-### `/deploy` — AWS
-| Command | Action |
-|---|---|
-| `staging` | Pre-flight → CDK → health check |
-| `prod` | Same + manual approval gate |
-| `status [env]` | API + CloudWatch + latency |
-| `rollback <env>` | Previous Lambda + CF invalidation |
-
-### `/logs` — CloudWatch
-| Command | Action |
-|---|---|
-| `health [env]` | Error rate + p95/p99 |
-| `errors [env]` | Errors grouped by type |
-| `tail [env]` | Stream last 20 entries |
-| `search <term>` | By message, requestId, userId |
-
-### `/fix` — Auto-fix
-| Command | Action |
-|---|---|
-| `lint` | `eslint --fix` |
-| `format` | `prettier --write` |
-| `types` | Show TS errors |
-| `all` | All three |
-
-### Release & quality
+### Release & Quality
 
 | Command | Sub-commands | Action |
 |---|---|---|
-| `/release` | `[patch\|minor\|major\|auto]` | Semver bump · `CHANGELOG.md` · git tag · GitHub Release |
-| `/deps` | `check` · `update [patch\|minor\|major\|all]` | Audit CVEs + outdated · update in batches · test-gated · Renovate config |
-| `/adr` | `<title> [issue#]` | Write numbered ADR to `docs/adr/` in Nygard format · update index |
-| `/dora` | `report` · `trend [--days N]` | DORA scorecard — deploy frequency, lead time, failure rate, MTTR |
+| `/release` | `patch` · `minor` · `major` · `auto` | Semver bump · `CHANGELOG.md` · git tag · GitHub Release |
+| `/deps` | `check` · `update [patch\|minor\|major\|all]` | Audit CVEs + outdated · batch updates · test-gated · ships `renovate.json` |
+| `/adr <title>` | `[issue#]` | Numbered ADR in Nygard format → `docs/adr/` · updates index |
+| `/dora` | `report` · `trend [--days N]` | DORA scorecard — deploy frequency, lead time, change failure rate, MTTR |
 
-### Performance & reliability
-
-| Command | Sub-commands | Action |
-|---|---|---|
-| `/test-load` | `run <endpoint>` · `bundle` · `baseline` | k6 load test against staging · bundle size budget · performance baseline |
-| `/feature-flag` | `create <name>` · `enable` · `disable` · `list` | AppConfig-backed flags · CDK construct · `isFlagEnabled()` · `useFlag()` hook |
-| `/validate` | `<issue#> [--env prod]` | Post-deploy: error rate delta · log hits · AC check · ship-green or rollback verdict |
-| `/slo` | `define` · `status` · `budget` | Define SLOs interactively · error budget calc · CloudWatch composite alarms + dashboard |
-
-### Coverage & observability
+### Performance & Reliability
 
 | Command | Sub-commands | Action |
 |---|---|---|
-| `/test-smoke` | `[--env prod\|staging]` | Read-only Playwright checks against live env — generates `tests/smoke/smoke.spec.ts` if absent · ship-green or rollback verdict |
-| `/synthetic` | `setup` · `status` · `pause` · `resume` | CloudWatch Synthetics canary — every-minute `/health` + critical path checks · CDK construct in MonitoringStack · alarm → SNS |
+| `/test-load` | `run <endpoint>` · `bundle` · `baseline` | k6 ramp 10→50→100 VUs · p95/p99 thresholds · bundle size budget |
+| `/feature-flag` | `create <name>` · `enable` · `disable` · `list` | AWS AppConfig flags · CDK construct · `isFlagEnabled()` backend · `useFlag()` React hook |
+| `/validate <issue#>` | `[--env prod\|staging]` | Post-deploy: error rate delta · endpoint hits · AC check · ship-green or rollback verdict |
+| `/slo` | `define` · `status` · `budget` | SLOs interactively defined · error budget calc · CloudWatch composite alarms + dashboard |
 
-### Remaining utilities
+### Coverage & Observability
 
 | Command | Sub-commands | Action |
 |---|---|---|
+| `/test-smoke` | `[--env prod\|staging]` | Read-only Playwright checks against live env · generates `tests/smoke/smoke.spec.ts` if absent · rollback verdict on failure |
+| `/synthetic` | `setup` · `status` · `pause` · `resume` | CloudWatch Synthetics canary every 1 min · CDK construct · alarm → SNS on 2 consecutive failures |
+
+### Utilities
+
+| Command | Sub-commands | Action |
+|---|---|---|
+| `/scaffold <feature>` | `frontend` · `backend` · `fullstack` | Generate feature boilerplate from design doc — types, API, components, controller, service, repository, Prisma model, CDK grants, Bruno stubs |
+| `/branch` | `create <#> <slug>` · `switch` · `status` · `delete` | Branch lifecycle tied to GitHub issue numbers |
+| `/test` | `unit [file]` · `e2e [spec]` · `api [collection]` · `coverage` · `generate [file]` | Run Vitest / Playwright / Bruno · coverage ≥ 80% gate · stub missing tests |
+| `/pr` | `create [target]` · `merge <#>` · `checks <#>` | Auto-filled PR → develop · merge after CI · CI status check |
+| `/deploy` | `staging` · `prod` · `status [env]` · `rollback <env>` | Pre-flight → CDK → CloudFront · manual approval for prod · Lambda + CF rollback |
+| `/logs` | `health [env]` · `errors [env]` · `tail [env]` · `search <term>` | CloudWatch error rate · p95/p99 · stream · search by message or requestId |
+| `/fix` | `lint` · `format` · `types` · `all` | `eslint --fix` · `prettier --write` · show TS errors |
 | `/task` | `create [title]` · `start <#>` · `list [mine]` · `close <#>` | GitHub issue management |
 | `/debug` | `this <description>` · `logs <env>` | Trigger debugger agent or tail error logs |
 | `/cognito-auth` | `frontend` · `backend` · `fullstack` | Scaffold full Cognito auth flow |
-| `/evolve` | `skills` · `agents` · `coverage` · `all` | End-of-sprint plugin self-improvement analysis |
+| `/evolve` | `skills` · `agents` · `coverage` · `all` | End-of-sprint plugin self-improvement — analyses patterns, updates skills |
 
 ---
 
 ## Agent
 
-One autonomous agent remains — the **debugger**. All other workflows are interactive commands.
+One autonomous agent — the **debugger**. All other workflows are interactive commands.
 
 ```mermaid
 flowchart LR
@@ -337,7 +293,7 @@ flowchart LR
     DBG --> RC[Recent commits]
     CW & TR & RC --> ROOT[Root cause identified]
     ROOT --> FIX[Minimal fix + failing test]
-    FIX --> RPT["BUG-REPORT-<date>.md"]
+    FIX --> RPT["BUG-REPORT-&lt;date&gt;.md"]
     RPT --> PR["/pr create"]
 ```
 
@@ -357,6 +313,7 @@ graph LR
         TP[typescript-patterns]
         TS[testing-standards]
         A11[accessibility]
+        PW[playwright]
     end
 
     subgraph Backend
@@ -365,6 +322,7 @@ graph LR
         SC[security]
         SQL[database-sql]
         NOSQL[database-nosql]
+        DG[data-governance]
     end
 
     subgraph Infrastructure
@@ -380,22 +338,27 @@ graph LR
         SS[secret-scanning]
         PKG[packages]
         PS[project-structure]
+        AD[api-docs]
+        BR[bruno]
     end
 
     RS --- CP
     RS --- TP
     RS --- TS
     RS --- A11
-    TS --- A11
+    TS --- PW
     AC --- EH
     EH --- SC
     SQL --- EH
+    SQL --- DG
     NOSQL --- CDK
     CDK --- SC
     CDK --- MON
     PIPE --- SC
     LD --- SQL
     LD --- NOSQL
+    AC --- AD
+    AC --- BR
 ```
 
 ---
@@ -464,79 +427,98 @@ flowchart TD
 
 ---
 
-## Plugin structure
+## Plugin Structure
 
 ```
-.claude-plugin/plugin.json     ← manifest, MCP servers, install-time tokens
+.claude-plugin/plugin.json          ← manifest, MCP servers, install-time tokens
 agents/
-  └── debugger.md              ← autonomous debug agent (only remaining agent)
+  └── debugger.md                   ← autonomous debug agent (only remaining agent)
 skills/
+  │
   ├── PM Workflow (user-invocable)
-  │   ├── product-brainstorm/  ← /product-brainstorm <slug>
-  │   ├── product-plan/        ← /product-plan <slug>
-  │   ├── product-tasks/       ← /product-tasks <slug>
-  │   └── product-refine/      ← /product-refine <ticket#>
+  │   ├── product-brainstorm/       ← /product-brainstorm <slug>
+  │   ├── product-plan/             ← /product-plan <slug>
+  │   ├── product-tasks/            ← /product-tasks <slug>
+  │   └── product-refine/           ← /product-refine <ticket#>
   │
   ├── Dev Workflow (user-invocable)
-  │   ├── dev-brainstorm/      ← /dev-brainstorm <ticket#>
-  │   ├── dev-design/          ← /dev-design <ticket#>
-  │   ├── dev-code/            ← /dev-code <ticket#>
-  │   └── dev-review/          ← /dev-review
+  │   ├── dev-brainstorm/           ← /dev-brainstorm <ticket#>
+  │   ├── dev-design/               ← /dev-design <ticket#>
+  │   ├── dev-code/                 ← /dev-code <ticket#>
+  │   └── dev-review/               ← /dev-review
   │
   ├── Release & Quality (user-invocable)
-  │   ├── release/             ← /release [patch|minor|major|auto]
-  │   ├── deps/                ← /deps check|update [scope]
-  │   ├── adr/                 ← /adr <title> [issue#]
-  │   └── dora/                ← /dora report|trend [--days N]
+  │   ├── release/                  ← /release [patch|minor|major|auto]
+  │   ├── deps/                     ← /deps check|update [scope]
+  │   ├── adr/                      ← /adr <title> [issue#]
+  │   └── dora/                     ← /dora report|trend [--days N]
   │
   ├── Performance & Reliability (user-invocable)
-  │   ├── test-load/           ← /test-load run|bundle|baseline
-  │   ├── feature-flag/        ← /feature-flag create|enable|disable|list
-  │   ├── validate/            ← /validate <issue#> [--env]
-  │   └── slo/                 ← /slo define|status|budget
+  │   ├── test-load/                ← /test-load run|bundle|baseline
+  │   ├── feature-flag/             ← /feature-flag create|enable|disable|list
+  │   ├── validate/                 ← /validate <issue#> [--env prod|staging]
+  │   └── slo/                      ← /slo define|status|budget
   │
   ├── Coverage & Observability (user-invocable)
-  │   ├── test-smoke/          ← /test-smoke [--env prod|staging]
-  │   └── synthetic/           ← /synthetic setup|status|pause|resume
+  │   ├── test-smoke/               ← /test-smoke [--env prod|staging]
+  │   └── synthetic/                ← /synthetic setup|status|pause|resume
   │
-  ├── Utility Commands (user-invocable)
-  │   ├── task/                ← /task create|start|list|close
-  │   ├── scaffold/            ← /scaffold <feature> [frontend|backend|fullstack]
-  │   ├── branch/              ← /branch create|switch|status|delete
-  │   ├── test/                ← /test unit|e2e|api|coverage|generate
-  │   ├── pr/                  ← /pr create|merge|checks
-  │   ├── deploy/              ← /deploy staging|prod|status|rollback
-  │   ├── logs/                ← /logs health|errors|tail|search
-  │   ├── fix/                 ← /fix lint|format|types|all
-  │   ├── debug/               ← /debug this|logs
-  │   ├── cognito-auth/        ← /cognito-auth frontend|backend|fullstack
-  │   └── evolve/              ← /evolve [skills|agents|coverage|all]
+  ├── Utilities (user-invocable)
+  │   ├── scaffold/                 ← /scaffold <feature> [frontend|backend|fullstack]
+  │   ├── branch/                   ← /branch create|switch|status|delete
+  │   ├── test/                     ← /test unit|e2e|api|coverage|generate
+  │   ├── pr/                       ← /pr create|merge|checks
+  │   ├── deploy/                   ← /deploy staging|prod|status|rollback
+  │   ├── logs/                     ← /logs health|errors|tail|search
+  │   ├── fix/                      ← /fix lint|format|types|all
+  │   ├── task/                     ← /task create|start|list|close
+  │   ├── debug/                    ← /debug this|logs
+  │   ├── cognito-auth/             ← /cognito-auth frontend|backend|fullstack
+  │   └── evolve/                   ← /evolve skills|agents|coverage|all
   │
-  └── Background knowledge (auto-loaded, always on)
-      ├── react-standards/       ├── composition-patterns/  ├── typescript-patterns/
-      ├── testing-standards/     ├── accessibility/         ├── error-handling/
-      ├── api-conventions/       ├── security/              ├── database-sql/
-      ├── database-nosql/        ├── project-structure/     ├── packages/
-      ├── pipeline/              ├── playwright/            ├── api-docs/
-      ├── monitoring/            ├── bruno/                 ├── cdk/
-      ├── product-persona/       ├── conventional-commit/   ├── secret-scanning/
-      ├── local-dev/             └── data-governance/       ← GDPR · PII tagging · erasure · consent
+  └── Background Knowledge (auto-loaded, always on)
+      ├── react-standards/          ← React component patterns
+      ├── composition-patterns/     ← Component composition rules
+      ├── typescript-patterns/      ← TS best practices
+      ├── testing-standards/        ← Vitest + RTL conventions
+      ├── accessibility/            ← a11y requirements
+      ├── playwright/               ← E2E test patterns
+      ├── api-conventions/          ← REST shape, status codes, pagination
+      ├── error-handling/           ← Error classes, asyncHandler, Prisma mapping
+      ├── security/                 ← Auth, IAM, input validation
+      ├── database-sql/             ← Prisma + PostgreSQL + safe migrations
+      ├── database-nosql/           ← DynamoDB patterns
+      ├── data-governance/          ← GDPR · PII tagging · erasure · consent · CCPA
+      ├── cdk/                      ← CDK constructs + CDK Nag
+      ├── monitoring/               ← CloudWatch alarms + dashboards
+      ├── pipeline/                 ← CI/CD GitHub Actions
+      ├── local-dev/                ← Docker Compose, env setup
+      ├── api-docs/                 ← OpenAPI / Bruno documentation
+      ├── bruno/                    ← Bruno API collection conventions
+      ├── product-persona/          ← User personas reference
+      ├── conventional-commit/      ← Commit message format
+      ├── secret-scanning/          ← Prevent secrets in code
+      └── packages/                 ← Approved dependency list
+
 hooks/
   hooks.json
   scripts/
-    tsc-check.sh · console-guard.sh · destructive-git-guard.sh · session-summary.sh
+    tsc-check.sh              ← TypeScript error check after every .ts/.tsx write
+    console-guard.sh          ← Warn on console.* usage
+    destructive-git-guard.sh  ← Block force push, reset --hard, rm -rf
+    session-summary.sh        ← Branch status summary on session end
 
 docs/  (generated by commands — not committed as boilerplate)
-  product-brainstorm/   ← /product-brainstorm output
-  product-plans/        ← /product-plan output
-  product-tasks/        ← /product-tasks + /product-refine output
-  dev-brainstorm/       ← /dev-brainstorm output
-  dev-tech-designs/     ← /dev-design output
-  adr/                  ← /adr output (Architecture Decision Records)
-  dora/                 ← /dora output (DORA metric reports)
-  perf/                 ← /test-load output (load test + baseline reports)
-  slo/                  ← /slo output (SLO definitions + error budget)
-  validation/           ← /validate output (post-deploy validation reports)
-  smoke/                ← /test-smoke output (smoke test reports)
-  evolve/               ← /evolve output
+  product-brainstorm/         ← /product-brainstorm output
+  product-plans/              ← /product-plan output
+  product-tasks/              ← /product-tasks + /product-refine output
+  dev-brainstorm/             ← /dev-brainstorm output
+  dev-tech-designs/           ← /dev-design output
+  adr/                        ← Architecture Decision Records
+  dora/                       ← DORA metric reports
+  perf/                       ← Load test + baseline reports
+  slo/                        ← SLO definitions + error budget
+  validation/                 ← Post-deploy validation reports
+  smoke/                      ← Smoke test reports
+  evolve/                     ← /evolve improvement plans
 ```
