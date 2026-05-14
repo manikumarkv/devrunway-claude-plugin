@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: Deploy to AWS with pre-flight checks, check deployment status, or rollback. Usage — /my-dev-standards:deploy <staging|prod> OR /my-dev-standards:deploy <status|rollback> [env]
+description: Deploy to AWS with pre-flight checks, check deployment status, or rollback. Usage — /devrunway:deploy <staging|prod> OR /devrunway:deploy <status|rollback> [env]
 argument-hint: <staging|prod|status|rollback> [env]
 arguments:
   - name: subcommand

@@ -1,6 +1,6 @@
-# my-dev-standards Plugin
+# devrunway Plugin
 
-This repo IS the Claude Code plugin — not an app. Files here define skills, agents, and hooks that extend Claude Code for React + Node.js + AWS teams.
+This repo IS the Claude Code plugin — not an app. Files here define skills, agents, and hooks that extend Claude Code for any tech stack.
 
 ---
 

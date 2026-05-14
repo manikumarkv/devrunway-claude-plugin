@@ -1,12 +1,12 @@
 {
-  "name": "my-dev-standards",
-  "description": "Full SDLC plugin for React + Node.js + AWS + Cognito + GitHub teams. Covers requirements → stories → tech design → implementation → testing → review → deploy → monitoring with enforced coding standards.",
-  "version": "3.1.0",
+  "name": "devrunway",
+  "description": "Modular SDLC plugin for any tech stack. Pick your tools, get tailored coding standards, MCP wiring, and SDLC workflow — from requirements to production.",
+  "version": "3.2.0",
   "author": {
     "name": "yamani"
   },
-  "homepage": "https://github.com/yamani/claude-plugin",
-  "repository": "https://github.com/yamani/claude-plugin",
+  "homepage": "https://devrunway.dev",
+  "repository": "https://github.com/manikumarkv/fullstack-sdlc-claude-plugin",
   "mcpServers": {
     "github": {
       "command": "npx",

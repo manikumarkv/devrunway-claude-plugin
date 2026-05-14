@@ -1,6 +1,6 @@
 ---
 name: fix
-description: Apply mechanical auto-fixes to the codebase — lint errors, formatting, or run all fixers. Never touches business logic. Usage — /my-dev-standards:fix <lint|format|types|all>
+description: Apply mechanical auto-fixes to the codebase — lint errors, formatting, or run all fixers. Never touches business logic. Usage — /devrunway:fix <lint|format|types|all>
 argument-hint: "<lint|format|types|all>"
 arguments:
   - name: subcommand

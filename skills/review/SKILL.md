@@ -1,6 +1,6 @@
 ---
 name: review
-description: Code review the current branch or run mechanical auto-fixes. 'run' delegates to the reviewer agent for a thorough standards audit. 'fix' applies only automated corrections (eslint --fix, prettier). Usage — /my-dev-standards:review [run|fix]
+description: Code review the current branch or run mechanical auto-fixes. 'run' delegates to the reviewer agent for a thorough standards audit. 'fix' applies only automated corrections (eslint --fix, prettier). Usage — /devrunway:review [run|fix]
 argument-hint: "[run|fix]"
 arguments:
   - name: subcommand

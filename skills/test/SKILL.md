@@ -1,6 +1,6 @@
 ---
 name: test
-description: Run or generate tests — unit (Vitest), E2E (Playwright), API (Bruno), coverage reports, watch mode. Usage — /my-dev-standards:test <sub-command> [args]
+description: Run or generate tests — unit (Vitest), E2E (Playwright), API (Bruno), coverage reports, watch mode. Usage — /devrunway:test <sub-command> [args]
 argument-hint: <unit|e2e|api|coverage|watch|generate> [file-or-feature]
 arguments:
   - name: subcommand

@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Manage GitHub Pull Requests — create, merge, list, view, close, checkout, and check status. Usage — /my-dev-standards:pr <sub-command> [args]. If first arg is a branch name (not a keyword), defaults to create.
+description: Manage GitHub Pull Requests — create, merge, list, view, close, checkout, and check status. Usage — /devrunway:pr <sub-command> [args]. If first arg is a branch name (not a keyword), defaults to create.
 argument-hint: <create|merge|list|view|close|checkout|checks|update> [args]
 arguments:
   - name: subcommand

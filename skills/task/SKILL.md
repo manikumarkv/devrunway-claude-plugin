@@ -1,6 +1,6 @@
 ---
 name: task
-description: Manage GitHub Issues — create, update, list, view, close, and start work on stories or tasks. Usage — /my-dev-standards:task <sub-command> [args]
+description: Manage GitHub Issues — create, update, list, view, close, and start work on stories or tasks. Usage — /devrunway:task <sub-command> [args]
 argument-hint: <create|update|list|view|close|start> [args]
 arguments:
   - name: subcommand

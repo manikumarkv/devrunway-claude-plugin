@@ -1,4 +1,4 @@
-# my-dev-standards — Claude Code Plugin
+# devrunway — Claude Code Plugin
 
 Full SDLC automation for React + Node.js + AWS + Cognito + GitHub.
 

@@ -1,6 +1,6 @@
 ---
 name: logs
-description: Query CloudWatch logs — health check, recent errors, live tail, or keyword search. Usage — /my-dev-standards:logs <health|errors|tail|search> [env] [args]
+description: Query CloudWatch logs — health check, recent errors, live tail, or keyword search. Usage — /devrunway:logs <health|errors|tail|search> [env] [args]
 argument-hint: "<health|errors|tail|search> [staging|prod] [keyword|window]"
 arguments:
   - name: subcommand

@@ -98,7 +98,7 @@ Checks:
   TypeScript: ✅
   ESLint:     ✅
 
-Next: deploy to staging → /my-dev-standards:deploy staging
+Next: deploy to staging → /devrunway:deploy staging
       then monitor: ask me to "check logs after deploy"
 ```
 

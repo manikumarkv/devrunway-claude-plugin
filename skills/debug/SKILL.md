@@ -1,6 +1,6 @@
 ---
 name: debug
-description: Debug a bug or check production logs by delegating to the debugger agent. 'this' investigates a reported bug. 'logs' runs a CloudWatch health check. Usage — /my-dev-standards:debug [this|logs] [description]
+description: Debug a bug or check production logs by delegating to the debugger agent. 'this' investigates a reported bug. 'logs' runs a CloudWatch health check. Usage — /devrunway:debug [this|logs] [description]
 argument-hint: "[this|logs] [error description or env]"
 arguments:
   - name: subcommand

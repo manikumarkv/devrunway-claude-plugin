@@ -1,6 +1,6 @@
 ---
 name: branch
-description: Manage git branches and scaffold new feature boilerplate. Usage — /my-dev-standards:branch <sub-command> [args]
+description: Manage git branches and scaffold new feature boilerplate. Usage — /devrunway:branch <sub-command> [args]
 argument-hint: <create|switch|list|delete|status> [args]
 arguments:
   - name: subcommand
