@@ -276,6 +276,20 @@ flowchart TD
 | `/test-smoke` | `[--env prod\|staging]` | Read-only Playwright checks against live env · generates `tests/smoke/smoke.spec.ts` if absent · rollback verdict on failure |
 | `/synthetic` | `setup` · `status` · `pause` · `resume` | CloudWatch Synthetics canary every 1 min · CDK construct · alarm → SNS on 2 consecutive failures |
 
+### Running Playwright tests from prompts (no command needed)
+
+Because the `playwright` background skill is always loaded and `.mcp.json` registers the Playwright MCP, you can run, inspect, and debug E2E tests with plain English prompts:
+
+| Prompt | What runs |
+|---|---|
+| "Run all E2E tests" | `npx playwright test` |
+| "Run the orders spec" | `npx playwright test e2e/orders.spec.ts` |
+| "Run tests tagged @smoke" | `npx playwright test --grep @smoke` |
+| "Open Playwright UI mode" | `npx playwright test --ui` |
+| "Show failing tests from the last run" | Reads `playwright-report/results.json` |
+| "Generate a test for the checkout flow" | `npx playwright codegen http://localhost:5173` |
+| "Navigate to /orders and take a screenshot" | Playwright MCP browser control |
+
 ### Utilities
 
 | Command | Sub-commands | Action |
@@ -499,11 +513,13 @@ skills/
       ├── typescript-patterns/      ← TS best practices
       ├── testing-standards/        ← Vitest + RTL conventions
       ├── accessibility/            ← a11y requirements
-      ├── playwright/               ← E2E test patterns
+      ├── playwright/               ← E2E test patterns + MCP runner (run tests from prompts)
+      ├── linting/                  ← ESLint v9 flat config + Prettier — FE and BE rules
+      ├── swagger-docs/             ← OpenAPI 3.1 via zod-to-openapi, Swagger UI setup
       ├── api-conventions/          ← REST shape, status codes, pagination
       ├── error-handling/           ← Error classes, asyncHandler, Prisma mapping
       ├── security/                 ← Auth, IAM, input validation
-      ├── database-sql/             ← Prisma + PostgreSQL + safe migrations
+      ├── database-sql/             ← Prisma + PostgreSQL + safe migrations + seeders
       ├── database-nosql/           ← DynamoDB patterns
       ├── data-governance/          ← GDPR · PII tagging · erasure · consent · CCPA
       ├── cdk/                      ← CDK constructs + CDK Nag
