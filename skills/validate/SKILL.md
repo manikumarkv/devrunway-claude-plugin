@@ -8,6 +8,8 @@ arguments:
   - name: env
     description: "Environment to validate (default: prod)"
 user-invocable: true
+context: fork
+effort: medium
 allowed-tools:
   - Read
   - Write

@@ -6,6 +6,8 @@ arguments:
   - name: focus
     description: "skills, agents, coverage, or all (default: all)"
 user-invocable: true
+context: fork
+effort: high
 allowed-tools:
   - Read
   - Write
@@ -113,6 +115,8 @@ Check if any of these high-value patterns are missing from the plugin's skills:
 ---
 
 ## Step 5 — Produce the EVOLVE report
+
+ultrathink
 
 Write to `docs/evolve/EVOLVE-<date>.md`:
 

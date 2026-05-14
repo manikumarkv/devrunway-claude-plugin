@@ -8,6 +8,7 @@ arguments:
   - name: env
     description: "For status/rollback: staging or prod"
 user-invocable: true
+effort: high
 allowed-tools:
   - Bash(git *)
   - Bash(npm *)

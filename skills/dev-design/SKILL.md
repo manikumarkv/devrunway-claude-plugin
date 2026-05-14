@@ -6,6 +6,7 @@ arguments:
   - name: input
     description: "GitHub issue number, or path to a dev-brainstorm doc"
 user-invocable: true
+effort: high
 allowed-tools:
   - Read
   - Write
@@ -13,6 +14,7 @@ allowed-tools:
   - Bash(ls *)
   - Bash(grep *)
   - Bash(gh *)
+  - mcp__git__get_issue
 ---
 
 # Dev Design
@@ -23,8 +25,10 @@ Parse `$ARGUMENTS[0]` as either a GitHub issue number or a brainstorm doc path.
 
 ## Step 1 — Load all context
 
+> **MCP preferred:** When the `github` MCP is active, use `mcp__git__get_issue` instead of `gh issue view`. Fall back to `gh` CLI if MCP unavailable.
+
 ```bash
-# If issue number given
+# If issue number given (gh CLI fallback)
 gh issue view <number> --json title,body,milestone,labels,comments
 
 # Brainstorm doc
@@ -43,6 +47,8 @@ Read every relevant doc before writing a single line of the plan. The design mus
 ---
 
 ## Step 2 — Confirm scope
+
+ultrathink
 
 Summarise what will be built and ask for confirmation before writing the plan:
 
@@ -63,6 +69,8 @@ Wait for confirmation. If the scope is wrong, discuss until aligned.
 ---
 
 ## Step 3 — Write the design document
+
+ultrathink
 
 Write to `docs/dev-tech-designs/<issue-number>-design.md`.
 

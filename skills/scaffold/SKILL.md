@@ -8,6 +8,7 @@ arguments:
   - name: scope
     description: "frontend, backend, or fullstack (default: fullstack)"
 user-invocable: true
+effort: high
 allowed-tools:
   - Read
   - Write

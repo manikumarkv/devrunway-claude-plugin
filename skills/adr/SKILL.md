@@ -53,6 +53,8 @@ Read both the issue and the dev-brainstorm doc (if exists) to pre-fill the ADR w
 
 ## Step 3 — Ask clarifying questions
 
+ultrathink
+
 Before writing, confirm the core decision with the user:
 
 > **ADR #<NNNN>: <title>**

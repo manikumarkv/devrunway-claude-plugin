@@ -2,6 +2,10 @@
 name: react-standards
 description: React best practices, performance rules, and anti-patterns. Load when writing, reviewing, or discussing any React/TypeScript frontend code, components, hooks, or state management.
 user-invocable: false
+paths:
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "src/**/*.ts"
 ---
 
 Full rules in [react.md](react.md). Always-on summary:

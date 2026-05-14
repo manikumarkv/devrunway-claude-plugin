@@ -8,6 +8,8 @@ arguments:
   - name: target
     description: "Optional file path, feature name, or spec file to scope the operation"
 user-invocable: true
+context: fork
+effort: low
 allowed-tools:
   - Read
   - Write

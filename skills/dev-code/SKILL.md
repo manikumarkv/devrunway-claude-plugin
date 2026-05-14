@@ -6,6 +6,7 @@ arguments:
   - name: input
     description: "GitHub issue number, or path to the design doc"
 user-invocable: true
+effort: medium
 allowed-tools:
   - Read
   - Write
@@ -17,9 +18,14 @@ allowed-tools:
   - Bash(ls *)
   - Bash(find *)
   - Bash(grep *)
+  - mcp__git__get_issue
+  - mcp__git__update_issue
+  - mcp__git__add_issue_comment
 ---
 
 # Dev Code
+
+> **MCP preferred:** When the `github` MCP is active, use `mcp__git__get_issue`, `mcp__git__update_issue`, `mcp__git__add_issue_comment` instead of `gh` CLI. Fall back to `gh` CLI if MCP unavailable.
 
 Parse `$ARGUMENTS[0]` as either a GitHub issue number or a design doc path.
 

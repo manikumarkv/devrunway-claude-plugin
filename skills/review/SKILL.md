@@ -12,7 +12,7 @@ allowed-tools:
   - Bash(npx tsc *)
   - Bash(git *)
 context: fork
-agent: reviewer
+agent: code-reviewer
 ---
 
 # Code Review
@@ -23,7 +23,7 @@ Sub-command is `$ARGUMENTS[0]`. Defaults to `run` if omitted.
 
 ## `/review run` (default)
 
-Delegate to the **reviewer** agent for a full standards audit of the current branch.
+Delegate to the **code-reviewer** agent for a full standards audit of the current branch.
 
 The reviewer agent will:
 1. Run `git diff develop...HEAD` to find all changed files

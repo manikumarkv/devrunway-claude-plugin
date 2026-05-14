@@ -6,6 +6,9 @@ arguments:
   - name: branch
     description: "Branch to review (default: current branch)"
 user-invocable: true
+context: fork
+effort: medium
+agent: code-reviewer
 allowed-tools:
   - Read
   - Write

@@ -79,6 +79,8 @@ Present the in-scope and out-of-scope items captured from the brainstorm. Ask th
 
 ## Step 5 — Define epics and stories
 
+ultrathink
+
 Break the in-scope work into epics (themes of related work) then stories within each epic.
 
 For each story:

@@ -6,6 +6,7 @@ arguments:
   - name: subcommand
     description: "lint — ESLint auto-fix. format — Prettier. types — show TS errors (can't auto-fix). all — lint + format then show types."
 user-invocable: true
+effort: low
 allowed-tools:
   - Bash(npx eslint *)
   - Bash(npx prettier *)
