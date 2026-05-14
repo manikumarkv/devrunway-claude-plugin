@@ -53,6 +53,9 @@ infra/
 
 ```ts
 // infra/bin/app.ts
+import { Aspects } from 'aws-cdk-lib'
+import { AwsSolutionsChecks, NagSuppressions } from 'cdk-nag'
+
 const app = new cdk.App()
 const env = { account: process.env.CDK_ACCOUNT, region: process.env.CDK_REGION }
 
@@ -60,7 +63,45 @@ new AuthStack(app, 'AuthStack', { env })
 new DatabaseStack(app, 'DatabaseStack', { env })
 new ApiStack(app, 'ApiStack', { env })
 new FrontendStack(app, 'FrontendStack', { env })
+
+// cdk-nag: enforce AWS Solutions security best practices at synth time
+// Fails cdk synth if any rules are violated — catches misconfig before deploy
+Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }))
 ```
+
+Install: `npm install -D cdk-nag`
+
+**What cdk-nag checks (AwsSolutionsChecks pack):**
+- `AwsSolutions-IAM4` — no AWS managed policies (use least-privilege inline)
+- `AwsSolutions-IAM5` — no wildcard `*` in IAM resource ARNs
+- `AwsSolutions-S1` — S3 server access logging enabled
+- `AwsSolutions-S10` — S3 requests require SSL
+- `AwsSolutions-L1` — Lambda uses latest runtime (not deprecated Node 14/16)
+- `AwsSolutions-API4` — API Gateway has logging enabled
+- `AwsSolutions-COG2` — Cognito MFA enabled
+- `AwsSolutions-DDB3` — DynamoDB PITR enabled
+
+**Suppressing a rule with justification (required — never suppress silently):**
+
+```ts
+// In the stack where the violation occurs
+NagSuppressions.addResourceSuppressions(myBucket, [
+  {
+    id: 'AwsSolutions-S1',
+    reason: 'Access logs intentionally disabled for ephemeral dev bucket — cost optimisation',
+  },
+])
+```
+
+Every suppression **must** have a `reason`. PRs with blank reasons are rejected in review.
+
+**Running nag locally:**
+```bash
+cd infra
+npx cdk synth 2>&1 | grep -E 'Error|Warning|AwsSolutions'
+```
+
+Add to CI pre-deploy step — cdk-nag failures will exit non-zero and block the deploy.
 
 ---
 

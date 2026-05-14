@@ -19,10 +19,17 @@ Full standards in [cdk.md](cdk.md). Always-on summary:
 - API Gateway: auth required on every route except `/health`
 - Secrets: SSM SecureString or Secrets Manager — never stack parameters
 
+**cdk-nag (always on):**
+- Add `Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }))` to every `bin/app.ts`
+- Install: `npm install -D cdk-nag`
+- Catches IAM wildcards, public S3, missing PITR, deprecated runtimes at `cdk synth` — before any deploy
+- Every `NagSuppressions` call must include a `reason` string
+
 **Never:**
 - `--require-approval never` in prod CI without explicit env gate
 - Hard-code account IDs or region strings — use `Stack.of(this).account`
 - `cdk destroy` in CI on non-ephemeral environments
+- Suppress a cdk-nag rule without a written justification
 
 
 **Related skills — apply together:**
