@@ -338,6 +338,12 @@ These apply automatically — no command needed. Claude checks them whenever wri
 
 ```mermaid
 graph LR
+    subgraph Quality
+        CL[checklists]
+        LN[linting]
+        SW[swagger-docs]
+    end
+
     subgraph Frontend
         RS[react-standards]
         CP[composition-patterns]
@@ -373,6 +379,13 @@ graph LR
         BR[bruno]
     end
 
+    CL --- RS
+    CL --- AC
+    CL --- SQL
+    LN --- RS
+    LN --- TP
+    SW --- AC
+    SW --- EH
     RS --- CP
     RS --- TP
     RS --- TS
@@ -391,6 +404,34 @@ graph LR
     AC --- AD
     AC --- BR
 ```
+
+---
+
+## Development Checklists
+
+The `checklists` background skill auto-applies the relevant checklist whenever one of these actions is taken. No prompt needed — Claude runs the checklist before marking work done.
+
+| Action | Checklist |
+|---|---|
+| New route / controller / method | API Creation / Modification |
+| New `.tsx` component file | Component Creation |
+| New page route or major page update | Page Creation / Update |
+| Calling a backend API from frontend | API Integration |
+| Adding a `logger.*` call | Logging |
+| Writing a Prisma query | DB Query |
+| New Prisma model / adding column / migration | DB Schema Change |
+
+**Quick pillars per checklist:**
+
+| Checklist | Must-haves |
+|---|---|
+| **API** | Zod validation · response envelope · `asyncHandler` · Swagger registered · tests |
+| **Component** | shadcn/ui first · typed props · `t()` strings · constants file · named export · test |
+| **Page** | Dedicated route · `useSearchParams` for list state · toast feedback · loading/empty/error states · E2E spec |
+| **API Integration** | `api-routes.ts` constant · React Query hook · invalidate on success · error toast · skeleton |
+| **Logging** | Pino (no `console.log`) · correct level · structured context · no PII · `requestId` |
+| **DB Query** | `deletedAt: null` filter · no N+1 · cursor pagination · transaction · user-scoped |
+| **DB Schema** | Base fields · FK `onDelete` · indexes · safe migration pattern · seeder · API schema updated |
 
 ---
 
@@ -508,6 +549,7 @@ skills/
   │   └── evolve/                   ← /evolve skills|agents|coverage|all
   │
   └── Background Knowledge (auto-loaded, always on)
+      ├── checklists/               ← Quality checklists — API · component · page · integration · logs · DB query · DB schema
       ├── react-standards/          ← React component patterns
       ├── composition-patterns/     ← Component composition rules
       ├── typescript-patterns/      ← TS best practices
