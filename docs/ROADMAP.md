@@ -345,9 +345,9 @@ Layers without an MCP omit the `mcp:` field entirely.
 
 | Layer | Status | Skills | MCP | Notes |
 |---|---|---|---|---|
-| `core/` | 📋 Planned | ~30 universal skills | — | Phase 1 |
+| `core/` | ✅ Done | 32 universal skills | — | Session 6 |
 | **Source Control** | | | | |
-| `layers/source-control/github` | 📋 Planned | pr, branch, task, release skills | `server-github` | Move from skills/ |
+| `layers/source-control/github` | ✅ Done | pr, branch, task, release skills | `server-github` | Move from skills/ |
 | `layers/source-control/gitlab` | 🫥 Stub | — | `@gitlab/mcp-server` | Community |
 | `layers/source-control/bitbucket` | 🫥 Stub | — | community | Community |
 | `layers/source-control/azure-devops` | 🫥 Stub | — | — | Community |
@@ -357,7 +357,7 @@ Layers without an MCP omit the `mcp:` field entirely.
 | `layers/package-manager/yarn` | 🫥 Stub | — | — | Community |
 | `layers/package-manager/bun` | 🫥 Stub | — | — | Community |
 | **Frontend** | | | | |
-| `layers/frontend/react` | 📋 Planned | react-standards, composition-patterns | — | Move from skills/ |
+| `layers/frontend/react` | ✅ Done | react-standards, composition-patterns | — | Move from skills/ |
 | `layers/frontend/vue` | 🫥 Stub | — | — | Community |
 | `layers/frontend/angular` | 🫥 Stub | — | — | Community |
 | `layers/frontend/nextjs` | 🫥 Stub | — | — | Community |
@@ -384,7 +384,7 @@ Layers without an MCP omit the `mcp:` field entirely.
 | `layers/component-docs/storybook` | 📋 Planned | Story patterns, args, decorators | `@storybook/mcp-server` | New skill |
 | `layers/component-docs/ladle` | 🫥 Stub | — | — | Community |
 | **Backend** | | | | |
-| `layers/backend/node-express` | 📋 Planned | nodejs-standards, Express error handling | — | Move + split |
+| `layers/backend/node-express` | ✅ Done | nodejs-standards, Express error handling | — | Move + split |
 | `layers/backend/python-fastapi` | 🫥 Stub | — | — | Community |
 | `layers/backend/python-django` | 🫥 Stub | — | — | Community |
 | `layers/backend/dotnet` | 🫥 Stub | — | — | Community |
@@ -394,7 +394,7 @@ Layers without an MCP omit the `mcp:` field entirely.
 | `layers/api-style/trpc` | 🫥 Stub | — | — | Community |
 | `layers/api-style/grpc` | 🫥 Stub | — | — | Community |
 | **Validation** | | | | |
-| `layers/validation/zod` | 📋 Planned | Zod schemas, .parse(), zod-to-openapi | — | Split from api-conventions |
+| `layers/validation/zod` | ✅ Done | Zod schemas, .parse(), zod-to-openapi | — | Split from api-conventions |
 | `layers/validation/yup` | 🫥 Stub | — | — | Community |
 | `layers/validation/valibot` | 🫥 Stub | — | — | Community |
 | `layers/validation/joi` | 🫥 Stub | — | — | Community |
@@ -403,21 +403,21 @@ Layers without an MCP omit the `mcp:` field entirely.
 | `layers/realtime/pusher` | 🫥 Stub | — | — | Community |
 | `layers/realtime/ably` | 🫥 Stub | — | — | Community |
 | **Cloud** | | | | |
-| `layers/cloud/aws` | 📋 Planned | cdk, deploy, validate, logs, feature-flag, synthetic, monitoring | `@aws/mcp-server-core` | Move from skills/ |
+| `layers/cloud/aws` | ✅ Done | cdk, deploy, validate, logs, feature-flag, synthetic, monitoring | `@aws/mcp-server-core` | Move from skills/ |
 | `layers/cloud/gcp` | 🫥 Stub | — | — | Community |
 | `layers/cloud/azure` | 🫥 Stub | — | — | Community |
 | **Database** | | | | |
-| `layers/database/postgres-prisma` | 📋 Planned | database-sql | `server-postgres` | Move from skills/ |
-| `layers/database/dynamodb` | 📋 Planned | database-nosql | — | Move from skills/ |
+| `layers/database/postgres-prisma` | ✅ Done | database-sql | `server-postgres` | Move from skills/ |
+| `layers/database/dynamodb` | ✅ Done | database-nosql | — | Move from skills/ |
 | `layers/database/mongodb` | 🫥 Stub | — | `mongodb-mcp-server` | Community |
 | `layers/database/sqlalchemy` | 🫥 Stub | — | — | Community |
 | **Auth** | | | | |
-| `layers/auth/cognito` | 📋 Planned | cognito-auth | — | Move from skills/ |
+| `layers/auth/cognito` | ✅ Done | cognito-auth | — | Move from skills/ |
 | `layers/auth/firebase` | 🫥 Stub | — | — | Community |
 | `layers/auth/azure-ad` | 🫥 Stub | — | — | Community |
 | `layers/auth/auth0` | 🫥 Stub | — | — | Community |
 | **Storage** | | | | |
-| `layers/storage/s3` | 📋 Planned | S3 upload patterns, signed URLs, CDN | — | New skill |
+| `layers/storage/s3` | ✅ Done | S3 upload patterns, signed URLs, CDN | — | New skill |
 | `layers/storage/cloudinary` | 🫥 Stub | — | — | Community |
 | `layers/storage/uploadthing` | 🫥 Stub | — | — | Community |
 | `layers/storage/gcs` | 🫥 Stub | — | — | Community |
@@ -438,26 +438,26 @@ Layers without an MCP omit the `mcp:` field entirely.
 | `layers/secrets/doppler` | 🫥 Stub | — | — | Community |
 | `layers/secrets/env-only` | 📋 Planned | .env conventions, never commit rules | — | New skill |
 | **Logging Framework** | | | | |
-| `layers/logging/framework/pino` | 📋 Planned | Pino singleton, pino-http, redact, bindings | — | Split from logging-standards |
+| `layers/logging/framework/pino` | ✅ Done | Pino singleton, pino-http, redact, bindings | — | Split from logging-standards |
 | `layers/logging/framework/winston` | 🫥 Stub | — | — | Community |
 | `layers/logging/framework/morgan` | 🫥 Stub | — | — | Community |
 | **Logging Provider** | | | | |
-| `layers/logging/provider/cloudwatch` | 📋 Planned | CloudWatch CDK, Insights queries, metric filters | — | Split from logging-standards |
+| `layers/logging/provider/cloudwatch` | ✅ Done | CloudWatch CDK, Insights queries, metric filters | — | Split from logging-standards |
 | `layers/logging/provider/datadog` | 🫥 Stub | — | `@datadog/mcp-server` | Community |
 | `layers/logging/provider/splunk` | 🫥 Stub | — | community | Community |
 | `layers/logging/provider/grafana-loki` | 🫥 Stub | — | — | Community |
 | `layers/logging/provider/newrelic` | 🫥 Stub | — | — | Community |
 | **Error Monitoring** | | | | |
-| `layers/error-monitoring/sentry` | 📋 Planned | Sentry init, captureException, ErrorBoundary | `@sentry/mcp-server` | Extract from logging-standards |
+| `layers/error-monitoring/sentry` | ✅ Done | Sentry init, captureException, ErrorBoundary | `@sentry/mcp-server` | Extract from logging-standards |
 | `layers/error-monitoring/datadog-apm` | 🫥 Stub | — | `@datadog/mcp-server` | Community |
 | `layers/error-monitoring/bugsnag` | 🫥 Stub | — | — | Community |
 | **Feature Flags** | | | | |
-| `layers/feature-flags/aws-appconfig` | 📋 Planned | AppConfig patterns (extract from feature-flag skill) | — | Move from skills/ |
+| `layers/feature-flags/aws-appconfig` | ✅ Done | AppConfig patterns (extract from feature-flag skill) | — | Move from skills/ |
 | `layers/feature-flags/launchdarkly` | 🫥 Stub | — | community | Community |
 | `layers/feature-flags/flagsmith` | 🫥 Stub | — | — | Community |
 | `layers/feature-flags/posthog` | 🫥 Stub | — | — | Community |
 | **Payment** | | | | |
-| `layers/payment/stripe` | 📋 Planned | Stripe patterns, webhook verification, PCI rules | `@stripe/mcp-server` | New skill |
+| `layers/payment/stripe` | ✅ Done | Stripe patterns, webhook verification, PCI rules | `@stripe/mcp-server` | New skill |
 | `layers/payment/paypal` | 🫥 Stub | — | — | Community |
 | `layers/payment/braintree` | 🫥 Stub | — | — | Community |
 | **Email** | | | | |
@@ -469,16 +469,16 @@ Layers without an MCP omit the `mcp:` field entirely.
 | `layers/search/elasticsearch` | 🫥 Stub | — | — | Community |
 | `layers/search/typesense` | 🫥 Stub | — | — | Community |
 | **Design** | | | | |
-| `layers/design/figma` | 📋 Planned | Figma MCP wiring, token conventions, handoff checklist | `@figma/mcp-server` | New skill |
+| `layers/design/figma` | ✅ Done | Figma MCP wiring, token conventions, handoff checklist | `@figma/mcp-server` | New skill |
 | `layers/design/sketch` | 🫥 Stub | — | — | Community |
 | `layers/design/adobe-xd` | 🫥 Stub | — | — | Community |
 | **Project Management** | | | | |
-| `layers/project-management/github` | 📋 Planned | Issues, milestones, labels, gh CLI | `server-github` | Move from task/pr/release |
+| `layers/project-management/github` | ✅ Done | Issues, milestones, labels, gh CLI | `server-github` | Move from task/pr/release |
 | `layers/project-management/jira` | 🫥 Stub | — | community | Community |
 | `layers/project-management/linear` | 🫥 Stub | — | `@linear/mcp-server` | Community |
 | `layers/project-management/huly` | 🫥 Stub | — | — | Community |
 | **CI/CD** | | | | |
-| `layers/ci/github-actions` | 📋 Planned | pipeline skill, workflow templates | — | Move from skills/ |
+| `layers/ci/github-actions` | ✅ Done | pipeline skill, workflow templates | — | Move from skills/ |
 | `layers/ci/gitlab-ci` | 🫥 Stub | — | — | Community |
 | `layers/ci/circleci` | 🫥 Stub | — | — | Community |
 | `layers/ci/azure-pipelines` | 🫥 Stub | — | — | Community |
@@ -487,27 +487,27 @@ Layers without an MCP omit the `mcp:` field entirely.
 | `layers/code-quality/sonarqube` | 🫥 Stub | — | — | Community |
 | `layers/code-quality/snyk` | 🫥 Stub | — | — | Community |
 | **Testing — Unit** | | | | |
-| `layers/testing/unit/vitest` | 📋 Planned | Vitest + RTL patterns | — | Split from testing-standards |
+| `layers/testing/unit/vitest` | ✅ Done | Vitest + RTL patterns | — | Split from testing-standards |
 | `layers/testing/unit/jest` | 🫥 Stub | — | — | Community |
 | `layers/testing/unit/pytest` | 🫥 Stub | — | — | Community |
 | **Testing — E2E** | | | | |
-| `layers/testing/e2e/playwright` | 📋 Planned | Playwright patterns, page objects | `@playwright/mcp` | Move from skills/ |
+| `layers/testing/e2e/playwright` | ✅ Done | Playwright patterns, page objects | `@playwright/mcp` | Move from skills/ |
 | `layers/testing/e2e/cypress` | 🫥 Stub | — | — | Community |
 | `layers/testing/e2e/selenium` | 🫥 Stub | — | — | Community |
 | `layers/testing/e2e/webdriverio` | 🫥 Stub | — | — | Community |
 | **Testing — API** | | | | |
-| `layers/testing/api/bruno` | 📋 Planned | Bruno collections, .bru patterns, env files | — | Moved from node-express |
+| `layers/testing/api/bruno` | ✅ Done | Bruno collections, .bru patterns, env files | — | Moved from node-express |
 | `layers/testing/api/postman` | 🫥 Stub | — | — | Community |
 | `layers/testing/api/insomnia` | 🫥 Stub | — | — | Community |
 | **Mocking** | | | | |
-| `layers/mocking/msw` | 📋 Planned | MSW v2 handlers, server setup | — | Split from testing-standards |
+| `layers/mocking/msw` | ✅ Done | MSW v2 handlers, server setup | — | Split from testing-standards |
 | `layers/mocking/mirage` | 🫥 Stub | — | — | Community |
 | `layers/mocking/json-server` | 🫥 Stub | — | — | Community |
 | **API Docs** | | | | |
-| `layers/api-docs/swagger-express` | 📋 Planned | swagger-docs skill | — | Move from skills/ |
+| `layers/api-docs/swagger-express` | ✅ Done | swagger-docs skill | — | Move from skills/ |
 | `layers/api-docs/openapi-fastapi` | 🫥 Stub | — | — | Community |
 | **Setup** | | | | |
-| `setup/` | 📋 Planned | /setup wizard — 6 groups × 5-6 questions → stack.json + .mcp.json + install commands | — | New skill |
+| `setup/` | ✅ Done | /setup wizard — 6 groups × 5-6 questions → stack.json + .mcp.json + install commands | — | New skill |
 
 **Legend:** ✅ Done · 🔨 In progress · 📋 Planned · 🫥 Stub (community)
 
@@ -537,60 +537,58 @@ _Date: 2026-05-14_
 _Date: 2026-05-14_
 **Designed:** Full core/ + layers/ structure, 35-question grouped wizard (6 groups), 3 outputs (stack.json + .mcp.json + install commands), MCP registry (26 tools), layer mcp: frontmatter spec, testing split into 3 sub-dimensions, Bruno repositioned, ROADMAP.md created.
 
+### Session 6 — Full Implementation
+_Date: 2026-05-14_
+**Completed directory restructure, /setup wizard, stub READMEs, and 12 new layer skills.**
+
+**Structure:**
+- Created full `core/` + `layers/` directory tree (~120 directories)
+- Moved 32 universal skills → `core/skills/`
+- Moved 3 agents → `core/agents/`, hooks → `core/hooks/`
+- Moved 30 stack-specific skills → correct `layers/` locations with `stack:` frontmatter
+- `skills/` directory now empty (all relocated)
+
+**New skills created:**
+- `setup/SKILL.md` — 35-question wizard in 6 screens, generates stack.json + .mcp.json + install commands
+- `setup/stack.schema.json` — JSON Schema for stack.json validation
+- `layers/validation/zod/` — Zod schema patterns, .parse()/.safeParse(), zod-to-openapi
+- `layers/mocking/msw/` — MSW v2 handlers, server/browser setup, test utils
+- `layers/ui-components/shadcn/` — shadcn/ui patterns, cn(), cva(), Radix primitives
+- `layers/css/tailwind/` — Tailwind v3 conventions, class ordering, dark mode, custom tokens
+- `layers/logging/provider/cloudwatch/` — retention CDK, Insights queries, metric filters
+- `layers/error-monitoring/sentry/` — init, captureException, ErrorBoundary, PII scrubbing
+- `layers/state/zustand/` — store structure, slices, selectors, devtools, persist
+- `layers/design/figma/` — MCP wiring, design tokens, dev handoff checklist
+- `layers/source-control/github/` — labels, milestones, gh CLI, MCP integration
+- `layers/payment/stripe/` — Checkout, webhook verification, PCI rules
+- `layers/storage/s3/` — presigned URLs, bucket policy, lifecycle, CloudFront
+- `layers/i18n/react-i18next/` — i18next setup, namespaces, plural rules, type safety
+
+**Stub READMEs created:** 100+ stubs for all unimplemented layers
+**Fixed:** Bruno moved from `backend/node-express/` → `testing/api/bruno/`
+**Updated:** `CLAUDE.md` to describe modular architecture
+
 ---
 
 ## Next Session Checklist
 
 ```bash
-cat docs/ROADMAP.md   # always start here
+cat docs/ROADMAP.md   # always start here — check what's done
 ```
 
-**Status:** Architecture fully designed. `skills/` still flat — no restructuring done yet.
+**Status as of Session 6:** Core restructure complete. All implemented skills in correct locations.
 
-**Start with Phase 1:**
+**Outstanding work for next session:**
 
-```bash
-# Create full directory tree
-mkdir -p core/skills core/agents core/hooks
-mkdir -p layers/source-control/{github,gitlab,bitbucket,azure-devops}
-mkdir -p layers/package-manager/{npm,yarn,pnpm,bun}
-mkdir -p layers/frontend/{react,vue,angular,nextjs}
-mkdir -p layers/state/{zustand,redux-toolkit,jotai,pinia}
-mkdir -p layers/ui-components/{shadcn,mui,ant-design,chakra}
-mkdir -p layers/css/{tailwind,styled-components,css-modules,bootstrap}
-mkdir -p layers/i18n/{react-i18next,lingui,vue-i18n}
-mkdir -p layers/component-docs/{storybook,ladle}
-mkdir -p layers/backend/{node-express,python-fastapi,python-django,dotnet}
-mkdir -p layers/api-style/{rest,graphql,trpc,grpc}
-mkdir -p layers/validation/{zod,yup,valibot,joi}
-mkdir -p layers/realtime/{socketio,pusher,ably}
-mkdir -p layers/cloud/{aws,gcp,azure}
-mkdir -p layers/database/{postgres-prisma,mongodb,dynamodb,sqlalchemy}
-mkdir -p layers/auth/{cognito,firebase,azure-ad,auth0}
-mkdir -p layers/storage/{s3,cloudinary,uploadthing,gcs}
-mkdir -p layers/cache-queue/{redis,bullmq,sqs,rabbitmq}
-mkdir -p layers/container/{serverless,docker,kubernetes,vercel,railway}
-mkdir -p layers/secrets/{aws-secrets-manager,vault,doppler,env-only}
-mkdir -p layers/logging/framework/{pino,winston,morgan}
-mkdir -p layers/logging/provider/{cloudwatch,datadog,splunk,grafana-loki,newrelic}
-mkdir -p layers/error-monitoring/{sentry,datadog-apm,bugsnag}
-mkdir -p layers/feature-flags/{aws-appconfig,launchdarkly,flagsmith,posthog}
-mkdir -p layers/payment/{stripe,paypal,braintree}
-mkdir -p layers/email/{ses,sendgrid,resend}
-mkdir -p layers/search/{algolia,elasticsearch,typesense}
-mkdir -p layers/design/{figma,sketch,adobe-xd}
-mkdir -p layers/project-management/{github,jira,linear,huly}
-mkdir -p layers/ci/{github-actions,gitlab-ci,circleci,azure-pipelines}
-mkdir -p layers/code-quality/{github-security,sonarqube,snyk}
-mkdir -p layers/testing/unit/{vitest,jest,pytest}
-mkdir -p layers/testing/e2e/{playwright,cypress,selenium,webdriverio}
-mkdir -p layers/testing/api/{bruno,postman,insomnia}
-mkdir -p layers/mocking/{msw,mirage,json-server}
-mkdir -p layers/api-docs/{swagger-express,openapi-fastapi}
-mkdir -p setup
-```
-
-Then move skills — see Skill Migration Map in the plan file.
+1. **CONTRIBUTING.md** — Guide for community contributors building new layers
+2. **README.md** — Update project root README with modular install story + `/setup` demo
+3. **Split mixed skills** — These skills have both principles AND implementation mixed together; principles should be in `core/` and implementation in the layer:
+   - `layers/logging/framework/pino/logging-standards/` — split into core logging principles + pino SKILL
+   - `layers/backend/node-express/error-handling/` — split into core error principles + express SKILL
+   - `layers/auth/cognito/security-standards/` — split into core security principles + cognito SKILL
+4. **Layer status update** — Mark all Session 6 layers as ✅ Done in the table above
+5. **`/install` command** — Create `core/skills/install/SKILL.md` that reads `stack.json` and tells Claude which layer skills to activate
+6. **Commit + push** — `git add -A && git commit -m "chore(plugin): implement modular core/ + layers/ architecture"` then push
 
 ---
 

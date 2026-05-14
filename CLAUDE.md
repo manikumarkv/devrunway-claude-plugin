@@ -1,29 +1,44 @@
 # devrunway Plugin
 
-This repo IS the Claude Code plugin — not an app. Files here define skills, agents, and hooks that extend Claude Code for any tech stack.
+This repo IS the Claude Code plugin — not an app. Files here define skills, agents, and hooks that extend Claude Code for **any tech stack** via a modular layer system.
 
 ---
 
-## What's here
+## Architecture
 
+```
+core/        ← always installed; universal SDLC for any stack
+layers/      ← technology-specific layers; install only what you use
+setup/       ← /setup wizard; generates stack.json + .mcp.json + install commands
+```
+
+### core/ — always active
 | Directory | Purpose |
 |---|---|
-| `skills/` | 30+ user-invocable slash commands + background reference skills |
-| `agents/` | Specialized sub-agents: `code-reviewer`, `security-reviewer`, `debugger` |
-| `hooks/` | Automatic quality enforcement on every Write/Edit/Bash |
-| `templates/` | Starter configs for new projects (mcp.json, etc.) |
+| `core/skills/` | ~32 universal slash commands + background reference skills |
+| `core/agents/` | `code-reviewer`, `security-reviewer`, `debugger` |
+| `core/hooks/` | `destructive-git-guard.sh`, `session-summary.sh` |
+
+### layers/ — install what matches your stack
+Each layer is a self-contained directory with its own skills and `stack:` frontmatter. Layers cover: frontend, backend, cloud, database, auth, CI, testing, logging, state, validation, design, and more.
+
+**First time in a project?** Run `/setup` to configure your stack. It generates:
+1. `stack.json` — declares which layers you use
+2. `.mcp.json` — pre-configures MCP servers for your tools (Figma, GitHub, Jira, etc.)
+3. `/install` commands — the exact layers to install
 
 ---
 
 ## Starting a session
 
-Use `/goal <what you're building today>` to orient Claude and stay focused across long sessions. This is a Claude Code built-in — no skill needed.
+```
+/setup          ← first-time project setup (generates stack.json + .mcp.json)
+/goal <task>    ← orient Claude for this session (Claude Code built-in)
+```
 
 ---
 
 ## SDLC flow
-
-Each command reads the previous command's output. Run linearly:
 
 ```
 /product-brainstorm → /product-plan → /product-tasks → /product-refine →
@@ -33,18 +48,24 @@ Each command reads the previous command's output. Run linearly:
 
 ---
 
-## Background skills (auto-load — no command needed)
+## Background skills (auto-load by stack)
 
-These are always active and apply to every file you touch:
+Skills in `layers/` load automatically based on your `stack.json` and the files you touch. Examples:
 
-- `react-standards` — React patterns, hooks, component structure
-- `typescript-patterns` — type safety, generics, strict mode
-- `error-handling` — AppError hierarchy, asyncHandler, errorHandler
-- `api-conventions` — response envelopes, cursor pagination, Zod validation
-- `logging-standards` — Pino setup, what/when/never to log, PII rules
-- `database-sql` — Prisma patterns, migrations, seeders
-- `linting` — ESLint v9 flat config, Prettier, lint-staged
-- `security-standards` — OWASP, Cognito, IAM, input validation
+| If your stack includes… | Skills that auto-load |
+|---|---|
+| React | `react-standards`, `composition-patterns`, `linting` |
+| Zod | `zod-validation` |
+| MSW | `msw-mocking` |
+| Pino | `logging-standards` |
+| Prisma | `database-sql` |
+| Cognito | `cognito-auth`, `security-standards` |
+
+Universal skills active for **all** stacks:
+- `typescript-patterns` — strict TS, generics, type narrowing
+- `error-handling` — typed error hierarchy, never swallow
+- `api-conventions` — response envelopes, pagination, versioning
+- `security-principles` — OWASP Top 10, input validation, secrets hygiene
 
 ---
 
@@ -52,19 +73,21 @@ These are always active and apply to every file you touch:
 
 | Command | Agent | What it checks |
 |---|---|---|
-| `/dev-review` | `code-reviewer` | TypeScript, React, error handling, tests, accessibility, logging, API conventions |
-| `/security-review` | `security-reviewer` | OWASP Top 10, secrets scan, Cognito auth, IAM least-privilege, PII in logs |
+| `/dev-review` | `code-reviewer` | TypeScript, error handling, tests, accessibility, logging, API conventions |
+| `/security-review` | `security-reviewer` | OWASP Top 10, secrets scan, auth flows, IAM least-privilege, PII in logs |
 
 ---
 
-## MCP tools
+## MCP auto-configuration
 
-| Tool prefix | Source | Prefer over |
+`/setup` generates `.mcp.json` for layers that have MCP support. Currently wired:
+
+| Layer | MCP package | Env var |
 |---|---|---|
-| `mcp__git__*` | GitHub MCP | `gh` CLI |
-| `mcp__figma__*` | Figma MCP | Manual design export |
-
-When GitHub MCP is active, `mcp__git__get_issue`, `mcp__git__update_issue`, `mcp__git__add_issue_comment` are preferred over `gh` CLI equivalents.
+| `design/figma` | `@figma/mcp-server` | `FIGMA_ACCESS_TOKEN` |
+| `source-control/github` | `@modelcontextprotocol/server-github` | `GITHUB_PERSONAL_ACCESS_TOKEN` |
+| `project-management/jira` | `@modelcontextprotocol/server-jira` | `JIRA_API_TOKEN`, `JIRA_BASE_URL` |
+| `project-management/linear` | `@linear/mcp-server` | `LINEAR_API_KEY` |
 
 ---
 
@@ -72,14 +95,20 @@ When GitHub MCP is active, `mcp__git__get_issue`, `mcp__git__update_issue`, `mcp
 
 | Hook | Trigger | What it does |
 |---|---|---|
-| `tsc-check.sh` | After every `.ts`/`.tsx` write | Runs `tsc --noEmit`, blocks if errors |
-| `console-guard.sh` | After every `.ts`/`.tsx` write | Blocks `console.*` in production code |
 | `destructive-git-guard.sh` | Before every `git` command | Blocks `force push`, `reset --hard`, `branch -D` |
 | `session-summary.sh` | Session end | Prints branch status and uncommitted changes |
+
+---
+
+## Layer status
+
+See `docs/ROADMAP.md` for the full layer status table (✅ done / 🚧 stub / 📋 planned).
 
 ---
 
 ## Modifying this plugin
 
 - Commit prefix: `chore(evolve):` or `chore(plugin):`
-- Run `/evolve` at sprint end for evidence-based improvement recommendations based on REVIEW and DEBUG report history
+- Run `/evolve` at sprint end for evidence-based improvement recommendations
+- To add a new layer: create `layers/<category>/<tech>/SKILL.md` with `stack:` frontmatter
+- See `docs/ROADMAP.md` → "Contributing a new layer" for the full guide
