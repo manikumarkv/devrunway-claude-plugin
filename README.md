@@ -25,8 +25,10 @@ flowchart TD
     E --> F["PM + Dev · /product-refine"]
     F --> G["Dev · /dev-brainstorm"]
     G --> H["Dev · /dev-design"]
-    H --> I["Dev · /dev-code"]
-    I --> J["Dev · /dev-review"]
+    H --> I["Dev · /dev-code\n▶ execute step N"]
+    I -->|"confirm → next step"| I
+    I -->|"review plan"| H
+    I -->|"all steps done"| J["Dev · /dev-review"]
     J --> K{All items resolved? · Dev}
     K -- Fix selected --> J
     K -- Done --> L["Dev · /pr create"]
@@ -132,17 +134,21 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    A(["Ticket"]) -->|"/dev-brainstorm"| B["Approaches + Decision matrix"]
-    B -->|"/dev-design"| C["Phased plan doc"]
-    C -->|"/dev-code"| D["Step-by-step build\n(confirm each step)"]
-    D -->|"/dev-review"| E["Review list · Fix selected"]
-    E -->|"/pr create"| F{CI}
-    F -->|Pass| G["/deploy staging"]
-    G --> H{Healthy?}
-    H -->|No| I["/debug"]
-    I --> D
-    H -->|Yes| J["Lead · /pr merge"]
-    J --> K["Lead · /deploy prod"]
+    A(["Ticket"]) -->|"/dev-brainstorm"| B["Approaches\nDecision matrix"]
+    B -->|"/dev-design"| C["Phased plan\nN phases · M steps"]
+    C -->|"/dev-code"| D["▶ Execute step N\nshow output"]
+    D -->|"confirm → next step"| D
+    D -->|"review plan"| C
+    D -->|"all steps done"| E["/dev-review\nfull findings list"]
+    E -->|"fix selected"| E
+    E -->|"done"| F["/pr create"]
+    F --> G{CI}
+    G -->|Pass| H["/deploy staging"]
+    H --> I{Healthy?}
+    I -->|No| J["/debug"]
+    J --> D
+    I -->|Yes| K["Lead · /pr merge"]
+    K --> L["Lead · /deploy prod"]
 ```
 
 ### Bug Fix
