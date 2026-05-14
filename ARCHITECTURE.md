@@ -15,7 +15,11 @@ Target architecture for projects built with this plugin. Every code generation c
 | React Router | 6+ | Client-side routing |
 | React Query (TanStack) | 5+ | Server state, caching, mutations |
 | Zod | 3+ | Runtime schema validation + type inference |
+| React Hook Form | 7+ | Form state + validation (paired with Zod) |
 | Tailwind CSS | 3+ | Utility-first styling |
+| **shadcn/ui** | latest | Component library — Button, Input, Dialog, Table, Form, Select, Badge … built on Radix UI |
+| Radix UI | — | Headless, accessible primitives — used under the hood by shadcn |
+| clsx + tailwind-merge | — | `cn()` utility for conditional class merging |
 | Playwright | 1.40+ | End-to-end + smoke tests |
 | Vitest + React Testing Library | — | Unit + component tests |
 
@@ -180,17 +184,30 @@ flowchart TD
 frontend/
 ├── src/
 │   │
+│   ├── components/
+│   │   └── ui/                        ← shadcn/ui components (auto-generated — do NOT hand-edit)
+│   │       ├── button.tsx             ← npx shadcn@latest add button
+│   │       ├── input.tsx              ← npx shadcn@latest add input
+│   │       ├── dialog.tsx             ← npx shadcn@latest add dialog
+│   │       ├── form.tsx               ← npx shadcn@latest add form
+│   │       ├── select.tsx             ← npx shadcn@latest add select
+│   │       ├── table.tsx              ← npx shadcn@latest add table
+│   │       ├── badge.tsx              ← npx shadcn@latest add badge
+│   │       ├── card.tsx               ← npx shadcn@latest add card
+│   │       ├── toast.tsx              ← npx shadcn@latest add toast
+│   │       └── …                     ← add more as needed
+│   │
 │   ├── features/                      ← One folder per product feature
 │   │   └── orders/                    ← Example: orders feature
 │   │       ├── api/
 │   │       │   └── orders.api.ts      ← React Query hooks (useOrders, useCreateOrder …)
 │   │       ├── components/
 │   │       │   ├── OrderList/
-│   │       │   │   ├── OrderList.tsx
+│   │       │   │   ├── OrderList.tsx  ← composes shadcn <Table>, <Badge> etc.
 │   │       │   │   ├── OrderList.test.tsx
 │   │       │   │   └── index.ts
 │   │       │   └── OrderForm/
-│   │       │       ├── OrderForm.tsx
+│   │       │       ├── OrderForm.tsx  ← composes shadcn <Form>, <Input>, <Button>
 │   │       │       ├── OrderForm.test.tsx
 │   │       │       └── index.ts
 │   │       ├── types.ts               ← Zod schemas + inferred TS types for this feature
@@ -202,16 +219,23 @@ frontend/
 │   │   └── NotFoundPage.tsx
 │   │
 │   ├── shared/                        ← Cross-feature reusable code
-│   │   ├── components/                ← Generic UI (Button, Modal, Table, Spinner …)
-│   │   │   └── Button/
-│   │   │       ├── Button.tsx
-│   │   │       ├── Button.test.tsx
+│   │   ├── components/                ← Custom composite components built on shadcn primitives
+│   │   │   ├── DataTable/             ← shadcn Table + sorting + pagination wrapper
+│   │   │   │   ├── DataTable.tsx
+│   │   │   │   ├── DataTable.test.tsx
+│   │   │   │   └── index.ts
+│   │   │   ├── ConfirmDialog/         ← shadcn Dialog + confirm/cancel actions
+│   │   │   │   ├── ConfirmDialog.tsx
+│   │   │   │   └── index.ts
+│   │   │   └── PageHeader/            ← Heading + breadcrumb + action slot
+│   │   │       ├── PageHeader.tsx
 │   │   │       └── index.ts
 │   │   ├── hooks/                     ← Generic hooks (useDebounce, usePagination …)
-│   │   ├── utils/                     ← Pure utility functions (formatDate, cn …)
+│   │   ├── utils/                     ← Pure utility functions (formatDate …)
 │   │   └── types/                     ← Global shared TS types (Paginated<T>, ApiResponse<T> …)
 │   │
 │   ├── lib/                           ← Third-party client setup (one file per library)
+│   │   ├── utils.ts                   ← cn() helper: import { clsx } + tailwind-merge
 │   │   ├── queryClient.ts             ← React Query client + global error handler
 │   │   ├── auth.ts                    ← Cognito Amplify Auth config
 │   │   ├── flags.ts                   ← Feature flag client (GET /api/v1/flags + useFlag hook)
@@ -232,6 +256,7 @@ frontend/
 │
 ├── public/                            ← Static assets (favicon, robots.txt, og images)
 ├── index.html                         ← Vite HTML entry
+├── components.json                    ← shadcn/ui config (style, paths, tailwind)
 ├── vite.config.ts
 ├── playwright.config.ts               ← E2E config (local + CI)
 ├── playwright.smoke.config.ts         ← Smoke config (targets live env)
@@ -239,41 +264,53 @@ frontend/
 └── tsconfig.json
 ```
 
-### Feature data flow
+### Frontend component hierarchy
 
 ```mermaid
-flowchart LR
-    subgraph Feature["src/features/orders/"]
-        TYPES["types.ts\nZod schemas\nTS inferred types"]
-        API["api/orders.api.ts\nuseOrders()\nuseCreateOrder()\nuseUpdateOrder()"]
-        COMP["components/\nOrderList/\nOrderForm/"]
-        IDX["index.ts\npublic barrel"]
+flowchart TD
+    subgraph ShadcnUI["src/components/ui/  ← shadcn (auto-generated, never hand-edit)"]
+        SH1["button.tsx"]
+        SH2["input.tsx"]
+        SH3["dialog.tsx"]
+        SH4["form.tsx"]
+        SH5["table.tsx · badge.tsx · card.tsx · …"]
     end
 
-    subgraph Shared["src/shared/"]
-        SCOMP["components/\nButton · Modal · Table"]
-        HOOKS["hooks/\nuseDebounce · usePagination"]
-        UTILS["utils/\nformatDate · cn"]
+    subgraph SharedComps["src/shared/components/  ← custom composites built on shadcn"]
+        SC1["DataTable/\n(Table + sort + pagination)"]
+        SC2["ConfirmDialog/\n(Dialog + confirm actions)"]
+        SC3["PageHeader/\n(heading + breadcrumb + slot)"]
     end
 
-    subgraph Lib["src/lib/"]
-        QC["queryClient.ts"]
-        AUTH["auth.ts"]
-        APIL["api.ts\nfetch wrapper + auth header"]
+    subgraph Feature["src/features/orders/  ← feature-specific components"]
+        FC1["OrderList/\n(DataTable + Badge)"]
+        FC2["OrderForm/\n(Form + Input + Button)"]
+        FAPI["api/orders.api.ts\nuseOrders · useCreateOrder"]
+        FTYPE["types.ts\nZod schemas · TS types"]
     end
 
-    PAGE["src/pages/\nOrdersPage.tsx"] --> COMP
-    PAGE --> IDX
-    COMP --> API
-    COMP --> SCOMP
-    COMP --> HOOKS
-    API --> APIL
-    API --> TYPES
-    APIL --> AUTH
-    APIL --> QC
+    PAGE["src/pages/\nOrdersPage.tsx"] --> FC1
+    PAGE --> FC2
+    FC1 --> SC1
+    FC2 --> SC2
+    FC1 --> SH5
+    FC2 --> SH4
+    FC2 --> SH2
+    FC2 --> SH1
+    SC1 --> SH5
+    SC1 --> SH1
+    SC2 --> SH3
+    SC2 --> SH1
+    FC1 --> FAPI
+    FC2 --> FAPI
+    FAPI --> FTYPE
 ```
 
 **Rules:**
+- Always use a shadcn component before building from scratch — check `src/components/ui/` first
+- Never hand-edit files in `src/components/ui/` — re-run `npx shadcn@latest add` to update
+- `src/shared/components/` holds custom composites that wrap shadcn primitives
+- Feature components compose shared components and shadcn primitives directly
 - Never import directly across feature folders — go through `index.ts`
 - Never put API calls inside components — always in `api/<name>.api.ts`
 - Never put business logic in pages — pages only compose feature components

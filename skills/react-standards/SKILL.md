@@ -8,10 +8,19 @@ Full rules in [react.md](react.md). Always-on summary:
 
 **Stack (no alternatives):**
 - React 18 + TypeScript strict + Vite + Tailwind CSS
+- **UI components: shadcn/ui** — always check `src/components/ui/` before building from scratch
 - Server state: React Query v5 — never `fetch` in `useEffect`
 - Routing: React Router v6
-- Forms: React Hook Form + Zod
+- Forms: React Hook Form + Zod + shadcn `<Form>` components
 - Testing: Vitest + React Testing Library + MSW + Playwright
+
+**shadcn/ui rules:**
+- Install: `npx shadcn@latest add <component>` — copies source into `src/components/ui/`
+- Never hand-edit `src/components/ui/` files — re-run the CLI to update
+- Always import from `@/components/ui/<name>`, never from `radix-ui` directly
+- Use `cn()` from `src/lib/utils.ts` for all conditional class merging — never string template literals
+- Custom composite components live in `src/shared/components/` and wrap shadcn primitives
+- Forms always use shadcn `<Form>`, `<FormField>`, `<FormItem>`, `<FormLabel>`, `<FormControl>`, `<FormMessage>` wrappers around React Hook Form
 
 **Components:**
 - Functional only · explicit `interface` props · max ~150 lines
@@ -26,6 +35,7 @@ Full rules in [react.md](react.md). Always-on summary:
 - Inline `style={{}}` for static values
 - Business logic in component body (belongs in a hook)
 - Server state stored in Zustand/Redux
+- Build a button, input, dialog, select, table, or badge from scratch — use shadcn
 
 **Re-render rules (see react.md for full examples):**
 - Hoist static JSX and non-primitive defaults outside components
