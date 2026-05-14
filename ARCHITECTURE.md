@@ -614,6 +614,84 @@ Flags are not secrets — it is safe to expose all flag values to the frontend. 
 
 ---
 
+## URL Design
+
+Every meaningful view has a unique, bookmarkable URL. The URL is the source of truth for navigation and list state — not component state.
+
+### Route structure
+
+```mermaid
+flowchart TD
+    ROOT["/\ndashboard"] --> ORDERS
+    ROOT --> PROFILE
+
+    subgraph ORDERS["Orders feature"]
+        OL["/orders\nlist + filters"]
+        ON["/orders/new\ncreate page"]
+        OD["/orders/:id\ndetail page"]
+        OE["/orders/:id/edit\nedit page"]
+        OI["/orders/:id/items\nnested list"]
+    end
+
+    subgraph PROFILE["Profile feature"]
+        PR["/profile\nsettings"]
+        PS["/profile/security\nsub-section"]
+    end
+
+    OL --> ON
+    OL --> OD
+    OD --> OE
+    OD --> OI
+```
+
+### URL search params — list state
+
+All list state (filters, search, sort, pagination) lives in the URL as search params — never in `useState`.
+
+| Search param | Purpose | Example |
+|---|---|---|
+| `?q=` | Full-text search query | `?q=laptop` |
+| `?status=` | Filter by enum field | `?status=PENDING` |
+| `?sort=` | Sort column | `?sort=createdAt` |
+| `?order=` | Sort direction | `?order=desc` |
+| `?cursor=` | Pagination cursor | `?cursor=clxyz` |
+| `?tab=` | Active tab | `?tab=items` |
+
+Example deep link: `/orders?status=PENDING&q=laptop&sort=createdAt&tab=items`  
+Result: opens the orders list, filtered, sorted, on the items tab — browser back button restores it.
+
+### UI pattern rules
+
+```mermaid
+flowchart TD
+    ACTION{What is the\nuser doing?}
+
+    ACTION -->|"Create a resource"| CREATE["Navigate to\n/resource/new\n(dedicated page)"]
+    ACTION -->|"Edit a resource"| EDIT["Navigate to\n/resource/:id/edit\n(dedicated page)"]
+    ACTION -->|"View a resource"| VIEW["Navigate to\n/resource/:id\n(dedicated page)"]
+    ACTION -->|"Destructive action\n(delete, archive)"| CONFIRM["AlertDialog\nconfirmation modal"]
+    CONFIRM -->|"Confirmed"| TOAST_S
+
+    ACTION -->|"API success"| TOAST_S["toast.success()"]
+    ACTION -->|"API error"| TOAST_E["toast.error()"]
+    ACTION -->|"Warning / info"| TOAST_W["toast.warning()\ntost.info()"]
+    ACTION -->|"Async operation"| TOAST_P["toast.promise()"]
+    ACTION -->|"Field validation"| FIELD["&lt;FormMessage /&gt;\ninline under field"]
+```
+
+| Situation | Do this | Not this |
+|---|---|---|
+| Create resource | Navigate to `/resource/new` | Open a create modal |
+| Edit resource | Navigate to `/resource/:id/edit` | Open an edit modal |
+| Filter / sort list | Write to `?filter=&sort=` in URL | `useState` |
+| Active tab | Write to `?tab=` in URL | `useState` |
+| Delete confirmation | `AlertDialog` modal | Inline button with no confirm |
+| API success | `toast.success()` | Alert modal or inline banner |
+| API error | `toast.error()` | Alert modal or console.log |
+| Field error | `<FormMessage />` inline | Toast |
+
+---
+
 ## Environment Strategy
 
 | Environment | Branch | Deploy trigger | Purpose |

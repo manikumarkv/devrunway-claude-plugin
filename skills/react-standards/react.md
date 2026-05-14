@@ -842,3 +842,387 @@ useEffect(() => {
   return () => socket.off('message', handler)
 }, [])
 ```
+
+---
+
+## URL accessibility — deep linking
+
+Every meaningful view must have a unique, bookmarkable URL. Users must be able to share, bookmark, and navigate back to any feature state via the browser address bar. The URL is the source of truth for all navigational and list state — not component state.
+
+### URL structure — RESTful page routes
+
+```
+/                              ← dashboard / home
+/orders                        ← list (filterable, sortable, paginated via search params)
+/orders/new                    ← create form (dedicated page — not a modal)
+/orders/:id                    ← detail / view
+/orders/:id/edit               ← edit form (dedicated page — not a modal)
+/orders/:id/items              ← nested resource list
+/orders/:id/items/:itemId      ← nested resource detail
+/profile                       ← current user settings
+/profile/security              ← sub-section via nested route
+```
+
+Define routes in `src/router/index.tsx`:
+
+```tsx
+import { createBrowserRouter } from 'react-router-dom'
+import { ProtectedLayout } from '@/shared/components/ProtectedLayout'
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <ProtectedLayout />,        // auth guard wraps all children
+    children: [
+      { index: true,              element: <DashboardPage /> },
+      { path: 'orders',           element: <OrdersPage /> },
+      { path: 'orders/new',       element: <CreateOrderPage /> },
+      { path: 'orders/:id',       element: <OrderDetailPage /> },
+      { path: 'orders/:id/edit',  element: <EditOrderPage /> },
+    ],
+  },
+  { path: '/login',  element: <LoginPage /> },
+  { path: '*',       element: <NotFoundPage /> },
+])
+```
+
+### URL search params — list state
+
+All list state (filters, search query, sort, pagination cursor) lives in the URL. Never store it in `useState`.
+
+```tsx
+// ❌ — state is lost on refresh, can't be shared or bookmarked
+const [status, setStatus] = useState('PENDING')
+const [search, setSearch] = useState('')
+const [sortBy, setSortBy] = useState('createdAt')
+
+// ✅ — URL is the source of truth
+import { useSearchParams } from 'react-router-dom'
+
+function OrdersPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const status  = searchParams.get('status') ?? 'all'
+  const search  = searchParams.get('q') ?? ''
+  const sortBy  = searchParams.get('sort') ?? 'createdAt'
+  const cursor  = searchParams.get('cursor') ?? undefined
+
+  function setFilter(key: string, value: string) {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (value) next.set(key, value)
+      else next.delete(key)
+      next.delete('cursor')   // reset pagination on filter change
+      return next
+    })
+  }
+
+  const { data } = useQuery({
+    queryKey: ['orders', { status, search, sortBy, cursor }],
+    queryFn: () => fetchOrders({ status, search, sortBy, cursor }),
+  })
+
+  return (
+    <>
+      <Input
+        value={search}
+        onChange={e => setFilter('q', e.target.value)}
+        placeholder="Search orders…"
+      />
+      <Select value={status} onValueChange={v => setFilter('status', v)}>
+        <SelectTrigger><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All</SelectItem>
+          <SelectItem value="PENDING">Pending</SelectItem>
+          <SelectItem value="SHIPPED">Shipped</SelectItem>
+        </SelectContent>
+      </Select>
+      {/* list renders here */}
+      {data?.meta.nextCursor && (
+        <Button onClick={() => setFilter('cursor', data.meta.nextCursor)}>
+          Load more
+        </Button>
+      )}
+    </>
+  )
+}
+```
+
+Resulting URL: `/orders?status=PENDING&q=laptop&sort=createdAt&cursor=clxyz`  
+Browser back button restores the exact filter state. Shareable link works.
+
+### Tab state in URL
+
+```tsx
+// ❌ — tab selection lost on refresh
+const [tab, setTab] = useState('details')
+
+// ✅ — tab in URL
+import { useSearchParams } from 'react-router-dom'
+
+function OrderDetailPage() {
+  const { id } = useParams<{ id: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = searchParams.get('tab') ?? 'details'
+
+  return (
+    <Tabs value={tab} onValueChange={t => setSearchParams({ tab: t })}>
+      <TabsList>
+        <TabsTrigger value="details">Details</TabsTrigger>
+        <TabsTrigger value="items">Items</TabsTrigger>
+        <TabsTrigger value="history">History</TabsTrigger>
+      </TabsList>
+      <TabsContent value="details"><OrderDetails id={id} /></TabsContent>
+      <TabsContent value="items"><OrderItems id={id} /></TabsContent>
+      <TabsContent value="history"><OrderHistory id={id} /></TabsContent>
+    </Tabs>
+  )
+}
+```
+
+URL: `/orders/clxyz?tab=items` — deep-linkable to a specific tab.
+
+### Navigation — always use Link, never window.location
+
+```tsx
+import { Link, useNavigate } from 'react-router-dom'
+
+// ❌
+window.location.href = `/orders/${id}`
+
+// ✅ — declarative
+<Link to={`/orders/${id}`}>View order</Link>
+
+// ✅ — programmatic (after mutation)
+const navigate = useNavigate()
+async function handleCreate(values: FormValues) {
+  const order = await createOrder(values)
+  navigate(`/orders/${order.id}`)      // land on detail page after create
+}
+```
+
+### useParams — reading route parameters
+
+```tsx
+import { useParams } from 'react-router-dom'
+
+function OrderDetailPage() {
+  const { id } = useParams<{ id: string }>()
+
+  const { data: order, isLoading } = useQuery({
+    queryKey: ['orders', id],
+    queryFn: () => fetchOrder(id!),
+    enabled: !!id,
+  })
+
+  if (isLoading) return <Skeleton />
+  if (!order)    return <Navigate to="/orders" replace />
+
+  return <OrderDetail order={order} />
+}
+```
+
+### Breadcrumbs — reflect URL structure
+
+```tsx
+// src/shared/components/Breadcrumb.tsx
+import { Link, useMatches } from 'react-router-dom'
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
+
+// Each route declares its breadcrumb label in the handle:
+// { path: 'orders/:id', element: <OrderDetailPage />, handle: { breadcrumb: 'Order detail' } }
+
+function AppBreadcrumb() {
+  const matches = useMatches()
+  const crumbs = matches.filter(m => m.handle?.breadcrumb)
+
+  return (
+    <Breadcrumb>
+      {crumbs.map((match, i) => (
+        <BreadcrumbItem key={match.id}>
+          {i < crumbs.length - 1
+            ? <BreadcrumbLink asChild><Link to={match.pathname}>{match.handle.breadcrumb}</Link></BreadcrumbLink>
+            : <span>{match.handle.breadcrumb}</span>
+          }
+          {i < crumbs.length - 1 && <BreadcrumbSeparator />}
+        </BreadcrumbItem>
+      ))}
+    </Breadcrumb>
+  )
+}
+```
+
+### URL accessibility checklist
+
+| Rule | Reason |
+|---|---|
+| Every list has `?filter=&sort=&q=&cursor=` in URL | Shareable filtered views |
+| Create form is `/resource/new` not a modal | Bookmarkable, back button works |
+| Edit form is `/resource/:id/edit` not a modal | Bookmarkable, refresh-safe |
+| Tab selection is `?tab=` in URL | Deep-linkable to a specific tab |
+| Browser back button restores previous filter/sort state | `useSearchParams` handles this automatically |
+| 404 on unknown routes | `{ path: '*', element: <NotFoundPage /> }` |
+| Auth-required routes redirect to `/login?returnTo=<url>` | After login, user lands where they were going |
+
+---
+
+## UI patterns — modals and notifications
+
+### Modals — only for confirmations, never for features
+
+```tsx
+// ❌ — opening a create form in a modal breaks the URL, back button, refresh
+function OrdersPage() {
+  const [showCreate, setShowCreate] = useState(false)
+  return (
+    <>
+      <Button onClick={() => setShowCreate(true)}>New order</Button>
+      <Dialog open={showCreate}>
+        <CreateOrderForm />    {/* wrong — this needs its own page */}
+      </Dialog>
+    </>
+  )
+}
+
+// ✅ — feature forms are dedicated pages
+function OrdersPage() {
+  return (
+    <>
+      <Button asChild>
+        <Link to="/orders/new">New order</Link>
+      </Button>
+      <OrdersTable />
+    </>
+  )
+}
+```
+
+**Use a modal (shadcn `AlertDialog`) ONLY for:**
+- Destructive confirmation — "Delete order?" with Cancel / Confirm
+- Irreversible action confirmation — "Archive all?" with warning text
+
+```tsx
+// ✅ — AlertDialog for destructive confirmation only
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+
+function DeleteOrderButton({ orderId }: { orderId: string }) {
+  const { mutate: deleteOrder } = useMutation({
+    mutationFn: () => api.delete(`/orders/${orderId}`),
+    onSuccess: () => {
+      toast.success('Order deleted')
+      navigate('/orders')
+    },
+    onError: () => toast.error('Failed to delete order'),
+  })
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive">Delete order</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this order?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. The order and all its items will be permanently removed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => deleteOrder()}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+```
+
+### Notifications — always use toast (snackbar), never inline modal alerts
+
+Use **Sonner** (recommended) or shadcn's built-in toast for all feedback messages.
+
+```bash
+npx shadcn@latest add sonner   # preferred — simpler API, auto-dismiss, stacking
+```
+
+Setup in `App.tsx`:
+```tsx
+import { Toaster } from '@/components/ui/sonner'
+
+function App() {
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster position="bottom-right" richColors closeButton />
+    </>
+  )
+}
+```
+
+Usage across the app:
+```tsx
+import { toast } from 'sonner'
+
+// ✅ — success
+toast.success('Order created', {
+  description: 'Order #1234 is now being processed.',
+})
+
+// ✅ — error
+toast.error('Failed to save', {
+  description: error.message,
+})
+
+// ✅ — warning
+toast.warning('Unsaved changes', {
+  description: 'Navigate away and your changes will be lost.',
+})
+
+// ✅ — info
+toast.info('Sync in progress', {
+  description: 'Your data is being updated in the background.',
+})
+
+// ✅ — loading state that resolves to success/error
+toast.promise(saveOrder(values), {
+  loading: 'Saving order…',
+  success: 'Order saved',
+  error:   'Failed to save order',
+})
+```
+
+**Where to call toast in mutations:**
+
+```tsx
+// ✅ — call from mutation callbacks, never from component render
+const { mutate: createOrder, isPending } = useMutation({
+  mutationFn: (values: CreateOrderInput) => api.post('/api/v1/orders', values),
+  onSuccess: (order) => {
+    toast.success('Order created')
+    navigate(`/orders/${order.id}`)
+  },
+  onError: (error: ApiError) => {
+    toast.error('Failed to create order', { description: error.message })
+  },
+})
+```
+
+### UI pattern decision table
+
+| Situation | Pattern |
+|---|---|
+| Create a resource | Navigate to `/resource/new` (dedicated page) |
+| Edit a resource | Navigate to `/resource/:id/edit` (dedicated page) |
+| View resource detail | Navigate to `/resource/:id` (dedicated page) |
+| Delete / destructive action | `AlertDialog` confirmation modal → toast on result |
+| API success | `toast.success()` |
+| API error | `toast.error()` |
+| Validation warning | `toast.warning()` or inline `<FormMessage />` under the field |
+| Background operation | `toast.promise()` |
+| System info | `toast.info()` |
+| Blocking form errors | `<FormMessage />` inline under each field (not a toast) |

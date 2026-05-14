@@ -26,6 +26,18 @@ Full rules in [react.md](react.md). Always-on summary:
 - Functional only · explicit `interface` props · max ~150 lines
 - Named exports · barrel `index.ts` per feature · co-located `.test.tsx`
 
+**URL accessibility — every view must be deep-linkable:**
+- Every feature has a dedicated route — create → `/resource/new`, edit → `/resource/:id/edit`, detail → `/resource/:id`
+- All list state (filters, search, sort, cursor) lives in URL search params via `useSearchParams()` — never in `useState`
+- Tab selection → `?tab=` in URL. Browser back button must restore previous state
+- After create/edit mutations, `navigate()` to the detail page — never stay on the same page and show a modal
+
+**UI patterns — modals and notifications:**
+- **Modals (`AlertDialog`) only for destructive confirmations** — "Delete?" / "Archive all?" — never for create/edit forms
+- **All feedback via toast (Sonner)** — `toast.success()` · `toast.error()` · `toast.warning()` · `toast.promise()`
+- Inline `<FormMessage />` for field-level validation errors — not a toast
+- `<Toaster position="bottom-right" richColors />` mounted once in `App.tsx`
+
 **Never:**
 - `any` type
 - `console.log` in production code
@@ -36,6 +48,8 @@ Full rules in [react.md](react.md). Always-on summary:
 - Business logic in component body (belongs in a hook)
 - Server state stored in Zustand/Redux
 - Build a button, input, dialog, select, table, or badge from scratch — use shadcn
+- Open a create/edit form in a modal — give it its own page/route
+- Show success/error/warning in a modal alert — use `toast` instead
 
 **Re-render rules (see react.md for full examples):**
 - Hoist static JSX and non-primitive defaults outside components
