@@ -252,7 +252,8 @@ Use when: adding any `logger.*` call, adding structured context to an existing l
 - [ ] First argument is a context object, second is the message string: `logger.info({ userId, orderId }, 'Order created')`
 - [ ] Message is a static string — dynamic values go in the context object, not string interpolation
 - [ ] Context includes identifiers that make the log searchable: `userId`, `orderId`, `requestId`
-- [ ] `requestId` always included on request-scoped logs (available from `req.headers['x-request-id']` or `res.locals.requestId`)
+- [ ] `requestId` always included on request-scoped logs (set automatically by pino-http on `req.id`)
+- [ ] `correlationId` included in child logger — propagated from `X-Correlation-Id` header via pino-http; ties logs across services
 
 ### PII & secrets
 - [ ] No email addresses in log messages or context

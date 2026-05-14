@@ -21,6 +21,7 @@
 ```ts
 // src/lib/logger.ts
 import pino, { type Logger } from 'pino'
+import os from 'os'
 import { env } from './env'
 
 export const logger: Logger = pino({
@@ -35,11 +36,14 @@ export const logger: Logger = pino({
   // Rewrite level number → label ('info' not 30)
   formatters: {
     level: (label) => ({ level: label }),
-    // Attach service name to every log line
-    bindings: (bindings) => ({
-      service: env.SERVICE_NAME ?? 'api',
-      env:     env.NODE_ENV,
-      pid:     bindings.pid,
+
+    // These fields appear on EVERY log line automatically — no need to add them manually
+    bindings: () => ({
+      service: env.SERVICE_NAME ?? 'api',    // logical service name, e.g. 'api', 'worker'
+      version: env.APP_VERSION ?? 'unknown', // app/deploy version — correlate logs to releases
+      env:     env.NODE_ENV,                 // 'production' | 'staging' | 'development'
+      host:    os.hostname(),                // container ID / EC2 instance ID / Lambda function name
+      region:  process.env.AWS_REGION ?? 'local', // AWS region — essential for multi-region setups
     }),
   },
 
@@ -49,12 +53,14 @@ export const logger: Logger = pino({
     paths: [
       'req.headers.authorization',
       'req.headers.cookie',
+      'req.headers["x-api-key"]',
       'body.password',
       'body.passwordConfirm',
       'body.currentPassword',
       'body.token',
       'body.refreshToken',
       'body.accessToken',
+      'body.idToken',
       'body.cardNumber',
       'body.cvv',
       'body.ssn',
@@ -63,13 +69,15 @@ export const logger: Logger = pino({
       '*.secret',
       '*.apiKey',
       '*.privateKey',
+      '*.accessKey',
     ],
     censor: '[REDACTED]',
   },
 
   // Pretty-print in development only — JSON in all other envs
+  // Note: hostname/pid shown in dev for debugging container routing; hidden in pretty output
   transport: env.NODE_ENV === 'development'
-    ? { target: 'pino-pretty', options: { colorize: true, translateTime: 'SYS:standard', ignore: 'pid,hostname' } }
+    ? { target: 'pino-pretty', options: { colorize: true, translateTime: 'SYS:standard', ignore: 'pid' } }
     : undefined,
 })
 ```
@@ -89,14 +97,32 @@ import { randomUUID } from 'crypto'
 export const httpLogger = pinoHttp({
   logger,
 
-  // Generate requestId for every request; attach to req and response header
+  // ── ID strategy ────────────────────────────────────────────────────────────
+  //
+  // requestId    — unique per HTTP request to THIS service (UUID)
+  //                Used to trace a single request through this service's logs.
+  //
+  // correlationId — spans across multiple services in the same user-initiated flow
+  //                 (e.g. frontend → API → async worker → email service).
+  //                 Read from X-Correlation-Id header if the caller supplies it;
+  //                 otherwise fall back to the requestId so it is never absent.
+  //                 Always echo it back in the response header so downstream
+  //                 services and the frontend can include it in their own logs.
+  //
   genReqId: (req, res) => {
-    const id = (req.headers['x-request-id'] as string) ?? randomUUID()
-    res.setHeader('X-Request-Id', id)
-    return id
+    const requestId     = (req.headers['x-request-id']    as string) ?? randomUUID()
+    const correlationId = (req.headers['x-correlation-id'] as string) ?? requestId
+
+    res.setHeader('X-Request-Id',     requestId)
+    res.setHeader('X-Correlation-Id', correlationId)
+
+    // Attach correlationId directly to req so controllers/services can read it
+    ;(req as Record<string, unknown>).correlationId = correlationId
+
+    return requestId   // pino-http stores this as req.id / the reqId field
   },
 
-  // Custom log fields added to every request/response log line
+  // ── Log level per response ─────────────────────────────────────────────────
   customLogLevel: (_req, res, err) => {
     if (err || res.statusCode >= 500) return 'error'
     if (res.statusCode >= 400) return 'warn'
@@ -109,20 +135,21 @@ export const httpLogger = pinoHttp({
   customErrorMessage: (_req, res, err) =>
     `Request failed — ${res.statusCode}: ${err.message}`,
 
-  // Fields to include in each request log
+  // ── Extra fields on every request log line ─────────────────────────────────
   customReceivedObject: (req) => ({
-    action:    'http_request',
-    method:    req.method,
-    url:       req.url,
-    userAgent: req.headers['user-agent'],
+    action:        'http_request',
+    correlationId: (req as Record<string, unknown>).correlationId,
+    method:        req.method,
+    url:           req.url,
+    userAgent:     req.headers['user-agent'],
   }),
 
-  // Fields to include in each response log
+  // ── Extra fields on every response log line ────────────────────────────────
   customSuccessObject: (req, res, val) => ({
-    action:     'http_response',
-    statusCode: res.statusCode,
-    durationMs: val.responseTime,
-    requestId:  res.getHeader('X-Request-Id'),
+    action:        'http_response',
+    correlationId: (req as Record<string, unknown>).correlationId,
+    statusCode:    res.statusCode,
+    durationMs:    val.responseTime,
   }),
 
   // Never log the full body — too much noise and potential PII
@@ -151,9 +178,14 @@ app.use(errorHandler)
 ### Child logger — attach request context once, propagate everywhere
 
 ```ts
-// In a controller — create child logger with request context
+// In a controller — create child logger with full request context
+// correlationId ties this log to the upstream caller's trace
 export const createOrder = asyncHandler(async (req, res) => {
-  const log = req.log.child({ userId: req.user.sub, action: 'createOrder' })
+  const log = req.log.child({
+    userId:        req.user.sub,
+    correlationId: (req as Record<string, unknown>).correlationId,
+    action:        'createOrder',
+  })
 
   log.debug({ body: { productId: req.body.productId, quantity: req.body.quantity } }, 'Creating order')
 
@@ -192,37 +224,48 @@ export async function createOrder(
 
 ## Log field schema — standard fields
 
-Every log line must contain these fields. Pino/pino-http populates the first group automatically.
+Every log line must contain these fields. Pino populates the first two groups automatically — you never need to add them manually.
 
-### Always-present (auto-populated)
-| Field | Type | Example | Source |
+### Always-present — set in logger bindings (automatic)
+| Field | Type | Example | Why it matters |
 |---|---|---|---|
-| `timestamp` | ISO 8601 | `2026-05-14T10:30:00.000Z` | Pino |
-| `level` | string | `info` | Pino |
-| `service` | string | `api` | Logger bindings |
-| `env` | string | `production` | Logger bindings |
-| `message` | string | `Order created` | Your code |
+| `timestamp` | ISO 8601 | `2026-05-14T10:30:00.000Z` | Time-order events across services |
+| `level` | string | `info` | Filter by severity in CloudWatch |
+| `service` | string | `api` | Distinguish logs when multiple services write to the same log group |
+| `version` | string | `1.4.2` | Correlate a bug to the exact deploy/release that introduced it |
+| `env` | string | `production` | Prevent staging noise polluting production dashboards |
+| `host` | string | `ip-10-0-1-42` / `api-fn` | Identify which container/Lambda instance produced the log — critical for container restart debugging |
+| `region` | string | `us-east-1` | Essential in multi-region setups; also required by some compliance audits |
+| `message` | string | `Order created` | Human-readable summary |
 
-### Per-request (populated by pino-http)
-| Field | Type | Example | Source |
+### Per-request — set by pino-http (automatic)
+| Field | Type | Example | Why it matters |
 |---|---|---|---|
-| `requestId` | UUID | `a1b2-c3d4` | pino-http genReqId |
-| `method` | string | `POST` | pino-http |
-| `url` | string | `/api/v1/orders` | pino-http |
-| `statusCode` | number | `201` | pino-http |
-| `durationMs` | number | `43` | pino-http |
+| `requestId` | UUID | `a1b2-c3d4-...` | Trace all logs for a single HTTP request within this service |
+| `correlationId` | UUID | `f9e8-d7c6-...` | Trace a user-initiated flow **across** multiple services; read from `X-Correlation-Id` header, falls back to `requestId` |
+| `method` | string | `POST` | Filter by HTTP method |
+| `url` | string | `/api/v1/orders` | Filter by endpoint |
+| `statusCode` | number | `201` | Filter errors by status |
+| `durationMs` | number | `43` | Detect slow endpoints |
+| `userAgent` | string | `Mozilla/5.0 ...` | Client type for debugging |
 
-### Per-operation (your code adds these)
+### Per-operation — your code adds these
 | Field | Type | When to add | Example |
 |---|---|---|---|
-| `action` | string | Every log line | `createOrder`, `processPayment` |
+| `action` | string | **Every** log line | `order.created`, `auth.signIn`, `stripe.charge` |
 | `userId` | string | Authenticated requests | `sub` from JWT |
+| `correlationId` | string | Child logger in controller | Propagated from pino-http; pass into child logger |
 | `resourceId` | string | Any mutation or read | `orderId`, `productId` |
 | `resourceType` | string | Generic error handlers | `Order`, `Product` |
 | `durationMs` | number | External calls, jobs | `142` |
-| `err` | Error object | Any `logger.error()` | Pino serialises stack |
+| `err` | Error object | Any `logger.error()` | Pino serialises `message` + `stack` automatically |
 | `reason` | string | Warn/error on expected failures | `insufficient_stock`, `token_expired` |
 | `attempt` | number | Retries | `2` |
+
+> **`requestId` vs `correlationId`:**
+> - `requestId` is unique per HTTP request to **this service**. Use it to find all logs for one request.
+> - `correlationId` spans **across services**. The frontend sends it in `X-Correlation-Id`; the API reads it, logs it, and passes it forward to any downstream service it calls. If no upstream caller sends it, it equals the `requestId`.
+> - Always echo `X-Correlation-Id` back in the HTTP response so the frontend and API gateway can link their logs.
 
 ---
 
@@ -460,36 +503,44 @@ Every production log line is a flat JSON object. Example for an `info` business 
 
 ```json
 {
-  "level": "info",
-  "timestamp": "2026-05-14T10:30:42.123Z",
-  "service": "api",
-  "env": "production",
-  "requestId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "userId": "clxyz123",
-  "action": "order.created",
-  "orderId": "clabc456",
-  "total": 49.99,
-  "itemCount": 2,
-  "message": "Order created"
+  "level":         "info",
+  "timestamp":     "2026-05-14T10:30:42.123Z",
+  "service":       "api",
+  "version":       "1.4.2",
+  "env":           "production",
+  "host":          "ip-10-0-1-42",
+  "region":        "us-east-1",
+  "requestId":     "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "correlationId": "f9e8d7c6-b5a4-3210-fedc-ba9876543210",
+  "userId":        "clxyz123",
+  "action":        "order.created",
+  "orderId":       "clabc456",
+  "total":         49.99,
+  "itemCount":     2,
+  "message":       "Order created"
 }
 ```
 
 Error log with stack trace:
 ```json
 {
-  "level": "error",
-  "timestamp": "2026-05-14T10:30:43.456Z",
-  "service": "api",
-  "env": "production",
-  "requestId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "userId": "clxyz123",
-  "action": "stripe.charge",
-  "orderId": "clabc456",
-  "durationMs": 1203,
+  "level":         "error",
+  "timestamp":     "2026-05-14T10:30:43.456Z",
+  "service":       "api",
+  "version":       "1.4.2",
+  "env":           "production",
+  "host":          "ip-10-0-1-42",
+  "region":        "us-east-1",
+  "requestId":     "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "correlationId": "f9e8d7c6-b5a4-3210-fedc-ba9876543210",
+  "userId":        "clxyz123",
+  "action":        "stripe.charge",
+  "orderId":       "clabc456",
+  "durationMs":    1203,
   "err": {
-    "type": "StripeCardError",
+    "type":    "StripeCardError",
     "message": "Your card has insufficient funds.",
-    "stack": "StripeCardError: Your card has insufficient funds.\n    at ..."
+    "stack":   "StripeCardError: Your card has insufficient funds.\n    at ..."
   },
   "message": "Stripe charge failed"
 }

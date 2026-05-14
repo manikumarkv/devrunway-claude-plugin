@@ -40,8 +40,11 @@ Full standards in [logging.md](logging.md). Always-on summary:
 
 ## Backend (Node.js / Express) — see [logging.md § Backend](logging.md)
 
-**Every log line must include:** `requestId · level · timestamp · action · service`  
-Add `userId` on authenticated requests. Add `orderId`, `productId`, etc. for domain context.
+**Every log line must include (auto-set by logger bindings + pino-http):**
+```
+timestamp · level · service · version · env · host · region · requestId · correlationId
+```
+Add `userId` on authenticated requests. Add `action` on every line. Add `orderId`, `productId`, etc. for domain context.
 
 **What to log:**
 - **HTTP in/out** — `pino-http` handles this automatically; no manual call needed
