@@ -350,6 +350,310 @@ Before writing any UI, check this list. If it's here, use shadcn — do not roll
 
 ---
 
+## Constants — single source of truth
+
+All application-wide values live in `src/lib/constants.ts`. Never hard-code a magic value inline — any number, string, or config value used in more than one place belongs here.
+
+```ts
+// src/lib/constants.ts
+
+// ─── Pagination ────────────────────────────────────────────────────────────────
+export const DEFAULT_PAGE_SIZE    = 20
+export const MAX_PAGE_SIZE        = 100
+
+// ─── Upload limits ─────────────────────────────────────────────────────────────
+export const MAX_UPLOAD_SIZE_MB   = 10
+export const MAX_UPLOAD_SIZE_B    = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
+
+// ─── Timing ────────────────────────────────────────────────────────────────────
+export const DEBOUNCE_MS          = 300       // search input debounce delay
+export const TOAST_DURATION_MS    = 4000      // snackbar auto-dismiss
+export const FLAG_POLL_MS         = 30_000    // feature flag refetch interval
+
+// ─── Auth ──────────────────────────────────────────────────────────────────────
+export const TOKEN_REFRESH_BUFFER_S = 60      // refresh token 60s before expiry
+
+// ─── Localisation ─────────────────────────────────────────────────────────────
+export const DEFAULT_LOCALE       = 'en'
+export const SUPPORTED_LOCALES    = ['en', 'fr', 'de'] as const
+export type  Locale               = typeof SUPPORTED_LOCALES[number]
+
+// ─── App ───────────────────────────────────────────────────────────────────────
+export const APP_NAME             = 'MyApp'
+```
+
+```tsx
+// ❌ — magic numbers scattered across files
+const { data } = useQuery({ queryFn: () => fetch('/orders?limit=20') })
+setTimeout(callback, 300)
+
+// ✅ — imported from constants
+import { DEFAULT_PAGE_SIZE, DEBOUNCE_MS } from '@/lib/constants'
+const { data } = useQuery({ queryFn: () => fetch(`/orders?limit=${DEFAULT_PAGE_SIZE}`) })
+setTimeout(callback, DEBOUNCE_MS)
+```
+
+---
+
+## API routes — single file for all endpoint paths
+
+All API endpoint paths live in `src/lib/api-routes.ts`. Never inline a URL string in a component or hook — import it from here.
+
+```ts
+// src/lib/api-routes.ts
+const BASE = '/api/v1'
+
+export const API_ROUTES = {
+  health:  '/health',
+  flags:   `${BASE}/flags`,
+  me:      `${BASE}/me`,
+  meDataExport: `${BASE}/me/data-export`,
+
+  orders: {
+    list:   `${BASE}/orders`,
+    create: `${BASE}/orders`,
+    get:    (id: string) => `${BASE}/orders/${id}`,
+    update: (id: string) => `${BASE}/orders/${id}`,
+    delete: (id: string) => `${BASE}/orders/${id}`,
+    items:  (id: string) => `${BASE}/orders/${id}/items`,
+  },
+
+  users: {
+    list:   `${BASE}/users`,
+    get:    (id: string) => `${BASE}/users/${id}`,
+  },
+} as const
+```
+
+```ts
+// src/features/orders/api/orders.api.ts
+import { useQuery, useMutation } from '@tanstack/react-query'
+import { API_ROUTES } from '@/lib/api-routes'
+import { api } from '@/lib/api'
+
+// ❌ — URL hardcoded inline
+export function useOrders() {
+  return useQuery({ queryFn: () => api.get('/api/v1/orders') })
+}
+
+// ✅ — imported from api-routes
+export function useOrders() {
+  return useQuery({
+    queryKey: ['orders'],
+    queryFn:  () => api.get(API_ROUTES.orders.list),
+  })
+}
+
+export function useOrder(id: string) {
+  return useQuery({
+    queryKey: ['orders', id],
+    queryFn:  () => api.get(API_ROUTES.orders.get(id)),
+    enabled:  !!id,
+  })
+}
+
+export function useCreateOrder() {
+  return useMutation({
+    mutationFn: (data: CreateOrderInput) => api.post(API_ROUTES.orders.create, data),
+  })
+}
+```
+
+---
+
+## Localisation (i18n)
+
+All user-visible strings go through `t()`. Hard-coded English strings in JSX are never acceptable — even if you only ship one language, using `t()` from day one means adding a second language later is a file swap, not a codebase search.
+
+### Setup
+
+```bash
+npm install i18next react-i18next i18next-browser-languagedetector
+```
+
+```ts
+// src/lib/i18n.ts
+import i18n from 'i18next'
+import { initReactI18next } from 'react-i18next'
+import LanguageDetector from 'i18next-browser-languagedetector'
+import enCommon from '@/locales/en/common.json'
+import enOrders from '@/locales/en/orders.json'
+import frCommon from '@/locales/fr/common.json'
+import frOrders from '@/locales/fr/orders.json'
+
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources: {
+      en: { common: enCommon, orders: enOrders },
+      fr: { common: frCommon, orders: frOrders },
+    },
+    defaultNS:    'common',
+    fallbackLng:  'en',
+    supportedLngs: ['en', 'fr', 'de'],
+    interpolation: { escapeValue: false },
+    detection: {
+      order:  ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+    },
+  })
+
+export default i18n
+```
+
+Import it once at the top of `src/main.tsx` before anything renders:
+```tsx
+import './lib/i18n'   // must be first import
+```
+
+### Translation file structure
+
+Namespace per feature. `common` is the default namespace — no namespace argument needed.
+
+```
+src/locales/
+  en/
+    common.json    ← actions, states, validation, pagination (shared)
+    orders.json    ← order-specific labels, messages, status enums
+    users.json     ← user-specific strings
+  fr/
+    common.json
+    orders.json
+    users.json
+```
+
+```json
+// src/locales/en/common.json
+{
+  "actions":    { "save": "Save", "cancel": "Cancel", "delete": "Delete", "edit": "Edit", "create": "Create", "back": "Back" },
+  "states":     { "loading": "Loading…", "saving": "Saving…", "empty": "No results found", "error": "Something went wrong" },
+  "validation": {
+    "required":  "This field is required",
+    "minLength": "Must be at least {{min}} characters",
+    "maxLength": "Must be no more than {{max}} characters",
+    "email":     "Enter a valid email address"
+  },
+  "pagination": { "loadMore": "Load more", "showing": "Showing {{count}} results" }
+}
+```
+
+```json
+// src/locales/en/orders.json
+{
+  "title":        "Orders",
+  "createButton": "New order",
+  "emptyState":   "No orders yet. Create your first one.",
+  "status": {
+    "PENDING":    "Pending",
+    "PROCESSING": "Processing",
+    "SHIPPED":    "Shipped",
+    "DELIVERED":  "Delivered",
+    "CANCELLED":  "Cancelled"
+  },
+  "fields":   { "id": "Order ID", "total": "Total", "status": "Status", "created": "Created" },
+  "messages": { "created": "Order created", "updated": "Order updated", "deleted": "Order deleted" }
+}
+```
+
+### Using translations in components
+
+```tsx
+import { useTranslation } from 'react-i18next'
+
+function OrdersPage() {
+  // namespace = 'orders' → reads from orders.json
+  const { t }  = useTranslation('orders')
+  // namespace = 'common' (default)
+  const { t: tc } = useTranslation()
+
+  return (
+    <>
+      <h1>{t('title')}</h1>
+
+      {/* ❌ — hardcoded string */}
+      <Button>New order</Button>
+
+      {/* ✅ — from translation file */}
+      <Button asChild>
+        <Link to="/orders/new">{t('createButton')}</Link>
+      </Button>
+
+      {/* Interpolation */}
+      <p>{tc('pagination.showing', { count: 42 })}</p>
+
+      {/* Enum → label (store the enum value, display the label) */}
+      <Badge>{t(`status.${order.status}`)}</Badge>
+
+      {/* Common actions */}
+      <Button variant="outline">{tc('actions.cancel')}</Button>
+      <Button>{tc('actions.save')}</Button>
+    </>
+  )
+}
+```
+
+### Zod validation messages — localised
+
+```tsx
+// Use t() inside the schema factory, called inside the component
+function useOrderSchema() {
+  const { t } = useTranslation()
+  return z.object({
+    name: z.string().min(2, t('validation.minLength', { min: 2 })),
+    status: z.enum(['PENDING', 'SHIPPED', 'DELIVERED', 'CANCELLED'], {
+      errorMap: () => ({ message: t('validation.required') }),
+    }),
+  })
+}
+
+function OrderForm() {
+  const schema = useOrderSchema()
+  const form = useForm({ resolver: zodResolver(schema) })
+  // …
+}
+```
+
+### Language switcher
+
+```tsx
+import { useTranslation } from 'react-i18next'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { SUPPORTED_LOCALES } from '@/lib/constants'
+
+const LOCALE_LABELS: Record<string, string> = {
+  en: 'English',
+  fr: 'Français',
+  de: 'Deutsch',
+}
+
+function LanguageSwitcher() {
+  const { i18n } = useTranslation()
+  return (
+    <Select value={i18n.language} onValueChange={lng => i18n.changeLanguage(lng)}>
+      <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+      <SelectContent>
+        {SUPPORTED_LOCALES.map(lng => (
+          <SelectItem key={lng} value={lng}>{LOCALE_LABELS[lng]}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
+```
+
+### i18n rules
+
+- Every user-visible string goes through `t()` — no hardcoded English in JSX
+- Namespace per feature — keep `common` lean (shared only)
+- Keys are `camelCase` paths: `orders.status.PENDING`, `common.actions.save`
+- Interpolation for dynamic values: `{{min}}`, `{{count}}` — never string concatenation
+- Enum labels live in the translation file, not in a TS `Map` or `switch`
+- Backend API error codes (`NOT_FOUND`, `FORBIDDEN`) are translated on the frontend, not in the API response
+
+---
+
 ## Re-render optimization — HIGH IMPACT
 
 ### Never define components inside components

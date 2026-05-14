@@ -12,7 +12,14 @@ Full rules in [react.md](react.md). Always-on summary:
 - Server state: React Query v5 — never `fetch` in `useEffect`
 - Routing: React Router v6
 - Forms: React Hook Form + Zod + shadcn `<Form>` components
+- i18n: react-i18next — every user-visible string goes through `t()`
 - Testing: Vitest + React Testing Library + MSW + Playwright
+
+**Single-file rules (enforced, no exceptions):**
+- `src/lib/constants.ts` — every magic value (numbers, limits, timeouts, locale list)
+- `src/lib/api-routes.ts` — every API endpoint path, including parameterised ones
+- `src/lib/i18n.ts` — i18next init; `src/locales/<lang>/<namespace>.json` for strings
+- Never inline a URL string, page size, debounce delay, or user-visible label in a component
 
 **shadcn/ui rules:**
 - Install: `npx shadcn@latest add <component>` — copies source into `src/components/ui/`

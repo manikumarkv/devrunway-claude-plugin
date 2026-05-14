@@ -234,13 +234,24 @@ frontend/
 │   │   ├── utils/                     ← Pure utility functions (formatDate …)
 │   │   └── types/                     ← Global shared TS types (Paginated<T>, ApiResponse<T> …)
 │   │
-│   ├── lib/                           ← Third-party client setup (one file per library)
-│   │   ├── utils.ts                   ← cn() helper: import { clsx } + tailwind-merge
+│   ├── lib/                           ← Third-party client setup + shared utilities
+│   │   ├── constants.ts               ← ALL app-wide constants (single source of truth)
+│   │   ├── api-routes.ts              ← ALL API endpoint paths (never inline strings)
+│   │   ├── i18n.ts                    ← i18next initialisation + language detector
+│   │   ├── utils.ts                   ← cn() helper: clsx + tailwind-merge
 │   │   ├── queryClient.ts             ← React Query client + global error handler
 │   │   ├── auth.ts                    ← Cognito Amplify Auth config
 │   │   ├── flags.ts                   ← Feature flag client (GET /api/v1/flags + useFlag hook)
 │   │   ├── api.ts                     ← Fetch wrapper — base URL, auth header, error normalisation
 │   │   └── logger.ts                  ← Client-side error logging
+│   │
+│   ├── locales/                       ← i18n translation files (one folder per locale)
+│   │   ├── en/
+│   │   │   ├── common.json            ← Shared strings (save, cancel, loading, errors …)
+│   │   │   └── orders.json            ← Feature-specific strings
+│   │   └── fr/
+│   │       ├── common.json
+│   │       └── orders.json
 │   │
 │   ├── router/
 │   │   └── index.tsx                  ← React Router — route definitions + auth guards
@@ -351,6 +362,8 @@ backend/
 │   │   └── index.ts                   ← Mount all routers onto app
 │   │
 │   ├── lib/                           ← Singleton clients and utilities
+│   │   ├── constants.ts               ← ALL app-wide constants (single source of truth)
+│   │   ├── api-routes.ts              ← ALL route path strings used in Express routers
 │   │   ├── prisma.ts                  ← PrismaClient singleton (avoids connection exhaustion)
 │   │   ├── logger.ts                  ← Pino with PII redaction serialiser
 │   │   ├── cognito.ts                 ← JWT verification + Cognito JWKS client
@@ -611,6 +624,372 @@ sequenceDiagram
 ```
 
 Flags are not secrets — it is safe to expose all flag values to the frontend. Sensitive configuration (server-side kill switches, auth logic gates) uses SSM or environment variables instead.
+
+---
+
+## Constants, API Routes & Localisation
+
+### Rule: one file per concern, one file per layer
+
+```mermaid
+flowchart LR
+    subgraph FE["Frontend (src/lib/)"]
+        FC["constants.ts\napp-wide magic values"]
+        FA["api-routes.ts\nall endpoint paths"]
+        FI["i18n.ts\ni18next setup"]
+        FL["locales/en/\ncommon.json · orders.json …"]
+    end
+
+    subgraph BE["Backend (src/lib/)"]
+        BC["constants.ts\napp-wide magic values"]
+        BA["api-routes.ts\nExpress route path strings"]
+    end
+
+    FC -.->|"same value both sides\ne.g. DEFAULT_PAGE_SIZE"| BC
+    FA -.->|"FE constructs URL\nBE declares path"| BA
+```
+
+**Rule:** if a value appears more than once, it belongs in `constants.ts`. If a URL string appears more than once, it belongs in `api-routes.ts`. Never hard-code either inline.
+
+---
+
+### Frontend — `src/lib/constants.ts`
+
+```ts
+// src/lib/constants.ts
+// ─── Pagination ────────────────────────────────────────────────────────────────
+export const DEFAULT_PAGE_SIZE   = 20
+export const MAX_PAGE_SIZE       = 100
+
+// ─── Upload limits ─────────────────────────────────────────────────────────────
+export const MAX_UPLOAD_SIZE_MB  = 10
+export const MAX_UPLOAD_SIZE_B   = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
+
+// ─── Timing ────────────────────────────────────────────────────────────────────
+export const DEBOUNCE_MS         = 300        // search input debounce
+export const TOAST_DURATION_MS   = 4000       // snackbar auto-dismiss
+export const FLAG_POLL_MS        = 30_000     // feature flag refetch interval
+
+// ─── Auth ──────────────────────────────────────────────────────────────────────
+export const TOKEN_REFRESH_BUFFER_S = 60      // refresh token 60s before expiry
+
+// ─── Localisation ─────────────────────────────────────────────────────────────
+export const DEFAULT_LOCALE      = 'en'
+export const SUPPORTED_LOCALES   = ['en', 'fr', 'de'] as const
+export type  Locale              = typeof SUPPORTED_LOCALES[number]
+
+// ─── App ───────────────────────────────────────────────────────────────────────
+export const APP_NAME            = 'MyApp'
+export const APP_VERSION         = __APP_VERSION__  // injected by Vite define
+```
+
+---
+
+### Frontend — `src/lib/api-routes.ts`
+
+All API endpoint paths in one place. Functions for parameterised paths, plain strings for fixed paths.
+
+```ts
+// src/lib/api-routes.ts
+
+const BASE = '/api/v1'
+
+export const API_ROUTES = {
+  // ─── Health ──────────────────────────────────────────────────────────────────
+  health:   '/health',
+
+  // ─── Auth / me ───────────────────────────────────────────────────────────────
+  me:        `${BASE}/me`,
+  meDataExport: `${BASE}/me/data-export`,
+
+  // ─── Feature flags ────────────────────────────────────────────────────────────
+  flags:     `${BASE}/flags`,
+
+  // ─── Orders ──────────────────────────────────────────────────────────────────
+  orders: {
+    list:    `${BASE}/orders`,
+    create:  `${BASE}/orders`,
+    get:     (id: string) => `${BASE}/orders/${id}`,
+    update:  (id: string) => `${BASE}/orders/${id}`,
+    delete:  (id: string) => `${BASE}/orders/${id}`,
+    items:   (id: string) => `${BASE}/orders/${id}/items`,
+  },
+
+  // ─── Users (admin) ────────────────────────────────────────────────────────────
+  users: {
+    list:    `${BASE}/users`,
+    get:     (id: string) => `${BASE}/users/${id}`,
+    anonymise: (id: string) => `${BASE}/users/${id}/anonymise`,
+  },
+} as const
+
+// Usage in orders.api.ts:
+// import { API_ROUTES } from '@/lib/api-routes'
+// const res = await api.get(API_ROUTES.orders.list)
+// const res = await api.get(API_ROUTES.orders.get(id))
+```
+
+---
+
+### Backend — `src/lib/constants.ts`
+
+```ts
+// src/lib/constants.ts
+
+// ─── Pagination ────────────────────────────────────────────────────────────────
+export const DEFAULT_PAGE_SIZE       = 20
+export const MAX_PAGE_SIZE           = 100
+
+// ─── Security ─────────────────────────────────────────────────────────────────
+export const BCRYPT_ROUNDS           = 12
+export const MAX_LOGIN_ATTEMPTS      = 5
+export const LOCKOUT_DURATION_MS     = 15 * 60 * 1000   // 15 minutes
+
+// ─── Data retention (days) ────────────────────────────────────────────────────
+export const RETENTION = {
+  DELETED_USER_PII_DAYS: 30,
+  AUTH_LOG_DAYS:         90,
+  SESSION_DAYS:           7,
+} as const
+
+// ─── Feature flags ────────────────────────────────────────────────────────────
+export const FLAG_CACHE_TTL_MS       = 30_000   // AppConfig poll interval
+
+// ─── File uploads ─────────────────────────────────────────────────────────────
+export const MAX_UPLOAD_SIZE_B       = 10 * 1024 * 1024   // 10 MB
+
+// ─── CORS ─────────────────────────────────────────────────────────────────────
+export const ALLOWED_ORIGINS         = [
+  'https://myapp.com',
+  'https://staging.myapp.com',
+  ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:5173'] : []),
+]
+```
+
+---
+
+### Backend — `src/lib/api-routes.ts`
+
+Express route path strings — used in both router registration and any place that references a path programmatically (e.g. logging, tests).
+
+```ts
+// src/lib/api-routes.ts
+
+const V1 = '/api/v1'
+
+export const ROUTES = {
+  health:        '/health',
+  flags:         `${V1}/flags`,
+  me:            `${V1}/me`,
+  meDataExport:  `${V1}/me/data-export`,
+
+  orders: {
+    base:        `${V1}/orders`,          // GET (list), POST (create)
+    byId:        `${V1}/orders/:id`,      // GET, PATCH, DELETE
+    items:       `${V1}/orders/:id/items`,
+  },
+
+  users: {
+    base:        `${V1}/users`,
+    byId:        `${V1}/users/:id`,
+    anonymise:   `${V1}/users/:id/anonymise`,
+  },
+} as const
+
+// Usage in orders.routes.ts:
+// import { ROUTES } from '@/lib/api-routes'
+// router.get(ROUTES.orders.base, list)
+// router.post(ROUTES.orders.base, create)
+// router.get(ROUTES.orders.byId, getById)
+```
+
+---
+
+### Localisation — `src/lib/i18n.ts`
+
+i18next with browser language detection. Ready to use — activate by wrapping any string with `t()`.
+
+```bash
+npm install i18next react-i18next i18next-browser-languagedetector
+```
+
+```ts
+// src/lib/i18n.ts
+import i18n from 'i18next'
+import { initReactI18next } from 'react-i18next'
+import LanguageDetector from 'i18next-browser-languagedetector'
+
+// Import all locale namespaces
+import enCommon from '@/locales/en/common.json'
+import enOrders from '@/locales/en/orders.json'
+import frCommon from '@/locales/fr/common.json'
+import frOrders from '@/locales/fr/orders.json'
+
+i18n
+  .use(LanguageDetector)          // detects browser language
+  .use(initReactI18next)
+  .init({
+    resources: {
+      en: { common: enCommon, orders: enOrders },
+      fr: { common: frCommon, orders: frOrders },
+    },
+    defaultNS:   'common',        // useTranslation() without ns arg → common.json
+    fallbackLng: 'en',
+    supportedLngs: ['en', 'fr', 'de'],
+    interpolation: { escapeValue: false },
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+    },
+  })
+
+export default i18n
+```
+
+Bootstrap in `src/main.tsx`:
+
+```tsx
+// src/main.tsx
+import './lib/i18n'              // import before anything renders
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App'
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+)
+```
+
+### Translation files
+
+```json
+// src/locales/en/common.json
+{
+  "actions": {
+    "save":    "Save",
+    "cancel":  "Cancel",
+    "delete":  "Delete",
+    "edit":    "Edit",
+    "create":  "Create",
+    "back":    "Back",
+    "confirm": "Confirm"
+  },
+  "states": {
+    "loading":  "Loading…",
+    "saving":   "Saving…",
+    "empty":    "No results found",
+    "error":    "Something went wrong"
+  },
+  "validation": {
+    "required":   "This field is required",
+    "minLength":  "Must be at least {{min}} characters",
+    "maxLength":  "Must be no more than {{max}} characters",
+    "email":      "Enter a valid email address",
+    "url":        "Enter a valid URL"
+  },
+  "pagination": {
+    "loadMore":   "Load more",
+    "showing":    "Showing {{count}} results"
+  }
+}
+```
+
+```json
+// src/locales/en/orders.json
+{
+  "title":        "Orders",
+  "createButton": "New order",
+  "emptyState":   "No orders yet. Create your first one.",
+  "status": {
+    "PENDING":    "Pending",
+    "PROCESSING": "Processing",
+    "SHIPPED":    "Shipped",
+    "DELIVERED":  "Delivered",
+    "CANCELLED":  "Cancelled"
+  },
+  "fields": {
+    "id":      "Order ID",
+    "total":   "Total",
+    "status":  "Status",
+    "created": "Created"
+  },
+  "messages": {
+    "created": "Order created successfully",
+    "updated": "Order updated",
+    "deleted": "Order deleted"
+  }
+}
+```
+
+```json
+// src/locales/fr/common.json
+{
+  "actions": {
+    "save":    "Enregistrer",
+    "cancel":  "Annuler",
+    "delete":  "Supprimer",
+    "edit":    "Modifier",
+    "create":  "Créer",
+    "back":    "Retour",
+    "confirm": "Confirmer"
+  },
+  "states": {
+    "loading":  "Chargement…",
+    "saving":   "Enregistrement…",
+    "empty":    "Aucun résultat",
+    "error":    "Une erreur s'est produite"
+  }
+}
+```
+
+### Using translations in components
+
+```tsx
+// ✅ — always use t(), never hardcode user-visible strings
+import { useTranslation } from 'react-i18next'
+
+function OrdersPage() {
+  const { t } = useTranslation('orders')         // namespace = orders.json
+  const { t: tc } = useTranslation('common')     // namespace = common.json
+
+  return (
+    <>
+      <h1>{t('title')}</h1>
+      <Button asChild>
+        <Link to="/orders/new">{t('createButton')}</Link>
+      </Button>
+    </>
+  )
+}
+
+// Interpolation
+tc('validation.minLength', { min: 3 })   // "Must be at least 3 characters"
+tc('pagination.showing',   { count: 42 }) // "Showing 42 results"
+
+// Enum labels from translation file
+const statusLabel = t(`status.${order.status}`)  // t('status.PENDING') → "Pending"
+
+// Language switcher
+import { useTranslation } from 'react-i18next'
+import { SUPPORTED_LOCALES } from '@/lib/constants'
+
+function LanguageSwitcher() {
+  const { i18n } = useTranslation()
+  return (
+    <Select value={i18n.language} onValueChange={lng => i18n.changeLanguage(lng)}>
+      <SelectTrigger><SelectValue /></SelectTrigger>
+      <SelectContent>
+        {SUPPORTED_LOCALES.map(lng => (
+          <SelectItem key={lng} value={lng}>{lng.toUpperCase()}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
+```
 
 ---
 
