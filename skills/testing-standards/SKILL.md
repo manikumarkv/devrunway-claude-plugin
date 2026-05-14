@@ -18,7 +18,7 @@ Full standards in [testing.md](testing.md). Always-on summary:
 - `waitFor` polling — prefer `findBy*` queries
 
 **Always:**
-- Test the three states: loading, error, empty, and success
+- Test all four states: loading, success, empty, and error
 - One logical assertion per test (multiple `expect` calls are fine if they test the same behaviour)
 - `userEvent.setup()` at the top of each test
 - Wrap with a custom `createWrapper()` that provides QueryClient + Router

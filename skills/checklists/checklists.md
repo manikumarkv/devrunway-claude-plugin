@@ -31,7 +31,7 @@ Use when: creating a new route, modifying an existing controller, adding a new H
 ### Auth & authorization
 - [ ] `requireAuth` middleware applied to the router (or individual route if mixed auth)
 - [ ] Ownership check performed — user can only access their own resources unless admin
-- [ ] `requireGroup('admin')` on admin-only sub-routes
+- [ ] `requireGroup('Admin')` on admin-only sub-routes (Cognito group names are case-sensitive — use 'Admin')
 - [ ] JWT claims used from `req.user` — never re-fetch user in controller
 
 ### Error handling
@@ -308,7 +308,7 @@ Use when: writing a new Prisma query, modifying an existing repository function,
 
 ### Security
 - [ ] Query scoped to the authenticated user: `where: { userId: req.user.sub }` — no cross-user data leakage
-- [ ] Admin-bypass queries gated behind `requireGroup('admin')` middleware
+- [ ] Admin-bypass queries gated behind `requireGroup('Admin')` middleware
 - [ ] No raw `$executeRaw` with user-supplied data without parameterisation
 
 ---

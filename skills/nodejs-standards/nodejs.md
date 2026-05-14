@@ -52,13 +52,13 @@ export const logger = pino({
 
 ### Custom error classes
 ```ts
-// utils/errors.ts
+// utils/errors.ts — canonical signatures; must match error-handling skill
 export class AppError extends Error {
   constructor(
-    public readonly code: string,
-    message: string,
-    public readonly statusCode: number = 400,
-    public readonly details: unknown[] = [],
+    public readonly message: string,   // human-readable; may be shown to user
+    public readonly statusCode: number,
+    public readonly code: string,      // machine-readable; stable across versions
+    public readonly details?: Record<string, string>, // field-level errors (validation)
   ) {
     super(message);
     this.name = 'AppError';
@@ -66,41 +66,56 @@ export class AppError extends Error {
 }
 
 export class NotFoundError extends AppError {
-  constructor(resource: string, id: string) {
-    super('NOT_FOUND', `${resource} with id '${id}' not found`, 404);
+  constructor(resource: string, id?: string) {
+    super(
+      id ? `${resource} with id "${id}" not found` : `${resource} not found`,
+      404,
+      'NOT_FOUND',
+    );
   }
 }
 
 export class UnauthorizedError extends AppError {
   constructor(message = 'Unauthorized') {
-    super('UNAUTHORIZED', message, 401);
+    super(message, 401, 'UNAUTHORIZED');
   }
 }
 
 export class ForbiddenError extends AppError {
   constructor(message = 'Insufficient permissions') {
-    super('FORBIDDEN', message, 403);
+    super(message, 403, 'FORBIDDEN');
   }
 }
 ```
 
 ### Centralized error handler
 ```ts
-// middleware/errorHandler.ts
+// middleware/errorHandler.ts — delegates to the full handler in error-handling skill
+// This is a minimal illustration; use the full version from error-handling/error-handling.md
 import type { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
 import { AppError } from '../utils/errors';
 import { logger } from '../utils/logger';
+import { API_VERSION } from '../lib/constants';
+
+function buildMeta(req: Request) {
+  return {
+    requestId: (req.headers as Record<string, string>)['x-request-id'] ?? crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    version:   API_VERSION,
+  }
+}
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
-  const requestId = (req as any).id;
-  const userId = (req as any).user?.sub;
+  const requestId = (req.headers as Record<string, string>)['x-request-id'];
+  const userId = (req as { user?: { sub: string } }).user?.sub;
 
   if (err instanceof ZodError) {
     logger.warn({ requestId, userId, err: err.issues }, 'Validation error');
     return res.status(400).json({
       success: false,
-      error: { code: 'VALIDATION_ERROR', message: 'Invalid input', details: err.issues },
+      error: { code: 'VALIDATION_ERROR', message: 'Validation failed', details: Object.fromEntries(err.issues.map(i => [i.path.join('.'), i.message])), path: req.path },
+      meta: buildMeta(req),
     });
   }
 
@@ -112,14 +127,16 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     }
     return res.status(err.statusCode).json({
       success: false,
-      error: { code: err.code, message: err.message, details: err.details },
+      error: { code: err.code, message: err.message, ...(err.details ? { details: err.details } : {}), path: req.path },
+      meta: buildMeta(req),
     });
   }
 
   logger.error({ requestId, userId, err }, 'Unhandled error');
   res.status(500).json({
     success: false,
-    error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' },
+    error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred', path: req.path },
+    meta: buildMeta(req),
   });
 };
 ```

@@ -281,39 +281,42 @@ export function LoadingButton({ isLoading, children, className, ...props }: Load
 }
 ```
 
-### Toast notifications
+### Toast notifications — use Sonner (not the built-in shadcn `useToast` hook)
+
+```bash
+# Install via shadcn CLI
+npx shadcn@latest add sonner
+```
 
 ```tsx
-// src/lib/utils.ts already has cn() — shadcn toast uses Sonner or built-in Toaster
-
-// In App.tsx — add Toaster once at root
-import { Toaster } from '@/components/ui/toaster'
+// App.tsx — mount Toaster once at the root
+import { Toaster } from '@/components/ui/sonner'
 
 function App() {
   return (
     <>
       <RouterProvider router={router} />
-      <Toaster />
+      <Toaster position="bottom-right" richColors closeButton />
     </>
   )
 }
 
-// In any component — use useToast hook
-import { useToast } from '@/components/ui/use-toast'
+// In any component — import toast directly from sonner (no hook needed)
+import { toast } from 'sonner'
 
 function OrderForm() {
-  const { toast } = useToast()
-
   async function onSubmit(values: FormValues) {
     try {
       await createOrder(values)
-      toast({ title: 'Order created', description: 'Your order is being processed.' })
+      toast.success('Order created', { description: 'Your order is being processed.' })
     } catch {
-      toast({ title: 'Error', description: 'Failed to create order.', variant: 'destructive' })
+      toast.error('Failed to create order')
     }
   }
 }
 ```
+
+> The older shadcn built-in `useToast` / `@/components/ui/use-toast` pattern is **deprecated** — do not use it in new code.
 
 ### Available components — check before building
 

@@ -325,19 +325,32 @@ const posts = await prisma.post.findMany({
 
 ### Pagination — always use cursor-based for large datasets
 
+Use the `where: { id: { lt: decodedCursor } }` pattern — consistent with `api-conventions.md`.
+Do NOT use Prisma's native `cursor: { id }` + `skip: 1` pattern for new code — it behaves
+differently under concurrent inserts and is harder to compose with other `where` filters.
+
 ```ts
 // ❌ — offset pagination is slow on large tables (PostgreSQL scans from row 0)
 const posts = await prisma.post.findMany({ skip: 10000, take: 20 })
 
-// ✅ — cursor pagination: O(1) regardless of depth
+// ❌ — Prisma native cursor with skip: 1 (avoid — inconsistent with api-conventions)
 const posts = await prisma.post.findMany({
   take: 20,
   skip: cursor ? 1 : 0,
   cursor: cursor ? { id: cursor } : undefined,
-  orderBy: { createdAt: 'desc' },
-  where: { deletedAt: null },
 })
-const nextCursor = posts[posts.length - 1]?.id ?? null
+
+// ✅ — where-filter cursor pattern (consistent with api-conventions + pagination utils)
+import { decodeCursor, buildNextCursor } from '../utils/pagination'
+
+const cursorWhere = cursor ? { id: { lt: decodeCursor(cursor).id } } : {}
+
+const posts = await prisma.post.findMany({
+  where: { deletedAt: null, ...cursorWhere },
+  orderBy: { createdAt: 'desc' },
+  take: limit,
+})
+const nextCursor = buildNextCursor(posts, limit)  // null when posts.length < limit
 ```
 
 ### Soft deletes — always filter deletedAt in queries

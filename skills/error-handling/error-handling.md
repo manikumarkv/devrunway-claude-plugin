@@ -396,13 +396,13 @@ Every response follows this shape. Never deviate.
 
 ```ts
 // Success
-{ "success": true, "data": { ... } }
+{ "success": true, "data": { ... }, "meta": { "requestId": "...", "timestamp": "...", "version": "v1" } }
 
-// Success with pagination
-{ "success": true, "data": [...], "meta": { "nextCursor": "...", "total": 42 } }
+// Success with pagination — pagination is a separate key, NOT inside meta
+{ "success": true, "data": [...], "pagination": { "nextCursor": "...", "total": 42, "limit": 20, "hasMore": true }, "meta": { "requestId": "...", "timestamp": "...", "version": "v1" } }
 
-// Error (from errorHandler)
-{ "error": { "message": "...", "code": "NOT_FOUND", "details": { ... } } }
+// Error (from errorHandler) — always includes success: false and meta
+{ "success": false, "error": { "message": "...", "code": "NOT_FOUND", "path": "/api/v1/orders/clxyz", "details": { ... } }, "meta": { "requestId": "...", "timestamp": "...", "version": "v1" } }
 ```
 
 ---
@@ -464,7 +464,7 @@ Set a global `onError` on the QueryClient. Every query and mutation gets it auto
 ```ts
 // src/lib/queryClient.ts
 import { QueryClient } from '@tanstack/react-query'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import * as Sentry from '@sentry/react'
 import { ApiError } from '../utils/errors'
 
@@ -494,7 +494,7 @@ export const queryClient = new QueryClient({
         }
         // 5xx or network error — unexpected, report to Sentry
         Sentry.captureException(error)
-        toast.error('Something went wrong. Please try again.')
+        toast.error('Something went wrong. Please try again.', { description: 'Our team has been notified.' })
       },
     },
   },
@@ -531,6 +531,8 @@ export function useCreateOrder() {
 
 ```tsx
 // src/features/orders/components/OrderForm/OrderForm.tsx
+import { toast } from 'sonner'
+
 export function OrderForm() {
   const { register, handleSubmit, setError, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(createOrderSchema),

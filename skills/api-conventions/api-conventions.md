@@ -328,15 +328,18 @@ Always cursor-based. Never offset (`?page=2&pageSize=20`) — it breaks under co
 GET /api/v1/orders?limit=20&cursor=<encodedCursor>
 ```
 
-**Response:**
+**Response:** (`pagination` is a separate top-level key — cursor and counts are NOT inside `meta`)
 ```json
 {
   "success": true,
   "data": [...],
-  "meta": {
+  "pagination": {
     "nextCursor": "eyJpZCI6ImFiYzEyMyJ9",
-    "total": 84
-  }
+    "total": 84,
+    "limit": 20,
+    "hasMore": true
+  },
+  "meta": { "requestId": "a1b2-c3d4", "timestamp": "2026-05-14T10:00:00.000Z", "version": "v1" }
 }
 ```
 
@@ -418,7 +421,7 @@ export function useOrders() {
         `/api/v1/orders?limit=20${pageParam ? `&cursor=${pageParam}` : ''}`
       ),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.meta.nextCursor ?? undefined,
+    getNextPageParam: (lastPage) => lastPage.pagination.nextCursor ?? undefined,
   })
 }
 ```

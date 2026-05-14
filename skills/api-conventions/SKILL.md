@@ -7,9 +7,9 @@ user-invocable: false
 Full standards in [api-conventions.md](api-conventions.md). Always-on summary:
 
 **Response envelope — always:**
-- Success: `{ "success": true, "data": <T> }`
-- Success + pagination: `{ "success": true, "data": <T[]>, "meta": { "nextCursor": "...", "total": 42 } }`
-- Error: `{ "error": { "message": "...", "code": "NOT_FOUND", "details": { ... } } }`
+- Success: `{ "success": true, "data": <T>, "meta": { "requestId": "...", "timestamp": "...", "version": "v1" } }`
+- Success + pagination: `{ "success": true, "data": <T[]>, "pagination": { "nextCursor": "...", "total": 42, "limit": 20, "hasMore": true }, "meta": { ... } }`
+- Error: `{ "success": false, "error": { "code": "NOT_FOUND", "message": "...", "path": "..." }, "meta": { ... } }`
 
 **Routes:**
 - Prefix: `/api/v1/`

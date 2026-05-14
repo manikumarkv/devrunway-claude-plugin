@@ -59,9 +59,9 @@ export function createWrapper() {
 
   return function Wrapper({ children }: { children: React.ReactNode }) {
     return (
-      <QueryClient client={queryClient}>
+      <QueryClientProvider client={queryClient}>
         <MemoryRouter>{children}</MemoryRouter>
-      </QueryClient>
+      </QueryClientProvider>
     )
   }
 }

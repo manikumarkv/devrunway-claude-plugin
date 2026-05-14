@@ -106,7 +106,8 @@ if (process.env.NODE_ENV !== 'production') {
     }),
   )
 
-  console.log('📖 Swagger UI: http://localhost:3000/api-docs')
+  // eslint-disable-next-line no-console -- startup info printed once; logger not available yet
+  process.stdout.write('📖 Swagger UI: http://localhost:3000/api-docs\n')
 }
 ```
 
@@ -409,7 +410,7 @@ import { buildOpenApiSpec } from '../src/docs/openapi'
 
 const spec = buildOpenApiSpec()
 fs.writeFileSync('openapi.json', JSON.stringify(spec, null, 2))
-console.log('✅ openapi.json written')
+process.stdout.write('✅ openapi.json written\n')  // script context — no app logger available
 ```
 
 ```json
