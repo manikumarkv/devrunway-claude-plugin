@@ -20,12 +20,25 @@ Full standards in [sql.md](sql.md). Always-on summary:
 - N+1 is never acceptable — use `include` or `select` with nested relations
 - Wrap multi-step operations in `prisma.$transaction()`
 
+**Safe migrations — expand-contract pattern** (required for any rename, removal, or type change on a live table):
+1. **Expand** — add new column (nullable), dual-write in app, deploy
+2. **Migrate** — backfill existing rows in batches (≤1000 rows/query), add NOT NULL with `NOT VALID` + `VALIDATE` to avoid table lock
+3. **Contract** — remove old column after confirming zero references in running code
+
+```bash
+# Never drop a column without deploying the app change first
+# Always diff before applying to production
+npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script
+grep -E 'DROP COLUMN|NOT NULL|ALTER TYPE' prisma/migrations/*/migration.sql   # flag for review
+```
+
 **Never:**
 - Store passwords in plaintext (use bcrypt/argon2)
 - Store tokens or secrets in the database without hashing
 - Delete rows that have audit/compliance value — use soft deletes
 - Run migrations in application startup code
 - Use `deleteMany` without a `where` clause
+- Apply a breaking schema change (rename/drop/type change) in a single deploy — always use expand-contract
 
 
 **Related skills — apply together:**
