@@ -51,7 +51,7 @@ grep -rL 'Related skills' skills/*/SKILL.md | head -20
 git log --oneline -50 | grep -oE '/(scaffold|design|review|debug|deploy|branch|pr|test|fix|task|logs)' | sort | uniq -c | sort -rn
 
 # 7. Recent commits — what areas are changing most?
-git log --oneline -30 --name-only | grep -E '\.ts$|\.tsx$' | grep -oE 'src/[^/]+/' | sort | uniq -c | sort -rn
+git log --oneline -30 --name-only | grep 'src/' | grep -oE 'src/[^/]+/' | sort | uniq -c | sort -rn
 ```
 
 Read all REVIEW-*.md files found. Extract:

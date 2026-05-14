@@ -1,43 +1,45 @@
 # Data Governance Standards
 
+Universal principles for handling personal data. For ORM-specific, framework-specific, or cloud-specific implementation, consult your installed layer skills.
+
 ---
 
 ## PII field identification
 
-Tag every Prisma field that holds personal data with a `// @pii` comment. This makes PII auditable with a simple grep.
+Tag every field that holds personal data with a `// @pii` annotation. This makes PII auditable with a simple grep.
 
-```prisma
-model User {
-  id              String    @id @default(cuid())
-  email           String    @unique  // @pii
-  name            String?            // @pii
-  phone           String?            // @pii
-  dateOfBirth     DateTime?          // @pii:sensitive
-  addressLine1    String?            // @pii
-  addressLine2    String?            // @pii
-  city            String?            // @pii
-  country         String?            // @pii:derived
-  ipAddress       String?            // @pii:derived
-  consentMarketing Boolean  @default(false)
-  consentAnalytics Boolean  @default(false)
-  consentDate      DateTime?
-  deletedAt       DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  @@map("users")
-}
+```
+Entity: User
+Fields:
+  id              — unique identifier
+  email           — String, unique          // @pii
+  name            — String, optional        // @pii
+  phone           — String, optional        // @pii
+  dateOfBirth     — Date, optional          // @pii:sensitive
+  addressLine1    — String, optional        // @pii
+  addressLine2    — String, optional        // @pii
+  city            — String, optional        // @pii
+  country         — String, optional        // @pii:derived
+  ipAddress       — String, optional        // @pii:derived
+  consentMarketing — Boolean, default false
+  consentAnalytics — Boolean, default false
+  consentDate      — Timestamp, optional
+  deletedAt        — Timestamp, optional    (soft delete)
+  createdAt        — Timestamp, auto
+  updatedAt        — Timestamp, auto
 ```
 
 **PII tiers:**
 - `// @pii` — directly identifies a person (email, name, phone)
-- `// @pii:sensitive` — special category (health, financial, biometric)
+- `// @pii:sensitive` — special category data (health, financial, biometric)
 - `// @pii:derived` — indirectly identifying (IP address, device ID, location)
 
 Audit all PII fields with:
 ```bash
-grep -rn '@pii' prisma/schema.prisma
+grep -rn '@pii' <your-schema-file>
 ```
+
+_(Use your database layer's annotation or comment convention to mark PII fields in the schema)_
 
 ---
 
@@ -45,42 +47,28 @@ grep -rn '@pii' prisma/schema.prisma
 
 Never hard-delete a user. Anonymise all PII in place, then soft-delete.
 
-```ts
-// src/services/user.service.ts
+```
+function anonymiseUser(userId):
+  // 1. Replace all @pii fields with anonymous values
+  update User where id = userId:
+    email = "deleted-{userId}@redacted.invalid"
+    name = null
+    phone = null
+    dateOfBirth = null
+    addressLine1 = null
+    addressLine2 = null
+    city = null
+    country = null
+    ipAddress = null
+    deletedAt = now()
 
-const PII_ANONYMOUS_VALUES = {
-  email: (id: string) => `deleted-${id}@redacted.invalid`,
-  name: null,
-  phone: null,
-  dateOfBirth: null,
-  addressLine1: null,
-  addressLine2: null,
-  city: null,
-  country: null,
-  ipAddress: null,
-}
+  // 2. Anonymise PII in related records
+  // Keep records for audit trail — only null out the personal fields
+  update Order where userId = userId:
+    shippingAddress = "[redacted]"
 
-export async function anonymiseUser(userId: string): Promise<void> {
-  // 1. Anonymise the user record
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      ...PII_ANONYMOUS_VALUES,
-      email: PII_ANONYMOUS_VALUES.email(userId),
-      deletedAt: new Date(),
-    },
-  })
-
-  // 2. Anonymise related records that contain PII
-  //    Keep records for audit trail — only null out the personal fields
-  await prisma.order.updateMany({
-    where: { userId },
-    data: { shippingAddress: '[redacted]' },
-  })
-
-  // 3. Log the erasure (without PII — just the user ID and timestamp)
-  logger.info({ userId, action: 'user_anonymised' }, 'User data anonymised on erasure request')
-}
+  // 3. Log the erasure (without PII — just userId and timestamp)
+  log info: { userId, action: "user_anonymised", timestamp: now() }
 ```
 
 **Do NOT:**
@@ -92,48 +80,37 @@ export async function anonymiseUser(userId: string): Promise<void> {
 
 ## Data retention policy
 
-Define retention per data category. Implement via a nightly Prisma job.
-
 | Data type | Retention | Action after |
 |---|---|---|
 | Active user PII | Until erasure request | Anonymise on request |
-| Deleted user PII | 30 days after deletedAt | Auto-anonymise |
+| Deleted user PII | 30 days after soft-delete | Auto-anonymise |
 | Order / transaction records | 7 years | Anonymise PII fields, keep financial data |
 | Auth / session logs | 90 days | Hard delete |
-| CloudWatch logs | 90 days (set in CDK) | Auto-expire |
-| Sentry error events | 90 days | Sentry auto-purge |
+| Infrastructure logs | 90 days | Expire via log management config |
+| Error tracking events | 90 days | Configure in your error tracking service |
 
-```ts
-// scripts/retention-cleanup.ts — run nightly via Lambda scheduled event
+```
+// Nightly retention cleanup job
 
-import { prisma } from '../src/lib/prisma'
-import { anonymiseUser } from '../src/services/user.service'
+function runRetentionCleanup():
+  thirtyDaysAgo = now() - 30 days
 
-async function runRetentionCleanup() {
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  // Find users deleted > 30 days ago that still have PII
+  staleUsers = query User where:
+    deletedAt < thirtyDaysAgo
+    AND email does NOT end with "@redacted.invalid"  // not yet anonymised
 
-  // Find users deleted more than 30 days ago that still have PII
-  const staleUsers = await prisma.user.findMany({
-    where: {
-      deletedAt: { lt: thirtyDaysAgo },
-      email: { not: { endsWith: '@redacted.invalid' } },  // not yet anonymised
-    },
-    select: { id: true },
-  })
-
-  for (const user of staleUsers) {
-    await anonymiseUser(user.id)
-    logger.info({ userId: user.id }, 'Retention cleanup: user anonymised')
-  }
+  for each user in staleUsers:
+    anonymiseUser(user.id)
+    log info: { userId: user.id, action: "retention_cleanup" }
 
   // Hard delete auth logs older than 90 days
-  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-  const deleted = await prisma.authLog.deleteMany({
-    where: { createdAt: { lt: ninetyDaysAgo } },
-  })
-  logger.info({ count: deleted.count }, 'Retention cleanup: auth logs purged')
-}
+  ninetyDaysAgo = now() - 90 days
+  delete from AuthLog where createdAt < ninetyDaysAgo
+  log info: { action: "auth_logs_purged", count: N }
 ```
+
+_(Implement using your database layer and scheduled job infrastructure)_
 
 ---
 
@@ -141,32 +118,23 @@ async function runRetentionCleanup() {
 
 Every user can request a machine-readable export of all their data.
 
-```ts
-// src/services/data-export.service.ts
+```
+function generateUserDataExport(userId):
+  // Fetch user's own data
+  user = fetch User where id = userId
+         select: id, email, name, phone, createdAt, consentMarketing, consentAnalytics
 
-export async function generateUserDataExport(userId: string): Promise<object> {
-  const [user, orders, sessions] = await Promise.all([
-    prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: {
-        id: true, email: true, name: true, phone: true,
-        createdAt: true, consentMarketing: true, consentAnalytics: true,
-      },
-    }),
-    prisma.order.findMany({
-      where: { userId },
-      select: { id: true, createdAt: true, total: true, status: true },
-    }),
-    prisma.authLog.findMany({
-      where: { userId },
-      select: { createdAt: true, action: true, ipAddress: true },
-      take: 1000,
-    }),
-  ])
+  // Fetch related records
+  orders = fetch Order where userId = userId
+           select: id, createdAt, total, status
+
+  sessions = fetch AuthLog where userId = userId
+             select: createdAt, action, ipAddress
+             limit: 1000
 
   return {
-    exportedAt: new Date().toISOString(),
-    exportVersion: '1.0',
+    exportedAt: now(),
+    exportVersion: "1.0",
     subject: {
       id: user.id,
       email: user.email,
@@ -176,31 +144,19 @@ export async function generateUserDataExport(userId: string): Promise<object> {
       marketingConsent: user.consentMarketing,
       analyticsConsent: user.consentAnalytics,
     },
-    orders: orders.map(o => ({
-      id: o.id,
-      date: o.createdAt,
-      total: o.total,
-      status: o.status,
-    })),
-    loginHistory: sessions.map(s => ({
-      date: s.createdAt,
-      action: s.action,
-      ipAddress: s.ipAddress,
-    })),
+    orders: [ { id, date, total, status } for each order ],
+    loginHistory: [ { date, action, ipAddress } for each session ],
   }
-}
 ```
 
 Expose via a protected endpoint:
-```ts
-// GET /api/v1/me/data-export — returns JSON, triggers download header
-router.get('/me/data-export', requireAuth(), asyncHandler(async (req, res) => {
-  const data = await generateUserDataExport(req.user.sub)
-  res.setHeader('Content-Disposition', `attachment; filename="my-data-${Date.now()}.json"`)
-  res.setHeader('Content-Type', 'application/json')
-  res.json(data)
-}))
 ```
+GET /api/v1/me/data-export — requires authentication
+Returns: JSON file download
+Header: Content-Disposition: attachment; filename="my-data-{timestamp}.json"
+```
+
+_(Implement using your backend layer's request handling and response conventions)_
 
 ---
 
@@ -208,44 +164,34 @@ router.get('/me/data-export', requireAuth(), asyncHandler(async (req, res) => {
 
 Never assume consent. Always read it from the user record before using personal data.
 
-```ts
-// src/lib/consent.ts
+```
+function assertConsent(userId, type: "marketing" | "analytics"):
+  user = fetch User where id = userId
+         select: consentMarketing, consentAnalytics
 
-export async function assertConsent(userId: string, type: 'marketing' | 'analytics'): Promise<void> {
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { id: userId },
-    select: { consentMarketing: true, consentAnalytics: true },
-  })
-
-  const hasConsent = type === 'marketing' ? user.consentMarketing : user.consentAnalytics
-  if (!hasConsent) {
-    throw new ForbiddenError(`User has not consented to ${type} data use`)
-  }
-}
+  hasConsent = (type == "marketing") ? user.consentMarketing : user.consentAnalytics
+  if NOT hasConsent:
+    throw ForbiddenError("User has not consented to {type} data use")
 
 // Usage in analytics service:
-export async function trackEvent(userId: string, event: string, properties: object) {
-  await assertConsent(userId, 'analytics')
+function trackEvent(userId, event, properties):
+  assertConsent(userId, "analytics")   // throws if no consent
   // safe to track
-  segment.track({ userId, event, properties })
-}
+  analyticsClient.track(userId, event, properties)
 ```
 
 Record consent changes with a timestamp and source:
-```prisma
-model ConsentLog {
-  id          String   @id @default(cuid())
-  userId      String
-  type        String   // 'marketing' | 'analytics'
-  granted     Boolean
-  source      String   // 'signup' | 'settings' | 'cookie-banner'
-  ipAddress   String   // @pii:derived
-  createdAt   DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
-
-  @@map("consent_logs")
-}
+```
+Entity: ConsentLog
+Fields:
+  id        — unique identifier
+  userId    — reference to User
+  type      — String ("marketing" | "analytics")
+  granted   — Boolean
+  source    — String ("signup" | "settings" | "cookie-banner")
+  ipAddress — String  // @pii:derived
+  createdAt — Timestamp, auto
 ```
 
 ---
@@ -253,81 +199,65 @@ model ConsentLog {
 ## PII in logs — hard rules
 
 **Never log these fields at any severity level:**
+`email`, `name`, `phone`, `password`, `token`, `dateOfBirth`, `address`, `ipAddress`, `cardNumber`, `ssn`, `taxId`, `passportNumber`
 
-```ts
-// src/lib/logger.ts — add a redaction serializer to Pino
+Configure your structured logger to redact these fields automatically:
 
-import pino from 'pino'
-
-const PII_FIELDS = ['email', 'name', 'phone', 'password', 'token',
-                    'dateOfBirth', 'address', 'ipAddress', 'cardNumber',
-                    'ssn', 'taxId', 'passportNumber']
-
-function redact(obj: Record<string, unknown>): Record<string, unknown> {
-  const result = { ...obj }
-  for (const key of PII_FIELDS) {
-    if (key in result) result[key] = '[redacted]'
-  }
-  return result
-}
-
-export const logger = pino({
-  redact: {
-    paths: PII_FIELDS.map(f => `*.${f}`),
-    censor: '[redacted]',
-  },
-})
 ```
+logger configuration:
+  redact paths:
+    - "*.email"
+    - "*.name"
+    - "*.phone"
+    - "*.password"
+    - "*.token"
+    - "*.ipAddress"
+    - "*.cardNumber"
+  censor value: "[redacted]"
+```
+
+_(Use your logging layer's redaction feature — e.g. Pino `redact`, Structlog filters, NLog masking)_
 
 ---
 
 ## CCPA — opt-out of data sale
 
-For California users, provide a "Do Not Sell My Personal Information" mechanism:
+For California users, provide a "Do Not Sell My Personal Information" mechanism.
 
-```prisma
-// Add to User model
-doNotSell Boolean @default(false)  // CCPA opt-out
+Add a `doNotSell` flag to the User entity:
+```
+doNotSell — Boolean, default false  // CCPA opt-out
 ```
 
-```ts
-// Check before sharing with any third-party data processor
-export async function shareWithThirdParty(userId: string, data: object, vendor: string) {
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { id: userId },
-    select: { doNotSell: true, country: true },
-  })
+Check before sharing with any third-party data processor:
+```
+function shareWithThirdParty(userId, data, vendor):
+  user = fetch User where id = userId
+         select: doNotSell, country
 
-  if (user.doNotSell || user.country === 'US') {
-    logger.info({ userId, vendor }, 'Third-party share blocked — CCPA opt-out or US user')
-    return
-  }
+  if user.doNotSell OR user.country == "US":
+    log info: { userId, vendor, reason: "CCPA opt-out or US user" }
+    return  // do not share
 
-  await externalVendor.send(vendor, data)
-}
+  externalVendor.send(vendor, data)
 ```
 
 ---
 
 ## Response shape rules
 
-PII fields must never appear in paginated list responses. Only in single-resource GETs.
+PII fields must never appear in paginated list responses. Only in single-resource GETs for the authenticated user's own data.
 
-```ts
-// ❌ — exposes all users' emails in a list
-const users = await prisma.user.findMany()
-return paginated(res, users, meta)
+```
+// ❌ List endpoint — exposes all users' PII
+GET /api/v1/users
+→ returns full user objects including email, name, phone
 
-// ✅ — list returns only non-PII fields
-const users = await prisma.user.findMany({
-  select: { id: true, displayName: true, avatarUrl: true, createdAt: true },
-})
-return paginated(res, users, meta)
+// ✅ List endpoint — returns only non-PII fields
+GET /api/v1/users
+→ select: id, displayName, avatarUrl, createdAt
 
-// ✅ — single user GET includes PII (own account only, after auth check)
-const user = await prisma.user.findUniqueOrThrow({
-  where: { id: req.user.sub },
-  select: { id: true, email: true, name: true, phone: true, createdAt: true },
-})
-return ok(res, user)
+// ✅ Single resource — own account only, after auth check
+GET /api/v1/me
+→ select: id, email, name, phone, createdAt
 ```

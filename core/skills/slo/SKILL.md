@@ -169,9 +169,11 @@ When error budget is < 10% remaining:
 - Reset requires post-mortem and budget replenishment
 ```
 
-### Step 5 — Generate the CDK monitoring constructs
+### Step 5 — Wire up monitoring alarms
 
-Append to `infra/lib/monitoring-stack.ts`:
+Implement burn rate alarms in your monitoring infrastructure. Consult your **cloud layer skill** for the specific implementation.
+
+**If using AWS CDK**, append to your monitoring stack:
 
 ```ts
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch'

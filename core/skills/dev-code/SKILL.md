@@ -127,35 +127,34 @@ Execute each phase and its steps exactly as written in the design doc.
 ### Key rules per phase type:
 
 **Database steps:**
-- Append the Prisma model to `prisma/schema.prisma` — never overwrite the whole file
-- Run `npx prisma migrate dev --name <descriptive-name>` and show output
-- Run `npx prisma generate`
-- If migration needs an env var (DATABASE_URL), pause and ask the user to confirm it is set
+- Follow your database layer skill for schema changes and migration commands
+- Never overwrite an existing schema file — append or modify specific sections only
+- Pause and confirm required environment variables (connection strings etc.) before running migrations
 
 **Backend steps:**
-- Follow error-handling skill: asyncHandler, AppError hierarchy, Zod `.parse()` on all inputs
-- Follow api-conventions skill: ok(), created(), paginated() helpers
-- Follow security skill: requireAuth on every route, ownership check in service layer
+- Follow your backend layer skill: error handling pattern, response helpers, validation approach
+- Follow api-conventions skill: consistent response envelope, correct status codes
+- Follow security-principles skill: authenticate every route, check ownership in service layer
 
 **Test steps:**
-- Create test files alongside source files
-- Follow testing-standards skill: one describe per function, mock at the boundary
-- Run tests after creating them: `npx vitest run <test-file>` — show pass/fail
+- Create test files alongside source files (not in a separate tree)
+- Follow your testing layer skill: one describe per function/module, mock at the system boundary
+- Run the test runner after creating tests and show pass/fail output
 
 **Frontend steps:**
-- Follow react-standards and composition-patterns skills
-- 4-state lists: loading skeleton, empty state, error state, data
-- Forms: react-hook-form + zodResolver, server errors via setError
-- Run `npx tsc --noEmit` after each FE file to catch type errors immediately
+- Follow your frontend layer skill for component patterns
+- Lists must handle all states: loading, empty, error, and data
+- Forms must handle server-side validation errors (display per-field)
+- Run the type checker after writing each file to catch errors immediately
 
-**Playwright steps:**
-- Follow playwright skill: page objects, role-based selectors
-- Run `npx playwright test <spec>` — show results
+**E2E steps:**
+- Follow your E2E testing layer skill: page objects, accessible selectors
+- Run the E2E test for the affected flow and show results
 
 **Logging steps:**
-- Use the Pino logger already wired in the project
-- Log at service layer: `logger.info({ userId, resourceId, action }, 'description')`
-- Never log passwords, tokens, or full request bodies
+- Use the project's structured logger (never `console.log` in production code)
+- Log at the service layer for business events (create/update/delete)
+- Never log passwords, tokens, or PII in any field
 
 ---
 

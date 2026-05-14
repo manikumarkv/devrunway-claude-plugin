@@ -1,19 +1,25 @@
 ---
 name: standards
-description: Coding standards and conventions for this project stack (React, Node.js, AWS, Cognito, GitHub). Load when writing, reviewing, or discussing any code in this project.
+description: Universal software engineering principles — naming, single responsibility, DRY, test proximity, explicit dependencies, fail fast. Applies to any language or stack. Load always.
 user-invocable: false
+paths:
+  - "**/*"
 ---
 
-For detailed standards, see [standards.md](standards.md). Key rules to always apply:
+Full standards in [standards.md](standards.md). Always-on principles:
 
-**Git:** Branch names: `feature/<GH-id>-<desc>` or `fix/<GH-id>-<desc>`. Commits follow Conventional Commits: `feat|fix|chore|refactor|test|docs(scope): summary`. PRs target `develop`, not `main`.
+**Naming:** Names are documentation. A function named `process()` documents nothing; `validatePaymentAmount()` documents intent, input, and scope. Choose the longer, clearer name.
 
-**React:** Functional components only. Props typed with `interface`. Server state via React Query — no manual fetch in `useEffect`. Business logic in custom hooks, not components. Co-locate tests as `Component.test.tsx`.
+**Single responsibility:** A function does one thing. A module owns one concept. If you need "and" to describe what something does, split it.
 
-**Node.js:** Controllers are thin (call service, return response). Validation via `zod` at controller boundary. All async handlers wrapped with `asyncHandler`. Centralized error middleware. Structured JSON logging with `pino` — no `console.log` in production.
+**DRY:** Extract when you see the same logic in 3 or more places. Duplication under 3 is usually fine — premature abstraction creates worse problems than duplication.
 
-**AWS:** Resources named `<project>-<env>-<service>-<type>`. All infra via CDK in `infra/`. IAM least-privilege — no `*` resources in prod. Secrets in SSM/Secrets Manager — never in `.env` committed to git.
+**Tests alongside source:** Test files live next to the code they test, not in a separate `tests/` tree. Tests are documentation of expected behaviour.
 
-**Cognito:** Verify JWTs server-side with `aws-jwt-verify`. Authorization by Cognito group (`Admin`, `User`), never by username/email. Never store tokens in `localStorage` — use memory or `HttpOnly` cookies.
+**Explicit dependencies:** A function declares everything it needs as parameters. No hidden globals, no reaching into singletons from inside business logic. Infrastructure (DB, logger, config) is injected, not imported directly into services.
 
-**Quality gates:** TypeScript strict mode. ESLint zero errors. Tests pass. No `console.log`, no hardcoded secrets, no untracked `TODO`/`FIXME`.
+**Fail fast at the boundary:** Validate inputs at the entry point. Once inside the system, trust the types. Never proceed with invalid data — fail loudly immediately.
+
+**No dead code:** Remove commented-out code, unused imports, and unreachable branches. Version control is the history; the codebase is the present.
+
+**For tech-specific implementation standards, consult your installed layer skills.**

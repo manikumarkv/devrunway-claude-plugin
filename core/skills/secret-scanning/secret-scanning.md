@@ -44,13 +44,14 @@ grep -rn 'BEGIN EC PRIVATE KEY' .
 grep -rn 'BEGIN OPENSSH PRIVATE KEY' .
 ```
 
-### Cognito and AWS service IDs
+### Auth service and cloud provider IDs
 
 ```bash
-# User pool IDs (eu-west-1_XXXXXXXXX pattern) hardcoded in source
-grep -rn 'us-[a-z]\+-[0-9]_[A-Za-z0-9]\{9\}' --include='*.ts' --include='*.js' .
+# Cloud provider resource IDs hardcoded in source (adapt pattern for your provider)
+# Example: region-scoped identifiers like "region_identifier"
+grep -rn '[a-z]\+-[a-z]\+-[0-9]_[A-Za-z0-9]\{9\}' --include='*.ts' --include='*.js' .
 
-# Cognito app client IDs (26 char alphanumeric) hardcoded in source
+# OAuth / auth service client IDs hardcoded in source
 grep -rn 'clientId\s*:\s*["\x27][a-z0-9]\{26\}["\x27]' .
 ```
 
@@ -141,9 +142,8 @@ Assume the secret is compromised the moment it touches git, even in a private re
 aws iam create-access-key --user-name <user>
 aws iam delete-access-key --access-key-id <old-key> --user-name <user>
 
-# Cognito — rotate app client secret
-aws cognito-idp describe-user-pool-client --user-pool-id <pool-id> --client-id <client-id>
-# Regenerate in AWS Console: Cognito → User pools → App clients → Edit → Regenerate secret
+# Auth service credentials — rotate via your provider's console or CLI
+# e.g. regenerate OAuth client secrets, rotate API keys in the service dashboard
 ```
 
 ### Step 2 — Remove from git history

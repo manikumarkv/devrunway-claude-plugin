@@ -1,30 +1,31 @@
 ---
 name: project-structure
-description: Frontend and backend folder structure standards — where every file type lives, naming conventions, module boundaries. Load when scaffolding a new project, adding a feature, or deciding where a file belongs.
+description: Universal project structure principles — feature-based organisation, separation of concerns, test proximity, module boundaries. Applies to any language or framework. Load when scaffolding or deciding where a file belongs.
 user-invocable: false
+paths:
+  - "**/*"
 ---
 
-Full structure in [structure.md](structure.md). Always-on summary:
+Full structure principles in [structure.md](structure.md). Always-on summary:
 
-**Frontend (React + Vite):**
-- Features in `src/features/<name>/` — types, api, hooks, components all co-located
-- Shared UI in `src/components/` — no business logic
-- Shared hooks in `src/hooks/` — no API calls (those live in features)
-- Global state in `src/stores/` — only truly global, non-server state
-- Route pages in `src/pages/` — thin wrappers, no logic
-- Named exports everywhere — no default exports in feature folders
+**Group by feature, not by file type**
+- `src/features/payments/` containing model + service + controller + tests is better than `controllers/payments.ts` + `services/payments.ts` in separate trees
+- Related code that changes together should live together
 
-**Backend (Node.js + Express):**
-- `src/controllers/` — validate input (Zod), call service, format response
-- `src/services/` — business logic only, no HTTP objects, no DB calls
-- `src/repositories/` — DB access only, no business logic
-- `src/middleware/` — auth, logging, rate limiting, error handling
-- `src/types/` — Zod schemas + inferred TypeScript types
-- `src/utils/` — pure utility functions (no side effects)
-- `src/lib/` — third-party client setup (prisma, dynamo, logger)
+**Separate concerns by layer**
+- Entry point (controller/handler): validates input, calls service, formats response — no business logic
+- Service: business logic only — no HTTP objects, no direct DB calls
+- Repository/data layer: data access only — no business logic
+- Infrastructure (logger, DB client, config): injected, not imported directly into services
 
+**Tests next to source**
+- `payment.service.test.ts` lives beside `payment.service.ts`
+- Integration tests in `__tests__/integration/` if you need to distinguish
 
-**Related skills — apply together:**
-- `packages` — use only approved packages; structure determines where each goes
-- `typescript-patterns` — naming conventions and file boundaries enforce TypeScript module isolation
-- `scaffold` — use `/scaffold` to generate the folder structure automatically
+**Configuration in one place**
+- Environment config at the root or `src/config/` — never scattered
+- Secrets via environment variables, never hardcoded in source
+
+**For technology-specific folder layouts, consult your installed layer skills:**
+- React/frontend → `layers/frontend/react/scaffold`
+- Node.js/Express → `layers/backend/node-express/nodejs-standards`

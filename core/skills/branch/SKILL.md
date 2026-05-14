@@ -50,34 +50,36 @@ After creating the branch, ask: "Scaffold boilerplate? (frontend / backend / ful
 
 ### Frontend scaffold
 
-Read `skills/branch/scaffold-templates.md` for the full templates. Replace `$NAME` with PascalCase name, `$name` with camelCase.
+Consult your **frontend layer skill** for the exact file structure and templates for your stack.
 
-Create these files under `src/features/<name>/`:
+Universal structure to create under `src/features/<name>/`:
 ```
-types.ts
-api/<name>.api.ts
-hooks/use<Name>.ts
-components/<Name>/<Name>.tsx
-components/<Name>/<Name>.test.tsx
-components/<Name>/index.ts
-index.ts
+types.<ext>              — data types / interfaces for this feature
+api/<name>.api.<ext>     — data-fetching hooks / queries
+hooks/use<Name>.<ext>    — business logic hook
+components/<Name>/       — UI component(s)
+  <Name>.<ext>           — main component (loading / empty / error / data states)
+  <Name>.test.<ext>      — component tests
+  index.<ext>            — barrel export
+index.<ext>              — feature public API (re-exports)
 ```
+
+Replace `<ext>` with the file extension for your language (e.g. `ts`, `tsx`, `js`, `vue`, `py`).
+Replace `$NAME` with PascalCase name, `$name` with camelCase.
 
 ### Backend scaffold
 
-Create these files:
+Consult your **backend layer skill** for the exact file structure and templates for your stack.
+
+Universal structure to create under `src/`:
 ```
-src/types/<name>.types.ts
-src/repositories/<name>.repository.ts
-src/services/<name>.service.ts
-src/controllers/<name>.controller.ts
+types/<name>.types.<ext>           — input/output types and validation schemas
+repositories/<name>.repository.<ext> — data access (DB queries)
+services/<name>.service.<ext>      — business logic and ownership checks
+controllers/<name>.controller.<ext> — request handling, validation, response
 ```
 
-Register the router in `src/app.ts` or `src/routes/index.ts` if it exists:
-```typescript
-import { <name>Router } from './controllers/<name>.controller';
-app.use('/api/v1/<name>', <name>Router);
-```
+Register the new route in your app's route registry (entry point file) after scaffolding.
 
 ### Fullstack
 
@@ -89,8 +91,8 @@ After scaffolding, print:
 ✅ Scaffolded: <files created>
 
 Next steps:
-  1. Fill in types in src/features/<name>/types.ts
-  2. Add Zod schema in src/types/<name>.types.ts
+  1. Fill in types in the types file
+  2. Implement the repository and service
   3. Run: /task start <ticket>
 ```
 

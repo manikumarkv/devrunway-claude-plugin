@@ -1,10 +1,10 @@
 # Branch Scaffold Templates
 
-> **Note:** The canonical scaffold templates live in `skills/scaffold/SKILL.md`.
-> When `/branch create` triggers scaffolding, read that skill for the full
-> up-to-date templates. The summaries below are kept for quick reference only.
+Universal pseudocode templates for `/branch create` scaffolding.
 
-Used by `/branch create` to generate boilerplate for new features and API endpoints.
+**Replace with your stack's actual syntax.** Consult your installed **frontend layer** and **backend layer** skills for language-specific implementations (TypeScript/React, Python/FastAPI, C#/.NET, etc.).
+
+Replace `$NAME` with PascalCase resource name, `$name` with camelCase.
 
 ---
 
@@ -12,243 +12,181 @@ Used by `/branch create` to generate boilerplate for new features and API endpoi
 
 Directory: `src/features/<name>/`
 
-### `types.ts`
-```typescript
-export interface $NAME {
-  id: string;
-  // TODO: add fields
-  createdAt: string;
-  updatedAt: string;
-}
+### `types.<ext>` — Data types
 
-export interface Create$NAMEInput {
-  // TODO: add input fields
-}
+```
+interface $NAME:
+  id: string (unique identifier)
+  createdAt: timestamp
+  updatedAt: timestamp
+  // TODO: add domain fields
+
+interface Create$NAMEInput:
+  // TODO: add required input fields
 ```
 
-### `api/$name.api.ts`
-```typescript
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/services/api';
-import type { $NAME, Create$NAMEInput } from '../types';
+### `api/$name.api.<ext>` — Data fetching
 
-const QUERY_KEY = '$name' as const;
+```
+// List query
+function use$NAMEs():
+  fetch GET /api/v1/$name
+  return list of $NAME
 
-export const use$NAMEs = () =>
-  useQuery({
-    queryKey: [QUERY_KEY],
-    queryFn: () => apiClient.get<$NAME[]>('/$name'),
-  });
+// Single record query
+function use$NAME(id):
+  fetch GET /api/v1/$name/:id
+  return single $NAME
 
-export const use$NAME = (id: string) =>
-  useQuery({
-    queryKey: [QUERY_KEY, id],
-    queryFn: () => apiClient.get<$NAME>(`/$name/${id}`),
-    enabled: !!id,
-  });
-
-export const useCreate$NAME = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: Create$NAMEInput) =>
-      apiClient.post<$NAME>('/$name', input),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [QUERY_KEY] }),
-  });
-};
+// Create mutation
+function useCreate$NAME():
+  POST /api/v1/$name with input
+  on success: invalidate list query
 ```
 
-### `hooks/use$NAME.ts`
-```typescript
-import { use$NAMEs, useCreate$NAME } from '../api/$name.api';
+### `hooks/use$NAME.<ext>` — Business logic hook
 
-export const use$NAME = () => {
-  const { data: items = [], isLoading, error } = use$NAMEs();
-  const createMutation = useCreate$NAME();
-
-  const create = (input: Parameters<typeof createMutation.mutate>[0]) =>
-    createMutation.mutate(input);
-
-  return { items, isLoading, error, create, isCreating: createMutation.isPending };
-};
+```
+function use$NAME():
+  items, isLoading, error = use$NAMEs()
+  create = useCreate$NAME()
+  return { items, isLoading, error, create }
 ```
 
-### `components/$NAME/$NAME.tsx`
-```typescript
-import type { FC } from 'react';
-import { use$NAME } from '../../hooks/use$NAME';
+### `components/$NAME/$NAME.<ext>` — UI component
 
-interface $NAMEProps {
-  // TODO: add props
-}
+```
+component $NAME:
+  { items, isLoading, error } = use$NAME()
 
-export const $NAME: FC<$NAMEProps> = () => {
-  const { items, isLoading, error } = use$NAME();
-
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error loading data</div>;
-  if (!items.length) return <div>No items found</div>;
-
-  return (
-    <div>
-      {/* TODO: render items */}
-    </div>
-  );
-};
+  if isLoading: render loading state
+  if error: render error state
+  if items is empty: render empty state
+  else: render items list
 ```
 
-### `components/$NAME/$NAME.test.tsx`
-```typescript
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
-import { $NAME } from './$NAME';
-import { createWrapper } from '@/test/utils';
+### `components/$NAME/$NAME.test.<ext>` — Component tests
 
-describe('$NAME', () => {
-  it('renders loading state', () => {
-    // TODO: mock loading state with MSW
-    render(<$NAME />, { wrapper: createWrapper() });
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
-  });
+```
+describe '$NAME':
+  it 'renders loading state while fetching'
+    // mock loading — assert loading indicator visible
 
-  it('renders items when loaded', async () => {
-    // TODO: mock success state with MSW handler
-    render(<$NAME />, { wrapper: createWrapper() });
-    // expect(await screen.findByRole('...', { name: '...' })).toBeInTheDocument();
-  });
+  it 'renders items when loaded'
+    // mock success response — assert items appear
 
-  it('renders empty state', () => {
-    // TODO: mock empty response with MSW
-    render(<$NAME />, { wrapper: createWrapper() });
-    // expect(screen.getByText('No items found')).toBeInTheDocument();
-  });
-});
+  it 'renders empty state when no items'
+    // mock empty response — assert empty message visible
+
+  it 'renders error state on fetch failure'
+    // mock error response — assert error message visible
 ```
 
-### `components/$NAME/index.ts`
-```typescript
-export { $NAME } from './$NAME';
+### `components/$NAME/index.<ext>` — Barrel export
+
+```
+export $NAME from ./$NAME
 ```
 
-### `index.ts` (feature public API)
-```typescript
-export { $NAME } from './components/$NAME';
-export { use$NAME } from './hooks/use$NAME';
-export type { $NAME as $NAMEType, Create$NAMEInput } from './types';
+### `index.<ext>` — Feature public API
+
+```
+export $NAME from ./components/$NAME
+export use$NAME from ./hooks/use$NAME
+export type $NAME, Create$NAMEInput from ./types
 ```
 
 ---
 
 ## Backend API Endpoint Scaffold
 
-### `src/types/$name.types.ts`
-```typescript
-import { z } from 'zod';
+### `src/types/$name.types.<ext>` — Validation schemas + types
 
-export const create$NAMESchema = z.object({
-  // TODO: add fields
-});
+```
+schema Create$NAMESchema:
+  // TODO: add required fields with types and constraints
+  // e.g. name: string, required, non-empty
+  //      ownerId: string, required, uuid
 
-export const $NAMEParamsSchema = z.object({
-  id: z.string().uuid(),
-});
+schema $NAMEParamsSchema:
+  id: string, required, uuid
 
-export type Create$NAMEInput = z.infer<typeof create$NAMESchema>;
+type Create$NAMEInput = inferred from Create$NAMESchema
 ```
 
-### `src/repositories/$name.repository.ts`
-```typescript
-import { logger } from '../utils/logger';
+_(Use your validation layer: Zod, Pydantic, Joi, FluentValidation, etc.)_
 
-export const $nameRepository = {
-  async findAll(): Promise<$NAME[]> {
-    // TODO: implement DB query
-    logger.debug({ action: 'findAll$NAME' }, 'Fetching all $name records');
-    return [];
-  },
+### `src/repositories/$name.repository.<ext>` — Data access
 
-  async findById(id: string): Promise<$NAME | null> {
-    logger.debug({ action: 'findById$NAME', id }, 'Fetching $name by id');
-    // TODO: implement DB query
-    return null;
-  },
+```
+repository $nameRepository:
 
-  async create(input: Create$NAMEInput): Promise<$NAME> {
-    logger.debug({ action: 'create$NAME', input }, 'Creating $name');
-    // TODO: implement DB insert
-    throw new Error('Not implemented');
-  },
-};
+  function findAll(): list of $NAME
+    log debug: action=findAll$NAME
+    // TODO: query database
+
+  function findById(id): $NAME or null
+    log debug: action=findById$NAME, id=id
+    // TODO: query database by primary key
+
+  function create(input: Create$NAMEInput): $NAME
+    log debug: action=create$NAME
+    // TODO: insert into database
 ```
 
-### `src/services/$name.service.ts`
-```typescript
-import { $nameRepository } from '../repositories/$name.repository';
-import { logger } from '../utils/logger';
+_(Use your database layer: Prisma, SQLAlchemy, Entity Framework, etc.)_
 
-export const $nameService = {
-  async getAll(userId: string): Promise<$NAME[]> {
-    logger.info({ userId, action: 'getAll$NAME' }, 'Fetching $names');
-    return $nameRepository.findAll();
-  },
+### `src/services/$name.service.<ext>` — Business logic
 
-  async getById(id: string, userId: string): Promise<$NAME> {
-    const item = await $nameRepository.findById(id);
-    if (!item) {
-      const err = new Error('NOT_FOUND');
-      logger.warn({ userId, action: 'getById$NAME', id }, '$NAME not found');
-      throw err;
-    }
-    return item;
-  },
+```
+service $nameService:
 
-  async create(input: Create$NAMEInput, userId: string): Promise<$NAME> {
-    logger.info({ userId, action: 'create$NAME' }, 'Creating $name');
-    return $nameRepository.create(input);
-  },
-};
+  function getAll(callerId): list of $NAME
+    log info: userId=callerId, action=getAll$NAME
+    return $nameRepository.findAll()
+
+  function getById(id, callerId): $NAME
+    item = $nameRepository.findById(id)
+    if item is null:
+      log warn: userId=callerId, action=getById$NAME, id=id
+      throw NotFoundError($NAME, id)
+    return item
+
+  function create(input, callerId): $NAME
+    log info: userId=callerId, action=create$NAME
+    return $nameRepository.create(input)
 ```
 
-### `src/controllers/$name.controller.ts`
-```typescript
-import { Router } from 'express';
-import { asyncHandler } from '../utils/asyncHandler';
-import { authMiddleware } from '../middleware/auth';
-import { $nameService } from '../services/$name.service';
-import { create$NAMESchema, $NAMEParamsSchema } from '../types/$name.types';
-import { logger } from '../utils/logger';
+### `src/controllers/$name.controller.<ext>` — Request handling
 
-export const $nameRouter = Router();
-
-$nameRouter.use(authMiddleware);
-
-$nameRouter.get(
-  '/',
-  asyncHandler(async (req, res) => {
-    const userId = req.user.sub;
-    const data = await $nameService.getAll(userId);
-    logger.info({ userId, action: 'list$NAME', count: data.length }, 'Listed $names');
-    res.json({ success: true, data });
-  }),
-);
-
-$nameRouter.get(
-  '/:id',
-  asyncHandler(async (req, res) => {
-    const { id } = $NAMEParamsSchema.parse(req.params);
-    const userId = req.user.sub;
-    const data = await $nameService.getById(id, userId);
-    res.json({ success: true, data });
-  }),
-);
-
-$nameRouter.post(
-  '/',
-  asyncHandler(async (req, res) => {
-    const userId = req.user.sub;
-    const input = create$NAMESchema.parse(req.body);
-    const data = await $nameService.create(input, userId);
-    logger.info({ userId, action: 'create$NAME', id: data.id }, '$NAME created');
-    res.status(201).json({ success: true, data });
-  }),
-);
 ```
+router $nameRouter:
+  all routes require: authMiddleware
+
+  GET /
+    callerId = request.user.id
+    data = $nameService.getAll(callerId)
+    log info: userId=callerId, action=list$NAME, count=data.length
+    respond 200: { success: true, data }
+
+  GET /:id
+    id = validate $NAMEParamsSchema(request.params)
+    callerId = request.user.id
+    data = $nameService.getById(id, callerId)
+    respond 200: { success: true, data }
+
+  POST /
+    input = validate Create$NAMESchema(request.body)
+    callerId = request.user.id
+    data = $nameService.create(input, callerId)
+    log info: userId=callerId, action=create$NAME, id=data.id
+    respond 201: { success: true, data }
+```
+
+_(Use your backend layer: Express/asyncHandler, FastAPI, ASP.NET controllers, etc.)_
+
+---
+
+> **Tech-specific templates:** See your installed layer skills for framework-specific code.
+> - Frontend: `layers/frontend/<your-stack>/`
+> - Backend: `layers/backend/<your-stack>/`

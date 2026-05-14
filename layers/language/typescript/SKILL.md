@@ -1,7 +1,12 @@
 ---
 name: typescript-patterns
-description: TypeScript patterns for React and Node.js — discriminated unions, type narrowing, generics, utility types, branded IDs, exhaustive checks. Load when writing or reviewing any TypeScript code.
+description: TypeScript patterns — discriminated unions, type narrowing, generics, utility types, branded IDs, exhaustive checks, React-specific typing. Load when writing or reviewing any TypeScript code.
 user-invocable: false
+stack: language/typescript
+paths:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "tsconfig*.json"
 ---
 
 Full patterns in [typescript.md](typescript.md). Always-on summary:
@@ -20,9 +25,8 @@ Full patterns in [typescript.md](typescript.md). Always-on summary:
 - Explicit return types on all exported functions
 - `const` assertions for static lookup objects
 
-
 **Related skills — apply together:**
 - `react-standards` — type all component props, events, and ref callbacks
-- `testing-standards` — type test utilities, mock factories, and MSW handlers
+- `zod-validation` — use Zod schemas as the source of truth; infer TS types from schemas
 - `error-handling` — type custom error classes and discriminated error unions
-- `api-conventions` — type request/response shapes with Zod inferred types
+- `api-conventions` — type request/response shapes with inferred schema types

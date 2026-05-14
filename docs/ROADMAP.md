@@ -345,7 +345,7 @@ Layers without an MCP omit the `mcp:` field entirely.
 
 | Layer | Status | Skills | MCP | Notes |
 |---|---|---|---|---|
-| `core/` | ✅ Done | 32 universal skills | — | Session 6 |
+| `core/` | ✅ Done | 32 universal skills (principle-only, zero stack refs) | — | Session 7 |
 | **Source Control** | | | | |
 | `layers/source-control/github` | ✅ Done | pr, branch, task, release skills | `server-github` | Move from skills/ |
 | `layers/source-control/gitlab` | 🫥 Stub | — | `@gitlab/mcp-server` | Community |
@@ -537,6 +537,40 @@ _Date: 2026-05-14_
 _Date: 2026-05-14_
 **Designed:** Full core/ + layers/ structure, 35-question grouped wizard (6 groups), 3 outputs (stack.json + .mcp.json + install commands), MCP registry (26 tools), layer mcp: frontmatter spec, testing split into 3 sub-dimensions, Bruno repositioned, ROADMAP.md created.
 
+### Session 7 — core/ Purity Audit
+_Date: 2026-05-14_
+**Goal: strip all stack-specific content from `core/` so it applies to any developer on any stack.**
+
+**Audit found 8+ core/ skills with violations** — React, Express, Prisma, Zod, Cognito, TypeScript, AWS, shadcn hardcoded in principles that should be universal.
+
+**Fix strategy:** rewrite core skills as pure principles (no code examples using specific libraries), move tech-specific content to correct layer skills, add "see your layer" redirects.
+
+**Files changed:**
+- `core/skills/typescript-patterns/` → **DELETED** (TypeScript is a language, not a universal principle)
+- `core/skills/type-safety/` → **NEW** — language-agnostic type safety principles (validate at boundary, make invalid states unrepresentable, explicit over implicit)
+- `layers/language/typescript/` → **NEW** — TypeScript-specific content moved here; `stack: language/typescript`; paths `**/*.ts`, `**/*.tsx`, `tsconfig*.json`
+- `core/skills/standards/` → rewritten: universal engineering principles only (naming, SRP, DRY, tests alongside source, fail fast, no dead code)
+- `core/skills/checklists/` → rewritten: 6 generic checklists (Feature Addition, API Endpoint, Data Model Change, Logging, Secrets, Auth)
+- `core/skills/project-structure/` → rewritten: universal layered architecture principles (entry point → service → repository → infrastructure)
+- `core/skills/api-conventions/` → rewritten: pure REST principles as JSON examples, no Express/Zod/Prisma imports
+- `core/skills/dev-review/` → genericised: "input validated at boundary" not "Zod .parse()", "async errors caught" not "asyncHandler"
+- `core/skills/dev-design/` → genericised: pseudocode data model instead of Prisma schema, validation layer references instead of Zod
+- `core/skills/dev-code/` → genericised: "run database migrations" instead of "npx prisma migrate dev", "run type checker" instead of "npx tsc --noEmit"
+- `core/skills/test/SKILL.md` → genericised: detects test runner from stack.json/package.json, shows Vitest/Jest/pytest/dotnet options for each subcommand
+- `core/skills/branch/` → genericised: scaffold templates are pseudocode, no .tsx files, no Express router imports
+- `core/skills/data-governance/` → rewritten: Prisma schema + pino + asyncHandler replaced with pseudocode
+- `core/skills/review/SKILL.md` → genericised: "run type checker and linter" not "npx tsc && npx eslint"
+- `core/skills/accessibility/SKILL.md` → genericised: "your frontend layer" not "react-standards"
+- `core/skills/security-review/SKILL.md` → genericised: "auth patterns" not "Cognito patterns"
+- `core/skills/secret-scanning/` → genericised: "auth service credentials" not "Cognito credentials"
+- `core/skills/slo/SKILL.md` → CloudWatch CDK block now conditional ("If using AWS CDK")
+- `core/skills/conventional-commit/` → example scopes genericised (no react-query/Cognito specific examples)
+- `core/skills/evolve/SKILL.md` → git log grep pattern generalised (no .tsx filter)
+
+**Verification:** `grep -r "React|Express|Prisma|Zod|Cognito..." core/skills/` — remaining hits are all acceptable (redirect notes, counter-examples, conditional blocks).
+
+---
+
 ### Session 6 — Full Implementation
 _Date: 2026-05-14_
 **Completed directory restructure, /setup wizard, stub READMEs, and 12 new layer skills.**
@@ -576,7 +610,7 @@ _Date: 2026-05-14_
 cat docs/ROADMAP.md   # always start here — check what's done
 ```
 
-**Status as of Session 6:** Core restructure complete. All implemented skills in correct locations.
+**Status as of Session 7:** Core is principle-only — zero stack-specific references. All 32 core skills are universal. TypeScript content moved to `layers/language/typescript/`.
 
 **Outstanding work for next session:**
 
@@ -586,9 +620,8 @@ cat docs/ROADMAP.md   # always start here — check what's done
    - `layers/logging/framework/pino/logging-standards/` — split into core logging principles + pino SKILL
    - `layers/backend/node-express/error-handling/` — split into core error principles + express SKILL
    - `layers/auth/cognito/security-standards/` — split into core security principles + cognito SKILL
-4. **Layer status update** — Mark all Session 6 layers as ✅ Done in the table above
+4. **`/setup` wizard** — Add `layers/language/typescript/` as a language question or auto-detect from stack selections
 5. **`/install` command** — Create `core/skills/install/SKILL.md` that reads `stack.json` and tells Claude which layer skills to activate
-6. **Commit + push** — `git add -A && git commit -m "chore(plugin): implement modular core/ + layers/ architecture"` then push
 
 ---
 

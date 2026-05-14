@@ -28,8 +28,8 @@ Delegate to the **code-reviewer** agent for a full standards audit of the curren
 The reviewer agent will:
 1. Run `git diff develop...HEAD` to find all changed files
 2. Read each changed file in full
-3. Run `npx tsc --noEmit` and `npx eslint .`
-4. Apply the full review checklist (TypeScript, React, Node.js, security, AWS, tests, code quality)
+3. Run the project's type checker and linter (detected from `package.json` or `stack.json`)
+4. Apply the full review checklist (type safety, error handling, security, API conventions, tests, code quality)
 5. Save a formal `REVIEW-<branch>.md` document with BLOCKER / WARNING / SUGGESTION findings
 6. Print the file path and verdict
 
@@ -43,29 +43,31 @@ Apply only mechanical, safe, automated fixes. Does NOT delegate to the reviewer 
 
 Run these in order:
 
+Detect the project's linter and formatter from `package.json` or `stack.json`, then run:
+
 ```bash
-# 1. Auto-fix ESLint rule violations
-npx eslint . --fix 2>&1
+# 1. Auto-fix linter violations (ESLint, Ruff, etc.)
+# e.g. npx eslint . --fix  |  ruff check --fix .
 
-# 2. Format with Prettier
-npx prettier --write "src/**/*.{ts,tsx}" 2>&1
+# 2. Format all source files (Prettier, Black, etc.)
+# e.g. npx prettier --write "src/**/*"  |  black src/
 
-# 3. Check TypeScript (cannot auto-fix, but show errors)
-npx tsc --noEmit 2>&1
+# 3. Run type checker — surface errors but do NOT auto-fix
+# e.g. npx tsc --noEmit  |  mypy src/  |  pyright
 ```
 
 After running, summarize:
 ```
 Auto-fix Results
 ================
-ESLint --fix:   N rules auto-fixed
-Prettier:       N files reformatted
-TypeScript:     N errors remain (must fix manually)
+Linter --fix:   N rules auto-fixed
+Formatter:      N files reformatted
+Type checker:   N errors remain (must fix manually)
 
 Files changed:
   <list of modified files>
 
-Next: commit the formatting changes, then fix any remaining TypeScript errors manually.
+Next: commit the formatting changes, then fix any remaining type errors manually.
 ```
 
-Do NOT attempt to fix TypeScript errors automatically — surface them so the developer can address them.
+Do NOT attempt to fix type errors automatically — surface them so the developer can address them.

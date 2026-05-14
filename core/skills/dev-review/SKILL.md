@@ -51,53 +51,47 @@ Read every changed file. Review against each standard below. Collect all finding
 
 ### Standards checklist
 
-**TypeScript**
-- No `any` unless explicitly justified with a comment
-- All function parameters and return types are explicit
-- No non-null assertions (`!`) without a guard check above
+**Type safety** (type-safety skill)
+- No use of catch-all types (`any`, untyped `object`) without a justification comment
+- All exported function parameters and return types are explicit
+- Type assertions used only with a guard check or justification comment above
 
 **Error handling** (error-handling skill)
-- All async controller handlers wrapped in `asyncHandler`
-- Service methods throw typed `AppError` subclasses (NotFoundError, ForbiddenError, etc.) — not `new Error()`
-- `errorHandler` middleware is the only place that touches `res.status(5xx)`
+- All async operations have error handling — no unhandled rejections or swallowed exceptions
+- Service layer throws typed, meaningful errors — not generic `Error("something went wrong")`
+- Error handler / middleware is the single place that formats error responses
 
 **API conventions** (api-conventions skill)
-- All success responses use `ok()`, `created()`, `paginated()` helpers
-- All `req.body`, `req.params`, `req.query` validated with Zod `.parse()` — never accessed directly
-- Cursor pagination used on list endpoints with `buildNextCursor`
+- All responses use the project's standard response envelope
+- All input (body, path params, query params) is validated before use
+- List endpoints use the project's standard pagination approach
 
-**Security** (security skill)
-- Every route has `requireAuth` middleware
-- Every mutating service method has ownership check: `if (resource.userId !== user.sub) throw new ForbiddenError()`
+**Security** (security-principles skill)
+- Every authenticated endpoint enforces authentication
+- Every mutating operation checks the caller owns/has access to the resource
 - No secrets or credentials in source code
-- S3 keys are UUIDs, never user-supplied filenames
-- `sanitize-html` or `DOMPurify` on any rendered HTML
+- User-supplied values are sanitised before use in queries or HTML rendering
 
-**React standards** (react-standards skill)
-- No `useEffect` for data fetching — use React Query hooks
-- Lists have all 4 states: loading skeleton, empty, error, data
-- Forms use react-hook-form + zodResolver + `setError` for server errors
-- No prop drilling beyond 2 levels — use context or co-location
-
-**Testing** (testing-standards skill)
-- Every new function has at least one test
-- Tests mock at the boundary (DB, HTTP) — not deep implementation
-- No `describe.skip` or `it.skip` left in merged code
-- `expect.assertions(N)` in async tests
+**Testing** (see your testing layer skill)
+- Every new function or behaviour has at least one test
+- Tests mock at the system boundary (DB, HTTP, filesystem) — not internal implementation
+- No skipped tests left in merged code
 
 **Accessibility** (accessibility skill)
-- All form inputs have associated `<label>`
+- All form inputs have an associated `<label>` or `aria-label`
 - Interactive elements are keyboard reachable
 - Error messages are linked to inputs via `aria-describedby`
-- Images have meaningful `alt` text
+- Images have meaningful `alt` text or `alt=""` if decorative
 
-**Logging** (monitoring skill)
-- Service-layer create/update/delete actions have a `logger.info` call
-- No `console.log` in production code
-- No PII (email, name, password) in log messages
+**Logging** (see your logging layer skill)
+- Significant business events (create/update/delete) are logged
+- No debug logging left in production code
+- No PII (email, name, password, tokens) in log messages
 
 **Conventional commits** (conventional-commit skill)
 - Commit message follows `type(scope): description (#issue)`
+
+**Stack-specific standards:** consult your installed layer skills for framework-specific items (e.g. React patterns, Express middleware, Prisma migration safety).
 
 ---
 

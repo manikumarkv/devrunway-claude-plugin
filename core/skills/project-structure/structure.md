@@ -1,228 +1,136 @@
-# Project Structure Standards
+# Universal Project Structure Principles
+
+These principles apply to any language or framework. For technology-specific folder layouts, see your installed layer skills.
 
 ---
 
-## Frontend — React + Vite + TypeScript
+## Organise by Feature, Not by File Type
+
+**File-type organisation** (avoid):
+```
+controllers/
+  users.ts
+  orders.ts
+services/
+  users.ts
+  orders.ts
+models/
+  users.ts
+  orders.ts
+```
+
+**Feature organisation** (prefer):
+```
+src/
+  users/
+    users.controller.ts
+    users.service.ts
+    users.repository.ts
+    users.types.ts
+    users.service.test.ts
+  orders/
+    orders.controller.ts
+    orders.service.ts
+    orders.repository.ts
+    orders.types.ts
+    orders.service.test.ts
+```
+
+**Why:** Code that changes together for the same reason lives together. Adding a new field to `User` touches `users/` only — not scattered files across 4 directories.
+
+---
+
+## Layered Architecture (applies to any stack)
+
+Every application has these conceptual layers. The names differ by framework, but the boundaries are universal:
+
+### Entry Point Layer (Controller / Handler / Route)
+- Receives the request (HTTP, queue message, CLI command, event)
+- Validates all inputs — rejects invalid data immediately
+- Calls the service layer
+- Formats and returns the response
+- **Contains:** validation, routing, response formatting
+- **Never contains:** business logic, database calls, complex conditionals
+
+### Service Layer (Business Logic)
+- Contains the application's business rules
+- Orchestrates between repositories and external services
+- Raises domain errors for invalid business states
+- **Contains:** business rules, orchestration, domain logic
+- **Never contains:** HTTP objects (Request/Response), SQL, framework-specific code
+
+### Repository / Data Access Layer
+- Translates domain objects to/from database representations
+- Executes queries, handles transactions
+- **Contains:** queries, database-specific code, mapping
+- **Never contains:** business rules, HTTP concerns
+
+### Infrastructure / Cross-Cutting Layer
+- Logger, database client, HTTP client, config, cache
+- Set up once at application start; injected into layers that need them
+- **Never imported directly into business logic** — always injected as dependency
+
+---
+
+## Tests Live Next to Source
 
 ```
 src/
-├── assets/                     # Static files (images, fonts, icons)
-│
-├── components/                 # Shared, reusable UI components (no business logic)
-│   ├── Button/
-│   │   ├── Button.tsx
-│   │   ├── Button.test.tsx
-│   │   └── index.ts
-│   ├── Modal/
-│   ├── Table/
-│   └── index.ts                # Public barrel for shared components
-│
-├── features/                   # Feature modules — each is self-contained
-│   └── <feature-name>/
-│       ├── types.ts            # TypeScript interfaces for this feature
-│       ├── api/
-│       │   └── <feature>.api.ts   # React Query hooks (useQuery, useMutation)
-│       ├── hooks/
-│       │   └── use<Feature>.ts    # Business logic hook
-│       ├── components/
-│       │   └── <Component>/
-│       │       ├── <Component>.tsx
-│       │       ├── <Component>.test.tsx
-│       │       └── index.ts
-│       └── index.ts            # Public API — only export what other features need
-│
-├── hooks/                      # Shared hooks (no API calls — those live in features)
-│   ├── useDebounce.ts
-│   ├── useLocalStorage.ts
-│   └── useMediaQuery.ts
-│
-├── lib/                        # Third-party client setup
-│   ├── queryClient.ts          # React Query client instance
-│   ├── router.tsx              # React Router definition
-│   └── amplify.ts              # AWS Amplify config
-│
-├── pages/                      # Route-level pages — thin wrappers only
-│   ├── DashboardPage.tsx       # Composes feature components, no logic
-│   ├── LoginPage.tsx
-│   └── NotFoundPage.tsx
-│
-├── stores/                     # Global client state (Zustand) — non-server state only
-│   └── uiStore.ts              # e.g. sidebar open/closed, theme
-│
-├── styles/                     # Global CSS, Tailwind base
-│   └── globals.css
-│
-├── test/                       # Test utilities (not test files)
-│   ├── server.ts               # MSW server setup
-│   ├── handlers.ts             # Default MSW handlers
-│   └── utils.tsx               # createWrapper(), custom render
-│
-├── types/                      # Global TypeScript types used across features
-│   └── api.ts                  # Shared API response shapes
-│
-├── utils/                      # Pure utility functions (no side effects)
-│   ├── cn.ts                   # Tailwind class merging (clsx + tailwind-merge)
-│   ├── formatDate.ts
-│   └── formatCurrency.ts
-│
-├── App.tsx                     # Root component — providers only
-├── main.tsx                    # Entry point — mounts App
-└── vite-env.d.ts
+  payments/
+    payment.service.ts
+    payment.service.test.ts     ← unit test beside source
+    payment.repository.ts
+    payment.repository.test.ts
+    __tests__/
+      payment.integration.test.ts  ← integration tests, if separated
 ```
 
-### Feature module rules
-
-```
-features/orders/
-  types.ts              ← Order, CreateOrderInput, UpdateOrderInput interfaces
-  api/
-    orders.api.ts       ← useOrders(), useOrder(id), useCreateOrder(), useUpdateOrder()
-  hooks/
-    useOrderForm.ts     ← form state, validation, submission logic
-  components/
-    OrderList/
-      OrderList.tsx
-      OrderList.test.tsx
-      index.ts
-    OrderForm/
-      OrderForm.tsx
-      OrderForm.test.tsx
-      index.ts
-    OrderDetail/
-      OrderDetail.tsx
-      OrderDetail.test.tsx
-      index.ts
-  index.ts              ← export { OrderList, OrderForm, OrderDetail, useOrderForm }
-```
-
-**Public API rule:** other features import only from `features/<name>/index.ts`, never from internal paths.
-
-```ts
-// ❌ — reaching into feature internals
-import { OrderList } from '@/features/orders/components/OrderList/OrderList'
-
-// ✅ — through the public API
-import { OrderList } from '@/features/orders'
-```
+**Why:** Tests are the documentation of expected behaviour. Readers look for documentation next to the code, not in a distant `tests/` tree.
 
 ---
 
-## Backend — Node.js + Express + TypeScript
+## Shared vs. Feature-Owned Code
+
+| Code type | Lives in |
+|---|---|
+| Used by only one feature | Inside that feature's directory |
+| Used by 2+ features | `src/shared/` or `src/common/` |
+| UI components used everywhere | `src/components/` |
+| Pure utility functions | `src/utils/` |
+| Third-party client setup | `src/lib/` or `src/infrastructure/` |
+| Type definitions shared across features | `src/types/` |
+
+**Rule:** start inside the feature. Move to shared only when a second consumer exists.
+
+---
+
+## Configuration and Secrets
 
 ```
 src/
-├── controllers/            # HTTP layer: validate input → call service → respond
-│   ├── users.controller.ts
-│   └── orders.controller.ts
-│
-├── services/               # Business logic — no HTTP, no DB
-│   ├── users.service.ts
-│   └── orders.service.ts
-│
-├── repositories/           # DB access only — no business logic
-│   ├── users.repository.ts
-│   └── orders.repository.ts
-│
-├── middleware/             # Express middleware
-│   ├── auth.ts             # Cognito JWT verification
-│   ├── requireGroup.ts     # Group-based authorization
-│   ├── errorHandler.ts     # Centralized error handler
-│   ├── requestLogger.ts    # Pino request logging
-│   └── rateLimiter.ts      # express-rate-limit setup
-│
-├── types/                  # Zod schemas + inferred TS types
-│   ├── users.types.ts      # createUserSchema, UpdateUserInput, etc.
-│   └── orders.types.ts
-│
-├── lib/                    # Third-party client setup — singletons
-│   ├── prisma.ts           # Prisma client
-│   ├── dynamodb.ts         # DynamoDB DocumentClient
-│   └── logger.ts           # Pino logger instance
-│
-├── utils/                  # Pure utilities
-│   ├── asyncHandler.ts     # Wraps async route handlers
-│   ├── errors.ts           # Custom error classes
-│   └── pagination.ts       # Cursor pagination helpers
-│
-├── routes/
-│   └── index.ts            # Mounts all routers: app.use('/api/v1/users', usersRouter)
-│
-├── app.ts                  # Express app setup: middleware, routes, error handler
-└── server.ts               # Entry point: listens on port / Lambda handler
+  config/
+    index.ts        ← validates and exports all config at startup
+    database.ts     ← DB connection config
+    auth.ts         ← auth provider config
 ```
 
-### Layer responsibility rules
+- Read environment variables once at startup, in `config/`
+- Fail fast if required config is missing — crash at startup, not mid-request
+- Pass config values as function arguments or inject via DI — never `process.env.X` scattered throughout the codebase
 
-```ts
-// Controller — validate, call service, respond. Nothing else.
-export const createOrder = asyncHandler(async (req, res) => {
-  const body = createOrderSchema.parse(req.body)          // validate
-  const order = await orderService.create(body, req.user) // delegate
-  res.status(201).json({ success: true, data: order })    // respond
-})
+---
 
-// Service — business logic only. No req/res, no DB.
-async function create(input: CreateOrderInput, user: AuthUser): Promise<Order> {
-  await checkInventory(input.productId, input.quantity)   // business rule
-  const order = await orderRepository.create({ ...input, userId: user.sub })
-  await notifyUser(user.sub, order.id)
-  return order
-}
+## Infrastructure Layout
 
-// Repository — DB access only. No business logic.
-async function create(data: CreateOrderData): Promise<Order> {
-  return prisma.order.create({ data })
-}
+```
+project-root/
+  src/            ← application source code
+  infra/          ← infrastructure as code (CDK, Terraform, Pulumi)
+  scripts/        ← one-off scripts, migrations, seeders
+  docs/           ← architecture decisions, API docs
+  .github/        ← CI/CD, PR templates, issue templates
 ```
 
 ---
 
-## Monorepo structure (if applicable)
-
-```
-/
-├── apps/
-│   ├── web/               # React frontend
-│   └── api/               # Node.js backend
-│
-├── packages/
-│   ├── types/             # Shared TypeScript types (FE + BE)
-│   │   └── src/
-│   │       ├── user.ts
-│   │       └── order.ts
-│   └── validators/        # Shared Zod schemas (FE + BE)
-│       └── src/
-│           ├── user.schema.ts
-│           └── order.schema.ts
-│
-├── infra/                 # AWS CDK stacks
-│   ├── bin/app.ts
-│   └── lib/
-│       ├── api-stack.ts
-│       └── frontend-stack.ts
-│
-├── e2e/                   # Playwright E2E tests
-├── bruno/                 # Bruno API collections
-├── package.json           # Workspace root
-└── turbo.json             # Turborepo config
-```
-
----
-
-## Naming conventions
-
-| Thing | Convention | Example |
-|---|---|---|
-| React components | PascalCase | `OrderList.tsx` |
-| Hooks | camelCase with `use` prefix | `useOrderForm.ts` |
-| API files | camelCase `.api.ts` | `orders.api.ts` |
-| Services | camelCase `.service.ts` | `orders.service.ts` |
-| Repositories | camelCase `.repository.ts` | `orders.repository.ts` |
-| Controllers | camelCase `.controller.ts` | `orders.controller.ts` |
-| Type files | camelCase `.types.ts` | `orders.types.ts` |
-| Test files | Same name + `.test.ts(x)` | `OrderList.test.tsx` |
-| E2E specs | camelCase `.spec.ts` | `orders.spec.ts` |
-| Constants | SCREAMING_SNAKE_CASE | `MAX_PAGE_SIZE` |
-| Env vars | SCREAMING_SNAKE_CASE | `DATABASE_URL` |
-| DB tables | snake_case | `order_items` |
-| Prisma models | PascalCase | `OrderItem` |
+*For technology-specific layouts (React feature structure, Express route layout, Prisma schema placement, etc.), consult your installed layer skills.*

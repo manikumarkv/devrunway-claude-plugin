@@ -38,8 +38,7 @@ find docs/dev-brainstorm/ -name "<number>.md" | head -1
 find docs/product-tasks/ -name "<number>-refined.md" | head -1
 
 # Understand existing code structure
-find src/ -type f -name "*.ts" -not -path "*/node_modules/*" | head -40
-ls prisma/ 2>/dev/null
+find src/ -type f | grep -v node_modules | head -40
 ```
 
 Read every relevant doc before writing a single line of the plan. The design must reflect the **recommended approach** from the brainstorm doc if one exists.
@@ -98,15 +97,12 @@ _Source: docs/dev-brainstorm/<number>.md_
 | DELETE | /api/v1/<resource>/:id | Required | Soft delete (owner only) |
 
 ### Request / Response shapes
-```ts
-// POST /api/v1/<resource>
-// Request body (Zod schema)
-const Create<Resource>Schema = z.object({
-  field: z.string().min(1),
-})
 
-// Response
-{ success: true, data: <Resource> }
+```
+POST /api/v1/<resource>
+Request fields: <field>: <type>, <field>: <type>
+Validation: <field> required and non-empty, <field> must be positive integer, ...
+Response: { success: true, data: <Resource> }
 ```
 
 ### Error cases
@@ -116,91 +112,90 @@ const Create<Resource>Schema = z.object({
 | Not owner | 403 | FORBIDDEN |
 | Invalid input | 400 | VALIDATION_ERROR |
 
-## Database
+## Data Model
 
-### Prisma model
-```prisma
-model <Resource> {
-  id        String   @id @default(cuid())
-  userId    String
-  field     String
-  deletedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+```
+Entity: <Resource>
+Fields:
+  id          — unique identifier (auto-generated)
+  ownerId     — reference to the User who owns this
+  <field>     — <type>, required
+  <field>     — <type>, optional
+  deletedAt   — soft-delete timestamp, nullable
+  createdAt   — auto-set on insert
+  updatedAt   — auto-updated on write
 
-  user User @relation(fields: [userId], references: [id])
-}
+Relations:
+  belongs to User (via ownerId)
 ```
 
-## Frontend Components
+_(Use your database layer's schema syntax to implement this model)_
 
-| Component | Path | Purpose |
-|---|---|---|
-| <Resource>List | src/features/<resource>/components/<Resource>List/ | Displays paginated list |
-| <Resource>Form | src/features/<resource>/components/<Resource>Form/ | Create / edit form |
+## UI Components Needed
+
+| Component | Purpose |
+|---|---|
+| `<Resource>List` | Displays paginated list — handles loading, empty, error, and data states |
+| `<Resource>Form` | Create / edit form — handles validation and server error display |
 
 ## Implementation Plan
 
 > ⚠️ /dev-code executes these steps one at a time with user confirmation between each.
 
-### Phase 1: Database
-**Step 1.1** — Add Prisma model to `prisma/schema.prisma`
-_Fields: id, userId, <fields>, deletedAt, createdAt, updatedAt_
+### Phase 1: Data model
+**Step 1.1** — Define the schema for `<Resource>` using your database layer's conventions
+_Fields: id, ownerId, <fields>, deletedAt, createdAt, updatedAt_
 
-**Step 1.2** — Run migration
-```bash
-npx prisma migrate dev --name add-<resource>
-npx prisma generate
-```
+**Step 1.2** — Run migration / schema sync using your database layer's tooling
+_Confirm required environment variables (connection string, etc.) are set first_
 
-### Phase 2: Backend types
-**Step 2.1** — Create `src/types/<resource>.types.ts`
-_Zod schemas: Create<Resource>Schema, Update<Resource>Schema, <Resource>Response_
+### Phase 2: Validation schemas / types
+**Step 2.1** — Define input schemas for Create<Resource> and Update<Resource>
+_Use your validation layer (Zod, Pydantic, etc.) — schemas are the source of truth for types_
 
-### Phase 3: Repository
-**Step 3.1** — Create `src/repositories/<resource>.repository.ts`
-_Methods: findById, findByUserId (cursor pagination), create, update, softDelete_
+### Phase 3: Data access layer
+**Step 3.1** — Create the repository / data access module for `<Resource>`
+_Methods: findById, findByOwner (with pagination), create, update, softDelete_
 
-### Phase 4: Service
-**Step 4.1** — Create `src/services/<resource>.service.ts`
-_Ownership check on every mutating method. Throw ForbiddenError if userId !== user.sub_
+### Phase 4: Service layer
+**Step 4.1** — Create the service for `<Resource>` business logic
+_Ownership check on every mutating method — throw a permission error if ownerId ≠ caller's ID_
 
-### Phase 5: Controller & routes
-**Step 5.1** — Create `src/controllers/<resource>.controller.ts`
-_asyncHandler on all handlers. Use ok(), created(), paginated() helpers._
+### Phase 5: Entry point (controller / handler / route)
+**Step 5.1** — Create the controller/handler for `<Resource>`
+_Validate all inputs using Step 2 schemas; call service; return standard response envelope_
 
-**Step 5.2** — Register routes in `src/app.ts`
-_All routes behind requireAuth(). PATCH/DELETE behind ownership (done in service)._
+**Step 5.2** — Register routes / endpoints
+_All routes require authentication; mutation routes require ownership (enforced in service)_
 
 ### Phase 6: Unit tests
-**Step 6.1** — `src/repositories/<resource>.repository.test.ts`
-_Test: findById returns null for unknown id, findByUserId returns correct page, create inserts row, softDelete sets deletedAt_
+**Step 6.1** — Repository tests
+_Test: returns null for unknown id, returns correct page, creates record, soft-deletes correctly_
 
-**Step 6.2** — `src/services/<resource>.service.test.ts`
-_Test: throws ForbiddenError when userId mismatch, happy path for each method_
+**Step 6.2** — Service tests
+_Test: throws permission error when owner mismatch, happy path for each method_
 
-**Step 6.3** — `src/controllers/<resource>.controller.test.ts`
-_Test: 401 when unauthenticated, 400 on invalid body, 201 on create, 200 on list_
+**Step 6.3** — Controller/handler tests
+_Test: 401 when unauthenticated, 400 on invalid input, 201 on create, 200 on list_
 
-### Phase 7: Frontend types & API hooks
-**Step 7.1** — Create `src/features/<resource>/types.ts`
-_Types: <Resource>, Create<Resource>Input, Update<Resource>Input_
+### Phase 7: Frontend data layer (if applicable)
+**Step 7.1** — Define frontend types for `<Resource>`
+_Mirror the API response shape; use your validation layer to infer types if available_
 
-**Step 7.2** — Create `src/features/<resource>/api/<resource>.api.ts`
-_Hooks: useInfiniteQuery for list, useMutation for create/update/delete_
+**Step 7.2** — Create data-fetching hooks / queries for `<Resource>`
+_List (with pagination), create mutation, update mutation, delete mutation_
 
-### Phase 8: Frontend components
-**Step 8.1** — Create `src/features/<resource>/components/<Resource>List/`
-_4 states: loading skeleton, empty state, error state, populated list with infinite scroll_
+### Phase 8: Frontend components (if applicable)
+**Step 8.1** — Create `<Resource>List` component
+_4 states: loading skeleton, empty state, error state, populated list_
 
-**Step 8.2** — Create `src/features/<resource>/components/<Resource>Form/`
-_react-hook-form + zodResolver. setError for server-side field errors._
+**Step 8.2** — Create `<Resource>Form` component
+_Validation on submit; display server-side field errors alongside client-side errors_
 
-**Step 8.3** — Create `src/features/<resource>/index.ts`
-_Barrel export_
+**Step 8.3** — Export barrel
 
 ### Phase 9: Screen / page
-**Step 9.1** — Create or update the route/page component that hosts these components
+**Step 9.1** — Create or update the route/page/view that hosts these components
 
 ### Phase 10: Playwright E2E tests
 **Step 10.1** — Create `e2e/<resource>.spec.ts`

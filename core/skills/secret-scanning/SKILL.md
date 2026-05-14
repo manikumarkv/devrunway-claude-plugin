@@ -8,7 +8,7 @@ Full standards in [secret-scanning.md](secret-scanning.md). Always-on summary:
 
 **Scan for:**
 - AWS keys (`AKIA[0-9A-Z]{16}`, `aws_secret_access_key`)
-- Cognito credentials (client IDs, pool IDs in hardcoded strings)
+- Auth service credentials (client IDs, pool IDs, OAuth secrets hardcoded in source)
 - JWT secrets and signing keys
 - Database connection strings with passwords (`postgres://user:password@`)
 - API keys in any form (`api_key`, `apiKey`, `API_KEY` assigned a value)

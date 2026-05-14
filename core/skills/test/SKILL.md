@@ -1,6 +1,6 @@
 ---
 name: test
-description: Run or generate tests — unit (Vitest), E2E (Playwright), API (Bruno), coverage reports, watch mode. Usage — /devrunway:test <sub-command> [args]
+description: Run or generate tests — unit tests, E2E tests, API tests, coverage reports, watch mode. Detects the project's test runner from stack.json or package.json. Usage — /devrunway:test <sub-command> [args]
 argument-hint: <unit|e2e|api|coverage|watch|generate> [file-or-feature]
 arguments:
   - name: subcommand
@@ -31,56 +31,61 @@ Sub-command is `$ARGUMENTS[0]`. Optional target path/file is the rest of `$ARGUM
 
 ---
 
-## `/test unit [file-or-feature]`
+## Detect the test runner
 
-Run Vitest unit tests. Optional path scopes to a file or directory.
+Before running, check `stack.json` and `package.json` to determine which tools are in use:
 
 ```bash
-# All unit tests
-npm test -- --run
+# Check stack.json for configured layers
+cat stack.json 2>/dev/null | grep -E "testing-unit|testing-e2e|testing-api"
 
-# Specific file or directory
-npx vitest run $TARGET
-
-# Watch mode for a file
-npx vitest $TARGET
+# Fallback: check package.json scripts and devDependencies
+cat package.json | grep -E '"test"|vitest|jest|pytest|playwright|cypress|bruno'
 ```
 
-After running, summarize: pass count, fail count, test files. Print any failing test names and their error messages.
+Use the detected tool for all subsequent commands. If multiple tools are found, ask the user which to use.
+
+---
+
+## `/test unit [file-or-feature]`
+
+Run unit tests. Detect runner from stack.json (`testing-unit`) or package.json.
+
+```bash
+# Common runners — use whichever is present:
+# Vitest:  npx vitest run $TARGET
+# Jest:    npx jest $TARGET --passWithNoTests
+# pytest:  python -m pytest $TARGET
+# dotnet:  dotnet test --filter $TARGET
+```
+
+After running, summarize: pass count, fail count, test files. Print any failing test names and error messages.
 
 ---
 
 ## `/test e2e [spec-file]`
 
-Run Playwright E2E tests.
+Run E2E tests. Detect runner from stack.json (`testing-e2e`) or package.json.
 
 ```bash
-# All E2E tests
-npx playwright test
-
-# Specific spec file
-npx playwright test $SPEC_FILE
-
-# With UI (headed mode)
-npx playwright test --headed $SPEC_FILE
+# Common runners — use whichever is present:
+# Playwright:   npx playwright test $SPEC_FILE
+# Cypress:      npx cypress run --spec $SPEC_FILE
+# WebdriverIO:  npx wdio $SPEC_FILE
 ```
 
-After running, summarize results by spec file. Print screenshots of any failures from `playwright-report/`.
+After running, summarize results by spec file. Report any failures with screenshots if available.
 
 ---
 
 ## `/test api [collection-name]`
 
-Run Bruno API tests.
+Run API tests. Detect runner from stack.json (`testing-api`) or project structure.
 
 ```bash
-# Run specific Bruno collection
-npx @usebruno/cli run bruno/$COLLECTION --env local
-
-# Run all Bruno collections
-for dir in bruno/*/; do
-  npx @usebruno/cli run "$dir" --env local
-done
+# Common runners — use whichever is present:
+# Bruno:   npx @usebruno/cli run $COLLECTION --env local
+# Newman:  npx newman run $COLLECTION.json --environment local.json
 ```
 
 Summarize: requests passed, failed, error messages.
@@ -89,168 +94,76 @@ Summarize: requests passed, failed, error messages.
 
 ## `/test coverage [threshold]`
 
-Run Vitest with coverage report. Default threshold: 80%.
+Run unit tests with coverage. Default threshold: 80%.
 
 ```bash
-npx vitest run --coverage
+# Vitest:  npx vitest run --coverage
+# Jest:    npx jest --coverage
+# pytest:  python -m pytest --cov --cov-report=term
 ```
 
-After running, parse the coverage summary and flag any files below the threshold:
-- Print files with coverage < 80% (or `$THRESHOLD`%)
-- Print overall: statements, branches, functions, lines coverage
-- If any file is below threshold, exit with a warning
+Flag files below the threshold. Print: statements, branches, functions, lines coverage overall.
 
 ---
 
 ## `/test watch [file]`
 
-Run Vitest in watch mode for fast feedback during development.
+Run unit tests in watch mode for fast feedback during development.
 
 ```bash
-# Watch all
-npx vitest
-
-# Watch specific file
-npx vitest $FILE
+# Vitest:  npx vitest $FILE
+# Jest:    npx jest --watch $FILE
+# pytest:  python -m pytest-watch $FILE
 ```
 
-This runs interactively. Inform the user: "Vitest is now watching. Press `q` to quit, `r` to rerun."
+Inform the user how to quit the watch process for their specific runner.
 
 ---
 
 ## `/test generate [file-or-feature]`
 
-Generate test stubs for existing code that lacks tests. Reads the source file(s), analyzes what needs testing, writes comprehensive test files.
+Generate test stubs for existing code that lacks tests. Reads the source file(s), analyses what needs testing, writes comprehensive test files.
 
 If no target given, use changed files from the current branch:
 ```bash
-git diff develop...HEAD --name-only | grep -E '\.(ts|tsx)$'
+git diff develop...HEAD --name-only | head -20
 ```
 
-### Backend service/controller test pattern
+### Universal test generation pattern
 
-Read the source file, identify all exported functions and edge cases, then write `<filename>.test.ts`:
+For every source file, generate tests that cover:
 
-```ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { OrdersService } from './orders.service';
-import { OrdersRepository } from '../repositories/orders.repository';
-import { NotFoundError, ForbiddenError } from '../utils/errors';
-
-vi.mock('../repositories/orders.repository');
-
-describe('OrdersService', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
-
-  describe('getById', () => {
-    it('returns the order when it belongs to the requesting user', async () => {
-      const mockOrder = { id: 'order-1', userId: 'user-123' };
-      vi.mocked(OrdersRepository.findById).mockResolvedValue(mockOrder as any);
-
-      const result = await OrdersService.getById('order-1', 'user-123');
-      expect(result).toEqual(mockOrder);
-    });
-
-    it('throws NotFoundError when order does not exist', async () => {
-      vi.mocked(OrdersRepository.findById).mockResolvedValue(null);
-      await expect(OrdersService.getById('missing', 'user-123')).rejects.toThrow(NotFoundError);
-    });
-
-    it('throws ForbiddenError when order belongs to a different user', async () => {
-      vi.mocked(OrdersRepository.findById).mockResolvedValue({ id: 'order-1', userId: 'other-user' } as any);
-      await expect(OrdersService.getById('order-1', 'user-123')).rejects.toThrow(ForbiddenError);
-    });
-  });
-});
+**Service / business logic:**
+```
+describe('<ServiceName>')
+  describe('<methodName>')
+    it('returns expected result for valid input')
+    it('throws NotFoundError when resource does not exist')
+    it('throws ForbiddenError when caller does not own the resource')
+    it('handles edge case: <empty/zero/max>')
 ```
 
-### React component test pattern
-
-```tsx
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
-import { server } from '@/test/server';
-import { createWrapper } from '@/test/utils';
-import { OrderList } from './OrderList';
-
-describe('OrderList', () => {
-  it('shows loading skeleton while fetching', () => {
-    render(<OrderList />, { wrapper: createWrapper() });
-    expect(screen.getByRole('status', { name: /loading/i })).toBeInTheDocument();
-  });
-
-  it('renders orders after successful fetch', async () => {
-    server.use(
-      http.get('/api/v1/orders', () =>
-        HttpResponse.json({ success: true, data: [{ id: '1', status: 'pending', total: 99 }] })
-      )
-    );
-    render(<OrderList />, { wrapper: createWrapper() });
-    await waitFor(() => expect(screen.getByText('$99.00')).toBeInTheDocument());
-  });
-
-  it('shows error message when fetch fails', async () => {
-    server.use(http.get('/api/v1/orders', () => HttpResponse.json({}, { status: 500 })));
-    render(<OrderList />, { wrapper: createWrapper() });
-    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
-  });
-
-  it('shows empty state when no orders', async () => {
-    server.use(http.get('/api/v1/orders', () => HttpResponse.json({ success: true, data: [] })));
-    render(<OrderList />, { wrapper: createWrapper() });
-    await waitFor(() => expect(screen.getByText(/no orders/i)).toBeInTheDocument());
-  });
-});
+**Controller / handler / route:**
+```
+describe('<endpoint> <method>')
+  it('returns 401 when unauthenticated')
+  it('returns 400 when input is invalid')
+  it('returns 201/200 on success')
+  it('returns 404 when resource not found')
 ```
 
-### E2E test pattern (Playwright)
-
-Create in `e2e/<feature>.spec.ts`:
-
-```ts
-import { test, expect } from '@playwright/test';
-
-test.describe('Orders', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.getByLabel('Email').fill(process.env.TEST_USER_EMAIL!);
-    await page.getByLabel('Password').fill(process.env.TEST_USER_PASSWORD!);
-    await page.getByRole('button', { name: /sign in/i }).click();
-    await expect(page).toHaveURL('/dashboard');
-  });
-
-  test('user can view order list', async ({ page }) => {
-    await page.goto('/orders');
-    await expect(page.getByRole('heading', { name: /orders/i })).toBeVisible();
-    await expect(page.getByRole('list', { name: /orders/i })).toBeVisible();
-  });
-
-  test('unauthenticated user is redirected to login', async ({ page }) => {
-    await page.context().clearCookies();
-    await page.goto('/orders');
-    await expect(page).toHaveURL('/login');
-  });
-});
+**UI component (if applicable):**
+```
+describe('<ComponentName>')
+  it('renders loading state while fetching')
+  it('renders data after successful fetch')
+  it('renders error state when fetch fails')
+  it('renders empty state when no data')
 ```
 
-### Bruno API collection pattern
+Use your installed testing layer's syntax (Vitest, Jest, pytest, etc.) for the actual test code. Consult your testing layer skill for framework-specific patterns and mock setup.
 
-Create `bruno/<resource>/`:
-```
-create-<resource>.bru        — POST success (201)
-create-<resource>-error.bru  — POST validation error (400)
-get-<resource>.bru           — GET list (200)
-get-<resource>-by-id.bru     — GET by ID (200 + 404)
-auth-error.bru               — Missing/invalid token (401)
-```
-
-After writing each test file, run it to verify no syntax errors:
-```bash
-npx vitest run <test-file> 2>&1 | tail -20
-```
-
-Fix any failures before moving on.
+After writing each test file, run it to verify no syntax errors. Fix any failures before moving on.
 
 ### Generate summary
 

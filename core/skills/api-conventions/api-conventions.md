@@ -1,556 +1,211 @@
-# API Design Conventions
+# REST API Design Conventions
+
+Universal principles — applies to any backend language or framework. For implementation helpers (response builders, validation middleware), see your backend layer skill.
 
 ---
 
-## Response envelope
+## Response Envelope
 
-Every response — success or error — follows a single consistent shape. Never return a bare array or object at the root. Every response includes a `meta` block with `requestId` and `timestamp` for traceability.
+Every response uses a single consistent shape. Never return a bare array or bare object at the root. Always include a `meta` block for traceability.
 
-### TypeScript types — define once, use everywhere
-
-```ts
-// src/types/api.types.ts
-
-/** Meta block present on every response */
-export interface ResponseMeta {
-  requestId: string          // from X-Request-Id header — trace across logs and Sentry
-  timestamp: string          // ISO 8601 — when the response was generated
-  version:   string          // API version, e.g. "v1"
-}
-
-/** Successful response — single resource or mutation result */
-export interface SuccessResponse<T> {
-  success:  true
-  data:     T
-  meta:     ResponseMeta
-}
-
-/** Successful response — paginated collection */
-export interface PaginatedResponse<T> {
-  success: true
-  data:    T[]
-  pagination: {
-    nextCursor: string | null
-    total:      number
-    limit:      number
-    hasMore:    boolean
-  }
-  meta: ResponseMeta
-}
-
-/** Successful mutation with no meaningful body (DELETE) */
-export interface NoContentResponse {
-  success: true
-  meta:    ResponseMeta
-}
-
-/** Error response — all failures */
-export interface ErrorResponse {
-  success: false
-  error: {
-    code:       string                        // machine-readable, stable across versions
-    message:    string                        // human-readable, may be shown to user
-    details?:   Record<string, string>        // field-level errors (validation)
-    path:       string                        // request path for debugging
-  }
-  meta: ResponseMeta
-}
-```
-
-### Wire shape — examples
-
+### Success response
 ```json
-// ✅ Single resource — GET /api/v1/orders/:id
 {
   "success": true,
-  "data": { "id": "clxyz", "status": "PENDING", "total": 49.99 },
-  "meta": { "requestId": "a1b2-c3d4", "timestamp": "2026-05-14T10:00:00.000Z", "version": "v1" }
-}
-
-// ✅ Paginated list — GET /api/v1/orders
-{
-  "success": true,
-  "data": [{ "id": "clxyz", "status": "PENDING" }],
-  "pagination": { "nextCursor": "eyJpZCI6ImNsYWJjIn0", "total": 84, "limit": 20, "hasMore": true },
-  "meta": { "requestId": "a1b2-c3d4", "timestamp": "2026-05-14T10:00:00.000Z", "version": "v1" }
-}
-
-// ✅ Mutation with no body — DELETE /api/v1/orders/:id  → 204
-// (no body sent for 204)
-
-// ✅ Error — any failure
-{
-  "success": false,
-  "error": {
-    "code":    "NOT_FOUND",
-    "message": "Order not found",
-    "path":    "/api/v1/orders/clxyz"
+  "data": {
+    "id": "usr_123",
+    "name": "Alice"
   },
-  "meta": { "requestId": "a1b2-c3d4", "timestamp": "2026-05-14T10:00:00.000Z", "version": "v1" }
-}
-
-// ✅ Validation error — includes field-level details
-{
-  "success": false,
-  "error": {
-    "code":    "VALIDATION_ERROR",
-    "message": "Validation failed",
-    "details": { "email": "Enter a valid email address", "quantity": "Must be at least 1" },
-    "path":    "/api/v1/orders"
-  },
-  "meta": { "requestId": "a1b2-c3d4", "timestamp": "2026-05-14T10:00:00.000Z", "version": "v1" }
-}
-```
-
-```ts
-// ❌ Bare array
-res.json([...orders])
-
-// ❌ Bare object
-res.json({ id: '...', status: 'pending' })
-
-// ❌ 200 with error body
-res.status(200).json({ error: 'Not found' })
-
-// ❌ success:false with 200 status
-res.status(200).json({ success: false, message: 'Not found' })
-```
-
-### Response helpers — always use, never `res.json()` directly
-
-```ts
-// src/lib/response.ts
-import { type Request, type Response } from 'express'
-import { API_VERSION } from './constants'
-
-function buildMeta(req: Request): ResponseMeta {
-  return {
-    requestId: req.headers['x-request-id'] as string ?? crypto.randomUUID(),
-    timestamp: new Date().toISOString(),
-    version:   API_VERSION,                // e.g. 'v1' from constants.ts
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2024-01-15T10:30:00Z",
+    "version": "v1"
   }
 }
+```
 
-/** 200 — single resource */
-export function ok<T>(req: Request, res: Response, data: T): void {
-  res.status(200).json({ success: true, data, meta: buildMeta(req) })
-}
-
-/** 201 — resource created */
-export function created<T>(req: Request, res: Response, data: T): void {
-  res.status(201).json({ success: true, data, meta: buildMeta(req) })
-}
-
-/** 204 — deleted, no body */
-export function noContent(res: Response): void {
-  res.status(204).end()
-}
-
-/** 200 — paginated collection */
-export function paginated<T>(
-  req: Request,
-  res: Response,
-  data: T[],
-  pagination: { nextCursor: string | null; total: number; limit: number },
-): void {
-  res.status(200).json({
-    success: true,
-    data,
-    pagination: { ...pagination, hasMore: pagination.nextCursor !== null },
-    meta: buildMeta(req),
-  })
-}
-
-/** Used by errorHandler — not called directly in controllers */
-export function errorResponse(
-  req: Request,
-  res: Response,
-  status: number,
-  code: string,
-  message: string,
-  details?: Record<string, string>,
-): void {
-  res.status(status).json({
-    success: false,
-    error: { code, message, ...(details ? { details } : {}), path: req.path },
-    meta: buildMeta(req),
-  })
+### Success response with pagination
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "ord_1", "total": 99.99 },
+    { "id": "ord_2", "total": 45.00 }
+  ],
+  "pagination": {
+    "nextCursor": "ord_2",
+    "total": 47,
+    "limit": 20,
+    "hasMore": true
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2024-01-15T10:30:00Z"
+  }
 }
 ```
 
-```ts
-// src/controllers/orders.controller.ts — always pass req to helpers
-export const getOrder = asyncHandler(async (req, res) => {
-  const order = await orderService.get(req.params.id, req.user)
-  ok(req, res, order)
-})
-
-export const createOrder = asyncHandler(async (req, res) => {
-  const order = await orderService.create(req.body, req.user)
-  created(req, res, order)
-})
-
-export const listOrders = asyncHandler(async (req, res) => {
-  const query = listOrdersQuerySchema.parse(req.query)
-  const { items, total } = await orderService.list(req.user.sub, query)
-  const nextCursor = buildNextCursor(items, query.limit)
-  paginated(req, res, items, { nextCursor, total, limit: query.limit })
-})
-
-export const deleteOrder = asyncHandler(async (req, res) => {
-  await orderService.delete(req.params.id, req.user)
-  noContent(res)
-})
-```
-
----
-
-## Route naming
-
-```
-Base prefix:  /api/v1/
-
-Collection:   GET    /api/v1/orders
-Single:       GET    /api/v1/orders/:id
-Create:       POST   /api/v1/orders
-Update:       PUT    /api/v1/orders/:id    (full replace)
-Patch:        PATCH  /api/v1/orders/:id   (partial update)
-Delete:       DELETE /api/v1/orders/:id
-
-Nested (ownership):
-              GET    /api/v1/users/:userId/orders
-              POST   /api/v1/users/:userId/orders
+### Error response
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "details": [
+      { "field": "email", "message": "Must be a valid email address" },
+      { "field": "age", "message": "Must be a positive integer" }
+    ]
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2024-01-15T10:30:00Z"
+  }
+}
 ```
 
 **Rules:**
-- Plural nouns — `/orders`, `/products`, `/order-items`
-- kebab-case — `/order-items` not `/orderItems` or `/order_items`
-- Max 2 nesting levels — `/users/:userId/orders` is fine, deeper is a smell
-- No verbs in path — `/orders/:id/cancel` (bad) → `PATCH /orders/:id` with `{ "status": "cancelled" }` in body
-- Exception: actions with no resource equivalent — `POST /api/v1/auth/sign-in`, `POST /api/v1/orders/:id/duplicate`
+- `success: true/false` on every response — makes client-side handling predictable
+- `data` is always an object or array of objects — never a scalar at the root
+- `error.code` is a machine-readable constant (SCREAMING_SNAKE_CASE)
+- `error.details` lists every invalid field — not just the first one
+- Never include stack traces, query text, or file paths in error responses
 
-```ts
-// ❌ Verb in path
-POST /api/v1/cancelOrder
-GET  /api/v1/getOrders
-POST /api/v1/orders/create
+---
 
-// ✅ Noun + HTTP method carries the verb
-DELETE /api/v1/orders/:id
-GET    /api/v1/orders
-POST   /api/v1/orders
+## Route Design
 
-// ✅ State change via PATCH
-PATCH /api/v1/orders/:id   body: { "status": "cancelled" }
+### URL structure
+```
+/api/v1/{resource}                 GET list, POST create
+/api/v1/{resource}/{id}            GET one, PUT/PATCH update, DELETE
+/api/v1/{resource}/{id}/{sub}      GET nested list, POST nested create
+```
 
-// ✅ Actions that don't map cleanly to CRUD
-POST /api/v1/orders/:id/duplicate
-POST /api/v1/invoices/:id/send
+### Rules
+- **Plural nouns** — `/users`, `/orders`, `/products` (not `/user`, `/getOrders`)
+- **Version from day one** — `/api/v1/` prefix, even if only one version exists
+- **Nested for ownership** — `/users/:userId/orders` when a resource belongs to another (max 2 levels)
+- **kebab-case** — `/order-items`, `/shipping-addresses` (not camelCase)
+- **No verbs in URLs** — the HTTP method is the verb. `/orders/:id/cancel` → `POST /orders/:id/cancellations` or `PATCH /orders/:id` with `{ status: "cancelled" }`
+
+### Examples
+```
+GET    /api/v1/users              → list users
+POST   /api/v1/users              → create user
+GET    /api/v1/users/:id          → get user
+PATCH  /api/v1/users/:id          → update user
+DELETE /api/v1/users/:id          → delete user
+GET    /api/v1/users/:id/orders   → list orders for user
+POST   /api/v1/users/:id/orders   → create order for user
 ```
 
 ---
 
-## Versioning
-
-All routes are versioned from day one. Version in the URL — not headers.
-
-```
-/api/v1/orders     ← current
-/api/v2/orders     ← when breaking changes are needed
-```
-
-```ts
-// src/routes/index.ts
-import { Router } from 'express'
-import { ordersRouter } from './orders'
-import { usersRouter } from './users'
-
-const v1 = Router()
-v1.use('/orders', ordersRouter)
-v1.use('/users', usersRouter)
-
-export function mountRoutes(app: Express) {
-  app.use('/api/v1', v1)
-}
-```
-
-**When to bump the version:**
-- Removing a field from the response
-- Changing a field type or name
-- Changing required/optional on a request field
-- Removing an endpoint
-
-**Not a breaking change (no version bump needed):**
-- Adding a new optional response field
-- Adding a new optional request field
-- Adding a new endpoint
-
----
-
-## HTTP status codes
+## HTTP Status Codes
 
 | Code | When to use |
 |---|---|
-| `200` | Successful GET, PUT, PATCH |
-| `201` | Successful POST that created a resource |
-| `204` | Successful DELETE (no body) |
-| `400` | Request validation failed (Zod parse error) |
-| `401` | Not authenticated — no token or invalid token |
-| `403` | Authenticated but not authorized — wrong role/group/owner |
-| `404` | Resource does not exist |
-| `409` | Conflict — duplicate unique key, version mismatch |
-| `422` | Business rule violated — insufficient stock, invalid state transition |
-| `429` | Rate limit exceeded |
-| `500` | Unexpected server error |
+| `200 OK` | Successful GET, PATCH, PUT |
+| `201 Created` | Successful POST that created a resource |
+| `204 No Content` | Successful DELETE (no response body) |
+| `400 Bad Request` | Input validation failed — malformed or missing fields |
+| `401 Unauthorized` | Not authenticated — no valid token |
+| `403 Forbidden` | Authenticated but not authorised for this resource |
+| `404 Not Found` | Resource does not exist |
+| `409 Conflict` | Duplicate creation or state conflict |
+| `422 Unprocessable Entity` | Input is valid but violates a business rule |
+| `429 Too Many Requests` | Rate limit exceeded |
+| `500 Internal Server Error` | Unexpected server-side failure |
 
-```ts
-// ❌ 200 for not found
-res.status(200).json({ found: false })
-
-// ❌ 400 for business rule violations (not a validation error)
-throw new ValidationError('Insufficient stock')   // use UnprocessableError
-
-// ✅ Correct mapping
-throw new NotFoundError('Order', id)              // → 404
-throw new ForbiddenError()                        // → 403
-throw new ConflictError('Email already in use')  // → 409
-throw new UnprocessableError('Insufficient stock', { available: 2, requested: 10 })  // → 422
-```
+**Never return `200` for errors.** Clients check the status code first — an error body inside a 200 response breaks every HTTP client and monitoring tool.
 
 ---
 
 ## Pagination
 
-Always cursor-based. Never offset (`?page=2&pageSize=20`) — it breaks under concurrent inserts and doesn't scale.
+Prefer **cursor-based** pagination over offset-based.
 
-**Request:**
+| | Cursor-based | Offset-based |
+|---|---|---|
+| Consistent under writes | ✅ | ❌ (items skip/duplicate) |
+| Works on large datasets | ✅ | ❌ (OFFSET N is slow) |
+| Can jump to page N | ❌ | ✅ |
+
+### Cursor request
 ```
-GET /api/v1/orders?limit=20&cursor=<encodedCursor>
+GET /api/v1/orders?limit=20&cursor=ord_abc123
 ```
 
-**Response:** (`pagination` is a separate top-level key — cursor and counts are NOT inside `meta`)
+### Cursor response
 ```json
 {
-  "success": true,
-  "data": [...],
   "pagination": {
-    "nextCursor": "eyJpZCI6ImFiYzEyMyJ9",
-    "total": 84,
+    "nextCursor": "ord_xyz789",
     "limit": 20,
-    "hasMore": true
-  },
-  "meta": { "requestId": "a1b2-c3d4", "timestamp": "2026-05-14T10:00:00.000Z", "version": "v1" }
+    "hasMore": true,
+    "total": 147
+  }
 }
 ```
 
-`nextCursor` is `null` when no more pages exist. `total` is the count of all matching records (for UI display — "Showing 20 of 84").
+When cursor is absent, return the first page. When `hasMore` is `false`, there are no more pages.
 
-**Implementation:**
-
-```ts
-// src/utils/pagination.ts
-const DEFAULT_LIMIT = 20
-const MAX_LIMIT = 100
-
-export function parsePaginationParams(query: Record<string, unknown>) {
-  const limit = Math.min(
-    Number(query.limit) || DEFAULT_LIMIT,
-    MAX_LIMIT,
-  )
-  const cursor = typeof query.cursor === 'string' ? query.cursor : undefined
-  return { limit, cursor }
-}
-
-export function encodeCursor(id: string): string {
-  return Buffer.from(JSON.stringify({ id })).toString('base64url')
-}
-
-export function decodeCursor(cursor: string): { id: string } {
-  return JSON.parse(Buffer.from(cursor, 'base64url').toString())
-}
-
-export function buildNextCursor(items: { id: string }[], limit: number): string | null {
-  if (items.length < limit) return null
-  return encodeCursor(items[items.length - 1].id)
-}
-```
-
-```ts
-// src/repositories/orders.repository.ts
-export async function findMany(params: {
-  userId: string
-  limit: number
-  cursor?: string
-}): Promise<{ items: Order[]; total: number }> {
-  const cursorWhere = params.cursor
-    ? { id: { lt: decodeCursor(params.cursor).id } }
-    : {}
-
-  const [items, total] = await prisma.$transaction([
-    prisma.order.findMany({
-      where: { userId: params.userId, deletedAt: null, ...cursorWhere },
-      orderBy: { createdAt: 'desc' },
-      take: params.limit,
-    }),
-    prisma.order.count({ where: { userId: params.userId, deletedAt: null } }),
-  ])
-
-  return { items, total }
-}
-```
-
-```ts
-// src/controllers/orders.controller.ts
-export const listOrders = asyncHandler(async (req, res) => {
-  const { limit, cursor } = parsePaginationParams(req.query)
-  const { items, total } = await orderService.list(req.user.sub, { limit, cursor })
-  const nextCursor = buildNextCursor(items, limit)
-  paginated(res, items, { nextCursor, total })
-})
-```
-
-**Frontend — React Query infinite query:**
-
-```ts
-// src/features/orders/api/orders.api.ts
-export function useOrders() {
-  return useInfiniteQuery({
-    queryKey: ['orders'],
-    queryFn: ({ pageParam }) =>
-      apiClient.get<PaginatedResponse<Order>>(
-        `/api/v1/orders?limit=20${pageParam ? `&cursor=${pageParam}` : ''}`
-      ),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.pagination.nextCursor ?? undefined,
-  })
-}
-```
+Use offset (`?page=N&pageSize=M`) only when the UI genuinely needs random page access (e.g. a numbered page list).
 
 ---
 
-## Query parameters
+## Query Parameters
 
-```
-Filtering:   GET /api/v1/orders?status=pending&status=confirmed
-Sorting:     GET /api/v1/orders?sort=createdAt&order=desc
-Search:      GET /api/v1/orders?q=widget
-Pagination:  GET /api/v1/orders?limit=20&cursor=abc123
-```
-
-**Validation with Zod:**
-
-```ts
-// src/types/orders.types.ts
-export const listOrdersQuerySchema = z.object({
-  status: z.union([orderStatusSchema, z.array(orderStatusSchema)]).optional(),
-  sort: z.enum(['createdAt', 'updatedAt', 'total']).default('createdAt'),
-  order: z.enum(['asc', 'desc']).default('desc'),
-  q: z.string().max(100).optional(),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-  cursor: z.string().optional(),
-})
-
-export type ListOrdersQuery = z.infer<typeof listOrdersQuerySchema>
-```
-
-```ts
-// In controller — parse query params the same way as body
-export const listOrders = asyncHandler(async (req, res) => {
-  const query = listOrdersQuerySchema.parse(req.query)  // throws ValidationError → 400
-  // ...
-})
-```
-
----
-
-## Headers
-
-```
-Request:
-  Authorization: Bearer <cognito-jwt>
-  Content-Type: application/json
-
-Response:
-  Content-Type: application/json
-  X-Request-Id: <uuid>          ← set by requestLogger middleware, trace across logs
-```
-
-```ts
-// src/middleware/requestId.ts
-import { randomUUID } from 'crypto'
-
-export function requestId(req: Request, res: Response, next: NextFunction) {
-  const id = randomUUID()
-  req.headers['x-request-id'] = id
-  res.setHeader('X-Request-Id', id)
-  next()
-}
-```
-
-Mount before `requestLogger` so every log line includes the same ID.
-
----
-
-## Naming conventions
-
-| Thing | Convention | Example |
+| Parameter | Convention | Example |
 |---|---|---|
-| Route path segments | kebab-case | `/order-items` |
-| Query parameters | camelCase | `?nextCursor=`, `?sortBy=` |
-| JSON body fields | camelCase | `{ "productId": "...", "createdAt": "..." }` |
-| JSON response fields | camelCase | `{ "success": true, "data": { "orderId": "..." } }` |
-| Route params | camelCase | `/:orderId`, `/:userId` |
+| Filtering | `?status=active` | `GET /orders?status=shipped` |
+| Sorting | `?sort=createdAt&order=desc` | `GET /users?sort=name&order=asc` |
+| Pagination | `?limit=20&cursor=<id>` | `GET /orders?limit=10&cursor=abc` |
+| Search | `?q=<term>` | `GET /products?q=keyboard` |
+| Field selection | `?fields=id,name,email` | `GET /users?fields=id,name` |
+
+**Rules:**
+- camelCase for multi-word params: `?createdAfter=` not `?created_after=`
+- Date params in ISO 8601: `?createdAfter=2024-01-01T00:00:00Z`
+- Boolean params as strings: `?includeDeleted=true`
+- Array params repeated: `?status=active&status=pending` or `?status=active,pending`
 
 ---
 
-## Route file structure
+## Versioning Strategy
 
-```ts
-// src/routes/orders.ts
-import { Router } from 'express'
-import { requireAuth } from '../middleware/auth'
-import { requireGroup } from '../middleware/requireGroup'
-import * as ordersController from '../controllers/orders.controller'
+Version in the URL path — not in headers or query params (headers and query params are invisible in browser address bars and most logs).
 
-export const ordersRouter = Router()
-
-ordersRouter.use(requireAuth)                                          // all routes require auth
-
-ordersRouter.get('/', ordersController.listOrders)
-ordersRouter.post('/', ordersController.createOrder)
-ordersRouter.get('/:id', ordersController.getOrder)
-ordersRouter.patch('/:id', ordersController.updateOrder)
-ordersRouter.delete('/:id', ordersController.deleteOrder)
-
-// Admin-only sub-routes
-ordersRouter.post('/:id/refund', requireGroup('admin'), ordersController.refundOrder)
 ```
+/api/v1/users   ← current
+/api/v2/users   ← new version when breaking changes required
+```
+
+**Breaking changes** that require a new version:
+- Removing a field from the response
+- Changing a field's type
+- Changing the semantics of a status code
+- Removing an endpoint
+
+**Non-breaking changes** — no new version needed:
+- Adding new optional fields to responses
+- Adding new optional query parameters
+- Adding new endpoints
 
 ---
 
-## Never
+## Idempotency
 
-```ts
-// ❌ No version prefix
-GET /api/orders
+Mutating operations that could be retried (due to network failures) should support idempotency keys:
 
-// ❌ Verb in path
-POST /api/v1/createOrder
-GET  /api/v1/getOrderById/:id
-
-// ❌ Bare array response
-res.json([...orders])
-
-// ❌ 200 for errors
-res.status(200).json({ error: 'Not found' })
-
-// ❌ Offset pagination
-GET /api/v1/orders?page=3&pageSize=20
-
-// ❌ snake_case fields in JSON
-{ "order_id": "...", "created_at": "..." }
-
-// ❌ Inconsistent envelope — some routes wrap, some don't
-res.json(order)           // sometimes bare
-res.json({ data: order }) // sometimes wrapped
 ```
+POST /api/v1/payments
+Idempotency-Key: <client-generated UUID>
+```
+
+If the same key is received twice, return the original response without re-processing. Store idempotency keys with a TTL (24 hours is typical).
+
+---
+
+*For backend-specific implementation (response helper functions, validation middleware, error handler middleware), see your backend layer skill (e.g., `layers/backend/node-express/`).*

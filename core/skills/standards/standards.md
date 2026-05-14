@@ -1,234 +1,154 @@
-# Full Stack Coding Standards
+# Universal Engineering Standards
 
-## Git & GitHub Workflow
-
-### Branching Strategy
-- `main` — production only, protected, no direct pushes
-- `develop` — integration branch, all features merge here first
-- `feature/<GH-id>-<short-desc>` — new features (e.g. `feature/GH-42-user-profile`)
-- `fix/<GH-id>-<short-desc>` — bug fixes (e.g. `fix/GH-99-login-redirect`)
-- `chore/<desc>` — dependency updates, config changes
-- `release/<version>` — release prep
-
-### Commit Convention (Conventional Commits)
-```
-<type>(<scope>): <short summary>
-
-[optional body]
-
-[optional footer: refs #<issue>]
-```
-Types: `feat` | `fix` | `chore` | `docs` | `refactor` | `test` | `perf` | `ci`
-
-### Pull Requests
-- Title follows Conventional Commits format
-- All PRs target `develop` (not `main`) unless hotfix
-- 1 reviewer approval required, all CI checks must pass
-- Description: What / Why / How to Test / Screenshots (if UI)
-- Link issue: `Closes #<n>`
-- Never merge with unresolved comments
-
-### Issues
-- Label: `bug` | `feature` | `enhancement` | `chore` | `blocked`
-- Always create feature branch from the issue
-- Close via `Closes #<n>` in PR description
+These principles apply regardless of language, framework, or stack. For technology-specific standards, see your installed layer skills.
 
 ---
 
-## React (Frontend)
+## Naming
 
-### Project Structure
+Names are the primary documentation of intent. Optimise for the reader, not the writer.
+
+**Functions:** verb + noun that describes what it does and what it operates on.
+- `validatePaymentAmount(amount)` not `validate(amount)` or `check(x)`
+- `fetchUserById(id)` not `getUser(id)` (fetch signals async I/O)
+- `buildOrderSummary(items)` not `process(items)`
+
+**Variables:** noun that describes what the value represents, not what it is.
+- `userCount` not `n` or `num`
+- `isPaymentProcessed` not `flag` or `status`
+- `activeSubscriptions` not `data` or `result`
+
+**Booleans:** always a yes/no question form.
+- `isLoading`, `hasError`, `canEdit`, `shouldRetry`
+
+**Constants:** SCREAMING_SNAKE_CASE for true constants; avoid using it for mutable config.
+
+**Files and modules:** name after the primary export or responsibility.
+- `UserRepository` → `user.repository.ts`
+- `paymentUtils` → `payment.utils.ts`
+
+---
+
+## Single Responsibility
+
+**One function, one job.** If you need "and" to describe what a function does, it does too much:
+- `validateAndSaveUser()` → split into `validateUser()` + `saveUser()`
+- `fetchAndFormatReport()` → split into `fetchReport()` + `formatReport()`
+
+**One module, one concept.** A module should have one reason to change. Mixing auth logic and billing logic in the same file means both change that file.
+
+**Controllers are thin.** Route handlers / controllers validate input, call a service, return a response. Business logic lives in the service layer, not in controllers.
+
+**Services contain business logic.** Services orchestrate business rules. They do not contain SQL, HTTP calls, or framework objects.
+
+**Repositories contain data access.** Database queries belong in a repository layer, not scattered across services or controllers.
+
+---
+
+## DRY (Don't Repeat Yourself)
+
+**Rule of three:** tolerate one duplicate; tolerate a second; extract on the third.
+
+Premature abstraction — extracting after one use — creates the wrong abstraction. Real duplication reveals the right shape of the abstraction.
+
+**What to extract:**
+- Business rules that appear in multiple places
+- Validation logic applied to the same data in different contexts
+- Error-handling patterns repeated across similar functions
+
+**What NOT to extract:**
+- Code that looks similar but handles genuinely different concepts
+- Very short expressions (extracting `x + 1` into `increment(x)` adds noise)
+- Test setup — test code duplication is often intentional for readability
+
+---
+
+## Tests Alongside Source
+
+Tests live next to the code they test:
+
 ```
 src/
-├── assets/
-├── components/        # Shared reusable components
-│   └── Button/
-│       ├── Button.tsx
-│       ├── Button.test.tsx
-│       └── index.ts
-├── features/          # Feature modules
-│   └── auth/
-│       ├── components/
-│       ├── hooks/
-│       ├── api/
-│       ├── types.ts
-│       └── index.ts
-├── hooks/             # Global shared hooks
-├── pages/             # Route-level components
-├── services/          # API clients
-├── store/             # Global state
-├── types/             # Shared TS types
-├── utils/             # Pure utilities
-└── App.tsx
+  payment/
+    payment.service.ts
+    payment.service.test.ts      ← next to the source
+    payment.repository.ts
+    payment.repository.test.ts
 ```
 
-### Component Rules
-- One component per file, PascalCase filename
-- Always TypeScript; explicit prop `interface`
-- Functional components with hooks only — no class components
-- Max ~150 lines; split if larger
-- Tests co-located as `Component.test.tsx`
-- Named exports (not default exports) in feature folders
+**Why:** Tests are the documentation of expected behaviour. They belong where the reader looks for that documentation — next to the code.
 
-### Hooks
-- Names start with `use`
-- Never conditional hook calls
-- `useMemo` for expensive calculations, `useCallback` for stable callbacks
-- Business logic extracted to custom hooks, not inline in components
+**Unit tests:** one file per module, testing public behaviour not implementation details.
 
-### State Management
-- Local UI state: `useState` / `useReducer`
-- Server state: React Query (`@tanstack/react-query`) — no manual fetch/useEffect for data
-- Global app state: Redux Toolkit or Zustand
-- Never store server response data in Redux
+**Integration tests:** test the component with real dependencies (DB, external service) — put in a `__tests__/integration/` folder if you need to distinguish.
 
-### Styling
-- Tailwind CSS as default
-- CSS Modules for component-specific styles when needed
-- No inline `style={{}}` except for truly dynamic computed values
-- No global CSS overrides of third-party components
-
-### Testing
-- Vitest + React Testing Library
-- Test behavior via accessible roles/labels, not DOM selectors
-- Every component has a smoke test minimum
-- MSW for API mocking
-- Coverage target ≥ 80% for feature code
+**Test naming:** `describe('<function/module>')` + `it('should <expected behaviour> when <condition>')`.
 
 ---
 
-## Node.js (Backend)
+## Explicit Dependencies
 
-### Project Structure
+A function declares everything it needs as a parameter. No hidden reaching:
+
 ```
-src/
-├── config/
-├── controllers/       # Thin request handlers
-├── services/          # Business logic
-├── repositories/      # DB queries
-├── middleware/        # Auth, logging, validation
-├── routes/
-├── types/
-└── utils/
-index.ts               # Entry point
+# ❌ Hidden dependency — function secretly uses a global
+def process_order(order_id):
+    db = get_global_db()          # hidden; untestable; couples to global state
+    config = read_env("API_KEY")  # hidden
+    ...
+
+# ✅ Explicit — all dependencies declared
+def process_order(order_id, db, api_key):
+    ...
 ```
 
-### API Design
-- RESTful, plural nouns: `/users`, `/orders`
-- Versioned from day one: `/api/v1/...`
-- Success response: `{ success: true, data: {...}, message?: "..." }`
-- Error response: `{ success: false, error: { code, message, details } }`
+**Infrastructure is injected:**
+- Database clients, HTTP clients, loggers, config — passed in, not imported directly into business logic
+- Business logic can be tested with a fake/mock dependency without touching real infrastructure
 
-### Error Handling
-- Centralized error handler middleware — no inline `res.status(500)`
-- Typed custom error classes extending `Error`
-- All async handlers wrapped with `asyncHandler` utility
-- Errors logged with correlation IDs
-
-### Validation
-- `zod` at controller boundary for all incoming data
-- Return 400 with field-level details on validation failure
-
-### Security
-- `helmet` for security headers
-- `express-rate-limit` on public endpoints
-- Never log tokens, passwords, or PII
-- Secrets in AWS SSM/Secrets Manager — never committed `.env`
-
-### Logging
-- Structured JSON with `pino`
-- Fields: `timestamp`, `level`, `requestId`, `userId`, `message`
-- Levels: `error` (actionable) · `warn` (handled) · `info` (business events) · `debug` (dev only)
-
-### TypeScript
-- `"strict": true` in tsconfig
-- No `any` — use `unknown` and narrow
-- Explicit return types on all exported functions
-- `zod` schemas as source of truth for runtime + compile-time types
+**Business logic has no imports from frameworks.** A service should not import Express, Flask, or any HTTP framework. It receives plain data objects, returns plain data objects.
 
 ---
 
-## AWS
+## Fail Fast at the Boundary
 
-### Naming Convention
-`<project>-<env>-<service>-<resource-type>`
+**Validate early, trust inside:**
+1. Input arrives from outside the system (HTTP request, file, queue message, user input)
+2. Validate it immediately at the entry point — schema, types, required fields, ranges
+3. If invalid → reject immediately with a clear error
+4. If valid → convert to a typed domain object and pass inward
+5. Inside the system, trust the types — no redundant null-checks or re-validation
 
-Examples:
-- S3: `myapp-prod-assets-bucket`
-- Lambda: `myapp-staging-process-order-fn`
-- DynamoDB: `myapp-prod-users-table`
-- Cognito: `myapp-prod-users-pool`
+**Never silently coerce.** `"" → 0`, `null → []`, `undefined → false` hide bugs. Reject invalid input explicitly.
 
-### Environments
-`dev` → `staging` → `prod`. Never test against prod.
-
-### Infrastructure as Code
-- AWS CDK (TypeScript) for everything — no manual console changes
-- `infra/` directory at repo root
-- One CDK stack per logical unit (AuthStack, ApiStack, DatabaseStack)
-- Tag all resources: `Project`, `Environment`, `Owner`, `ManagedBy: cdk`
-
-### IAM
-- Least privilege always — no `*` actions/resources in prod
-- IAM roles for service-to-service, never long-lived access keys
-- Rotate access keys every 90 days
-- Never hardcode credentials
-
-### Lambda
-- Single-purpose functions
-- Explicit memory + timeout (not defaults)
-- X-Ray tracing enabled
-- DLQ for async invocations
-
-### S3
-- Block all public access by default; use signed URLs or CloudFront
-- Versioning on prod buckets
-- SSE-S3 minimum (SSE-KMS for sensitive data)
-- Lifecycle policies for cost management
-
-### API Gateway
-- HTTP API for new projects (not REST API unless features needed)
-- Throttling on all endpoints
-- Custom Domain Names with ACM certs
-- Log all requests to CloudWatch
+**Never swallow exceptions.** Every `catch` block should either: handle the error and recover, or re-throw with additional context. Empty catch blocks are bugs.
 
 ---
 
-## AWS Cognito
+## No Dead Code
 
-### User Pool Config
-- MFA enabled (optional for users, required for admins)
-- Password policy: min 12 chars, upper + lower + numbers + symbols
-- Email verification enabled
-- Tokens: Access 1h, Refresh 30 days
+**Remove, don't comment out.** Commented-out code is noise — version control is the history.
 
-### Frontend Auth
-- `aws-amplify` or `amazon-cognito-identity-js` — never call Cognito APIs directly
-- Store tokens in memory (not `localStorage`); `HttpOnly` cookies where possible
-- Silent token refresh before expiry
-- On 401: attempt one refresh, then redirect to login if refresh fails
-- `signOut()` on logout — don't just delete cookies
+**Remove unused imports immediately.** They make the dependency graph misleading.
 
-### Backend Auth
-- `aws-jwt-verify` for server-side JWT verification
-- Extract `sub` (user ID) and `cognito:groups` from verified claims
-- Group-based authorization middleware
-- Authorization by `sub`, never by username/email
+**No unreachable branches.** An `else` after `return` is unreachable. A `catch` that only rethrows unchanged is redundant.
+
+**TODO/FIXME must have an owner.** A bare `// TODO: fix this` is meaningless. `// TODO(2024-Q1 #123): fix race condition in token refresh` is actionable.
 
 ---
 
-## CI/CD (GitHub Actions)
-- Push to any branch → lint + tests
-- Merge to `develop` → lint + tests + deploy to staging
-- Merge to `main` → lint + tests + deploy to prod (manual approval gate)
-- AWS credentials via OIDC — no long-lived access keys in secrets
+## Git & Version Control Conventions
 
-## Quality Gates (every PR)
-- `tsc --noEmit` — zero TS errors
-- `eslint .` — zero lint errors
-- `prettier --check .` — formatted
-- All tests pass, coverage ≥ 80%
-- No `console.log` in prod code
-- No hardcoded secrets
-- No untracked `TODO`/`FIXME`
-- API changes reflected in types
+These are universal across git providers:
+
+**Commit messages:** imperative mood, short subject line (≤72 chars), body explains *why* not *what*.
+- ✅ `Add idempotency key to payment retry logic`
+- ❌ `fixed stuff` / `WIP` / `asdfgh`
+
+**Conventional Commits:** `type(scope): description` — `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `ci`.
+
+**Small commits:** one logical change per commit. Large commits are hard to review, hard to revert, hard to bisect.
+
+**Branch naming:** `type/issue-id-short-description` — e.g. `feat/123-add-payment-retry`, `fix/456-token-expiry`.
+
+**For provider-specific workflow** (PR templates, CI gates, protected branches), see your source-control layer.

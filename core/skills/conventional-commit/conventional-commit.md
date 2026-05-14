@@ -43,22 +43,22 @@ Scope is the area of the codebase affected. Use the feature name, layer, or pack
 
 ```
 feat(orders): add cursor pagination to list endpoint
-fix(auth): handle expired Cognito token refresh
-chore(deps): bump @tanstack/react-query to 5.62.0
+fix(auth): handle expired token refresh
+chore(deps): bump data-fetching library to latest stable
 refactor(repositories): extract shared pagination helper
 test(orders): add missing error state test for OrderForm
-ci(pipeline): add npm audit step to CI workflow
+ci(pipeline): add dependency audit step to CI workflow
 ```
 
 Common scopes for your stack:
 
 | Scope | When to use |
 |---|---|
-| `auth` | Cognito, JWT, login/logout flows |
+| `auth` | Authentication, tokens, login/logout flows |
 | `orders`, `users`, `[feature]` | Feature-specific changes |
 | `api` | API layer, routes, controllers |
-| `db` | Prisma schema, migrations, repositories |
-| `infra` | CDK stacks, AWS resources |
+| `db` | Schema changes, migrations, repositories |
+| `infra` | Infrastructure as code, cloud resources |
 | `ui` | Shared components, design system |
 | `deps` | Dependency updates |
 | `config` | Configuration files |

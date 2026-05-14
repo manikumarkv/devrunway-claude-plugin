@@ -1,6 +1,6 @@
 ---
 name: security-review
-description: Security audit of the current branch — OWASP Top 10, secrets scanning, Cognito auth patterns, IAM least-privilege. Outputs SECURITY-REVIEW-<branch>.md with PASS/FAIL per check and an overall verdict. Usage — /security-review [branch-name]
+description: Security audit of the current branch — OWASP Top 10, secrets scanning, auth patterns, IAM least-privilege. Outputs SECURITY-REVIEW-<branch>.md with PASS/FAIL per check and an overall verdict. Usage — /security-review [branch-name]
 argument-hint: "[branch-name]"
 arguments:
   - name: branch
@@ -29,8 +29,8 @@ The security-reviewer agent will:
 1. Identify all files changed vs `develop` (or `main`)
 2. Run `npm audit --audit-level=high` — CVE scan
 3. Scan for hardcoded secrets with grep patterns
-4. Apply OWASP Top 10 checks per file type (auth, controllers, React, CDK)
-5. Verify Cognito patterns: `requireAuth`, `requireGroup('Admin')`, no hardcoded pool IDs
+4. Apply OWASP Top 10 checks per file type (auth, controllers, UI, infrastructure)
+5. Verify auth patterns: authentication enforced on all protected routes, no hardcoded credentials or service IDs
 6. Check logging for PII leakage
 7. Write `SECURITY-REVIEW-<branch>.md` with PASS/FAIL per check and overall verdict
 

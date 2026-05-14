@@ -25,6 +25,6 @@ Full rules in [accessibility.md](accessibility.md). Always-on summary:
 
 
 **Related skills — apply together:**
-- `react-standards` — semantic HTML is the foundation of accessible React
-- `testing-standards` — `getByRole`/`getByLabel` selectors enforce accessibility in tests
-- `playwright` — keyboard navigation and screen reader flows belong in E2E tests
+- Your frontend layer skill — semantic HTML is the foundation of accessible UI
+- Your testing layer skill — role/label-based selectors enforce accessibility in tests
+- Your E2E testing layer skill — keyboard navigation and screen reader flows belong in E2E tests
