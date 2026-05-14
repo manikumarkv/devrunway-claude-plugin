@@ -4,6 +4,23 @@ Full SDLC automation for React + Node.js + AWS + Cognito + GitHub.
 
 ---
 
+## Tech Stack
+
+This plugin is purpose-built for the following stack. All commands, skills, code generation, and standards assume these technologies — nothing in this plugin is generic.
+
+| Layer | Technology | Role |
+|---|---|---|
+| **Frontend** | [React](https://react.dev) + TypeScript | Component library, hooks, Zod validation, React Query |
+| **Backend** | [Node.js](https://nodejs.org) + TypeScript | REST API, Lambda functions, Prisma ORM |
+| **Cloud** | [AWS](https://aws.amazon.com) (CDK, Lambda, API Gateway, DynamoDB, RDS, AppConfig, CloudWatch, Cognito, S3, CloudFront) | All infrastructure defined as code via CDK |
+| **Auth** | [Amazon Cognito](https://aws.amazon.com/cognito) | User pools, JWT verification, `/cognito-auth` scaffolding |
+| **Source control & issues** | [GitHub](https://github.com) | Issues, milestones, PRs, Actions CI — all PM and Dev workflow commands use the GitHub API |
+| **Design** | [Figma](https://figma.com) | Design file access via MCP — referenced in brainstorm and design commands |
+
+> If your stack differs (e.g. Vue instead of React, GCP instead of AWS) the background skills and workflow commands will need to be adapted before use.
+
+---
+
 ## Setup
 
 ```bash
