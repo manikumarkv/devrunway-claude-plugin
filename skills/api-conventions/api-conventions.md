@@ -4,68 +4,197 @@
 
 ## Response envelope
 
-Every response — success or error — is wrapped. Never return a bare array or object at the root.
+Every response — success or error — follows a single consistent shape. Never return a bare array or object at the root. Every response includes a `meta` block with `requestId` and `timestamp` for traceability.
+
+### TypeScript types — define once, use everywhere
 
 ```ts
-// ✅ Single resource
-{ "success": true, "data": { "id": "...", "status": "pending" } }
+// src/types/api.types.ts
 
-// ✅ Collection
-{ "success": true, "data": [...], "meta": { "nextCursor": "abc123", "total": 84 } }
+/** Meta block present on every response */
+export interface ResponseMeta {
+  requestId: string          // from X-Request-Id header — trace across logs and Sentry
+  timestamp: string          // ISO 8601 — when the response was generated
+  version:   string          // API version, e.g. "v1"
+}
 
-// ✅ Mutation with no meaningful return
-{ "success": true }
+/** Successful response — single resource or mutation result */
+export interface SuccessResponse<T> {
+  success:  true
+  data:     T
+  meta:     ResponseMeta
+}
 
-// ✅ Error (from errorHandler — see error-handling skill)
-{ "error": { "message": "Order not found", "code": "NOT_FOUND" } }
+/** Successful response — paginated collection */
+export interface PaginatedResponse<T> {
+  success: true
+  data:    T[]
+  pagination: {
+    nextCursor: string | null
+    total:      number
+    limit:      number
+    hasMore:    boolean
+  }
+  meta: ResponseMeta
+}
 
-// ❌ Bare array — client can't add metadata later without breaking change
-[{ "id": "..." }, { "id": "..." }]
+/** Successful mutation with no meaningful body (DELETE) */
+export interface NoContentResponse {
+  success: true
+  meta:    ResponseMeta
+}
 
-// ❌ Bare object — no room to add "success" or pagination
-{ "id": "...", "status": "pending" }
-
-// ❌ 200 with error in body
-{ "status": "error", "message": "Not found" }
+/** Error response — all failures */
+export interface ErrorResponse {
+  success: false
+  error: {
+    code:       string                        // machine-readable, stable across versions
+    message:    string                        // human-readable, may be shown to user
+    details?:   Record<string, string>        // field-level errors (validation)
+    path:       string                        // request path for debugging
+  }
+  meta: ResponseMeta
+}
 ```
 
-**TypeScript helper:**
+### Wire shape — examples
+
+```json
+// ✅ Single resource — GET /api/v1/orders/:id
+{
+  "success": true,
+  "data": { "id": "clxyz", "status": "PENDING", "total": 49.99 },
+  "meta": { "requestId": "a1b2-c3d4", "timestamp": "2026-05-14T10:00:00.000Z", "version": "v1" }
+}
+
+// ✅ Paginated list — GET /api/v1/orders
+{
+  "success": true,
+  "data": [{ "id": "clxyz", "status": "PENDING" }],
+  "pagination": { "nextCursor": "eyJpZCI6ImNsYWJjIn0", "total": 84, "limit": 20, "hasMore": true },
+  "meta": { "requestId": "a1b2-c3d4", "timestamp": "2026-05-14T10:00:00.000Z", "version": "v1" }
+}
+
+// ✅ Mutation with no body — DELETE /api/v1/orders/:id  → 204
+// (no body sent for 204)
+
+// ✅ Error — any failure
+{
+  "success": false,
+  "error": {
+    "code":    "NOT_FOUND",
+    "message": "Order not found",
+    "path":    "/api/v1/orders/clxyz"
+  },
+  "meta": { "requestId": "a1b2-c3d4", "timestamp": "2026-05-14T10:00:00.000Z", "version": "v1" }
+}
+
+// ✅ Validation error — includes field-level details
+{
+  "success": false,
+  "error": {
+    "code":    "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "details": { "email": "Enter a valid email address", "quantity": "Must be at least 1" },
+    "path":    "/api/v1/orders"
+  },
+  "meta": { "requestId": "a1b2-c3d4", "timestamp": "2026-05-14T10:00:00.000Z", "version": "v1" }
+}
+```
 
 ```ts
-// src/utils/response.ts
-import { type Response } from 'express'
+// ❌ Bare array
+res.json([...orders])
 
-export function ok<T>(res: Response, data: T, status = 200) {
-  res.status(status).json({ success: true, data })
+// ❌ Bare object
+res.json({ id: '...', status: 'pending' })
+
+// ❌ 200 with error body
+res.status(200).json({ error: 'Not found' })
+
+// ❌ success:false with 200 status
+res.status(200).json({ success: false, message: 'Not found' })
+```
+
+### Response helpers — always use, never `res.json()` directly
+
+```ts
+// src/lib/response.ts
+import { type Request, type Response } from 'express'
+import { API_VERSION } from './constants'
+
+function buildMeta(req: Request): ResponseMeta {
+  return {
+    requestId: req.headers['x-request-id'] as string ?? crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    version:   API_VERSION,                // e.g. 'v1' from constants.ts
+  }
 }
 
-export function created<T>(res: Response, data: T) {
-  res.status(201).json({ success: true, data })
+/** 200 — single resource */
+export function ok<T>(req: Request, res: Response, data: T): void {
+  res.status(200).json({ success: true, data, meta: buildMeta(req) })
 }
 
-export function noContent(res: Response) {
+/** 201 — resource created */
+export function created<T>(req: Request, res: Response, data: T): void {
+  res.status(201).json({ success: true, data, meta: buildMeta(req) })
+}
+
+/** 204 — deleted, no body */
+export function noContent(res: Response): void {
   res.status(204).end()
 }
 
+/** 200 — paginated collection */
 export function paginated<T>(
+  req: Request,
   res: Response,
   data: T[],
-  meta: { nextCursor: string | null; total: number },
-) {
-  res.json({ success: true, data, meta })
+  pagination: { nextCursor: string | null; total: number; limit: number },
+): void {
+  res.status(200).json({
+    success: true,
+    data,
+    pagination: { ...pagination, hasMore: pagination.nextCursor !== null },
+    meta: buildMeta(req),
+  })
+}
+
+/** Used by errorHandler — not called directly in controllers */
+export function errorResponse(
+  req: Request,
+  res: Response,
+  status: number,
+  code: string,
+  message: string,
+  details?: Record<string, string>,
+): void {
+  res.status(status).json({
+    success: false,
+    error: { code, message, ...(details ? { details } : {}), path: req.path },
+    meta: buildMeta(req),
+  })
 }
 ```
 
 ```ts
-// In controllers — always use helpers, never res.json() directly
+// src/controllers/orders.controller.ts — always pass req to helpers
 export const getOrder = asyncHandler(async (req, res) => {
   const order = await orderService.get(req.params.id, req.user)
-  ok(res, order)
+  ok(req, res, order)
 })
 
 export const createOrder = asyncHandler(async (req, res) => {
   const order = await orderService.create(req.body, req.user)
-  created(res, order)
+  created(req, res, order)
+})
+
+export const listOrders = asyncHandler(async (req, res) => {
+  const query = listOrdersQuerySchema.parse(req.query)
+  const { items, total } = await orderService.list(req.user.sub, query)
+  const nextCursor = buildNextCursor(items, query.limit)
+  paginated(req, res, items, { nextCursor, total, limit: query.limit })
 })
 
 export const deleteOrder = asyncHandler(async (req, res) => {

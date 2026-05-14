@@ -107,85 +107,245 @@ export const createOrderBad = async (req: Request, res: Response) => {
 
 ---
 
-### Centralized error handler
+### Centralized error handler — handles every exception type
+
+The error handler is the single place all errors are converted to the standard API response envelope. It must handle every known error type explicitly. Unknown errors must never leak internals.
 
 ```ts
 // src/middleware/errorHandler.ts
 import { type Request, type Response, type NextFunction } from 'express'
 import { ZodError } from 'zod'
 import { Prisma } from '@prisma/client'
-import { AppError } from '../utils/errors'
+import { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken'
+import { MulterError } from 'multer'
+import * as Sentry from '@sentry/node'
+import { AppError } from '../errors'
 import { logger } from '../lib/logger'
+import { errorResponse } from '../lib/response'
 
 export function errorHandler(
   err: unknown,
   req: Request,
   res: Response,
   _next: NextFunction,
-) {
-  // Zod validation error — parse and return field-level messages
+): void {
+
+  // ─── 1. Zod validation error ────────────────────────────────────────────────
+  // Thrown by schema.parse() in controllers or validate middleware
   if (err instanceof ZodError) {
     const details = err.errors.reduce<Record<string, string>>((acc, issue) => {
       acc[issue.path.join('.')] = issue.message
       return acc
     }, {})
-
-    return res.status(400).json({
-      error: {
-        message: 'Validation failed',
-        code: 'VALIDATION_ERROR',
-        details,
-      },
-    })
+    logger.warn({ path: req.path, details }, 'Validation failed')
+    return errorResponse(req, res, 400, 'VALIDATION_ERROR', 'Validation failed', details)
   }
 
-  // Prisma known errors
+  // ─── 2. Malformed JSON body ──────────────────────────────────────────────────
+  // express.json() throws SyntaxError when the body is not valid JSON
+  if (err instanceof SyntaxError && 'body' in err) {
+    return errorResponse(req, res, 400, 'MALFORMED_JSON', 'Request body is not valid JSON')
+  }
+
+  // ─── 3. JWT errors ───────────────────────────────────────────────────────────
+  // jsonwebtoken throws these when verifying tokens manually
+  if (err instanceof TokenExpiredError) {
+    return errorResponse(req, res, 401, 'TOKEN_EXPIRED', 'Your session has expired. Please sign in again.')
+  }
+  if (err instanceof JsonWebTokenError) {
+    return errorResponse(req, res, 401, 'INVALID_TOKEN', 'Invalid authentication token.')
+  }
+
+  // ─── 4. Prisma known request errors ─────────────────────────────────────────
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    if (err.code === 'P2002') {
-      return res.status(409).json({
-        error: { message: 'A record with this value already exists', code: 'CONFLICT' },
-      })
-    }
-    if (err.code === 'P2025') {
-      return res.status(404).json({
-        error: { message: 'Record not found', code: 'NOT_FOUND' },
-      })
+    switch (err.code) {
+      case 'P2002':   // Unique constraint violation
+        return errorResponse(req, res, 409, 'CONFLICT',
+          'A record with this value already exists.')
+
+      case 'P2025':   // Record not found (update/delete on non-existent row)
+        return errorResponse(req, res, 404, 'NOT_FOUND', 'Record not found.')
+
+      case 'P2003':   // Foreign key constraint violation
+        return errorResponse(req, res, 409, 'FOREIGN_KEY_VIOLATION',
+          'This record is referenced by another record and cannot be deleted.')
+
+      case 'P2014':   // Required relation violation
+        return errorResponse(req, res, 400, 'RELATION_VIOLATION',
+          'The change violates a required relation.')
+
+      case 'P2021':   // Table not found — migration not applied
+        logger.error({ err }, 'Prisma: table not found — run prisma migrate deploy')
+        Sentry.captureException(err)
+        return errorResponse(req, res, 500, 'INTERNAL_ERROR', 'A database error occurred.')
+
+      default:
+        logger.error({ err, code: err.code }, 'Prisma known error (unmapped)')
+        Sentry.captureException(err)
+        return errorResponse(req, res, 500, 'INTERNAL_ERROR', 'A database error occurred.')
     }
   }
 
-  // Our own AppError subclasses
+  // ─── 5. Prisma validation error (schema mismatch) ────────────────────────────
+  if (err instanceof Prisma.PrismaClientValidationError) {
+    logger.error({ err }, 'Prisma validation error — likely a bug in query construction')
+    Sentry.captureException(err)
+    return errorResponse(req, res, 500, 'INTERNAL_ERROR', 'A database error occurred.')
+  }
+
+  // ─── 6. Prisma connection / timeout errors ───────────────────────────────────
+  if (err instanceof Prisma.PrismaClientInitializationError ||
+      err instanceof Prisma.PrismaClientRustPanicError) {
+    logger.error({ err }, 'Prisma connection/panic error')
+    Sentry.captureException(err)
+    return errorResponse(req, res, 503, 'SERVICE_UNAVAILABLE', 'Database is temporarily unavailable.')
+  }
+
+  // ─── 7. Multer file upload errors ────────────────────────────────────────────
+  if (err instanceof MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return errorResponse(req, res, 413, 'FILE_TOO_LARGE',
+        `File size exceeds the ${process.env.MAX_UPLOAD_MB ?? 10} MB limit.`)
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return errorResponse(req, res, 400, 'UNEXPECTED_FILE', `Unexpected file field: ${err.field}`)
+    }
+    return errorResponse(req, res, 400, 'UPLOAD_ERROR', err.message)
+  }
+
+  // ─── 8. Rate limit error (express-rate-limit) ────────────────────────────────
+  // express-rate-limit sets err.status = 429 when limit is exceeded
+  if (typeof err === 'object' && err !== null && (err as any).status === 429) {
+    return errorResponse(req, res, 429, 'RATE_LIMITED',
+      'Too many requests. Please wait before trying again.')
+  }
+
+  // ─── 9. Our own AppError subclasses ──────────────────────────────────────────
   if (err instanceof AppError) {
-    // Log 5xx as errors, 4xx as warnings
-    const logFn = err.statusCode >= 500 ? logger.error.bind(logger) : logger.warn.bind(logger)
-    logFn({ err, req: { method: req.method, url: req.url } }, err.message)
+    const logFn = err.statusCode >= 500 ? logger.error : logger.warn
+    logFn.call(logger,
+      { err, requestId: req.headers['x-request-id'], path: req.path },
+      err.message,
+    )
+    if (err.statusCode >= 500) Sentry.captureException(err)
 
-    return res.status(err.statusCode).json({
-      error: {
-        message: err.message,
-        code: err.code,
-        ...(err.details ? { details: err.details } : {}),
-      },
-    })
+    return errorResponse(
+      req, res,
+      err.statusCode,
+      err.code,
+      err.message,
+      err.details as Record<string, string> | undefined,
+    )
   }
 
-  // Unknown/unexpected error — log and return generic message
-  logger.error({ err, req: { method: req.method, url: req.url } }, 'Unhandled error')
+  // ─── 10. Unknown / unexpected errors ─────────────────────────────────────────
+  // Never leak internals. Log fully, return generic message.
+  logger.error(
+    { err, requestId: req.headers['x-request-id'], path: req.path, method: req.method },
+    'Unhandled error',
+  )
+  Sentry.captureException(err)
 
-  return res.status(500).json({
+  return errorResponse(req, res, 500, 'INTERNAL_ERROR',
+    'An unexpected error occurred. Our team has been notified.')
+}
+```
+
+### 404 route not found handler
+
+Mount this BEFORE `errorHandler` and AFTER all routes. Catches requests to unknown paths.
+
+```ts
+// src/app.ts
+import { notFoundHandler } from './middleware/notFoundHandler'
+import { errorHandler } from './middleware/errorHandler'
+
+app.use('/api/v1', routes)
+
+// Must be after all routes — catches anything that didn't match
+app.use(notFoundHandler)
+app.use(errorHandler)
+```
+
+```ts
+// src/middleware/notFoundHandler.ts
+import { type Request, type Response, type NextFunction } from 'express'
+
+export function notFoundHandler(req: Request, res: Response, _next: NextFunction): void {
+  res.status(404).json({
+    success: false,
     error: {
-      message: 'An unexpected error occurred',
-      code: 'INTERNAL_ERROR',
+      code:    'ROUTE_NOT_FOUND',
+      message: `Cannot ${req.method} ${req.path}`,
+      path:    req.path,
+    },
+    meta: {
+      requestId: req.headers['x-request-id'] as string,
+      timestamp: new Date().toISOString(),
+      version:   'v1',
     },
   })
 }
 ```
 
+### Process-level handlers — unhandled rejections and exceptions
+
+Register these in `handler.ts` (Lambda entry point). They are the last safety net.
+
 ```ts
-// src/app.ts — error handler must be last
+// src/handler.ts
+import { logger } from './lib/logger'
+import * as Sentry from '@sentry/node'
+
+// Catch promises that rejected without a .catch() handler
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error({ reason, promise }, 'Unhandled promise rejection')
+  Sentry.captureException(reason)
+  // Do NOT process.exit() in Lambda — let the invocation fail, Lambda will retry
+})
+
+// Catch synchronous throws that were never caught
+process.on('uncaughtException', (err) => {
+  logger.error({ err }, 'Uncaught exception')
+  Sentry.captureException(err)
+  // In Lambda context this is fatal — let it surface
+})
+```
+
+### All Prisma error codes — reference
+
+| Code | Cause | HTTP |
+|---|---|---|
+| `P2002` | Unique constraint violation | 409 Conflict |
+| `P2003` | Foreign key constraint violation | 409 Conflict |
+| `P2014` | Required relation violation | 400 Bad Request |
+| `P2025` | Record not found (update/delete) | 404 Not Found |
+| `P2021` | Table does not exist — migration missing | 500 Internal |
+| `P2034` | Transaction conflict / deadlock | 503 Retry |
+| `P1001` | DB unreachable | 503 Service Unavailable |
+| `P1008` | Operation timed out | 503 Service Unavailable |
+
+```ts
+// src/app.ts — full correct order
+import express from 'express'
+import { json } from 'express'
+import { requestId } from './middleware/requestId'
+import { pinoHttp } from 'pino-http'
+import { logger } from './lib/logger'
+import { mountRoutes } from './routes'
+import { notFoundHandler } from './middleware/notFoundHandler'
 import { errorHandler } from './middleware/errorHandler'
 
-app.use('/api/v1', routes)
-app.use(errorHandler)          // after all routes
+const app = express()
+
+app.use(requestId)                // 1. attach x-request-id
+app.use(pinoHttp({ logger }))     // 2. structured request logging
+app.use(json({ limit: '10mb' }))  // 3. parse JSON body (throws SyntaxError on malform)
+mountRoutes(app)                  // 4. all API routes
+app.use(notFoundHandler)          // 5. catch unknown routes — BEFORE errorHandler
+app.use(errorHandler)             // 6. convert all errors to standard envelope — LAST
+
+export default app
 ```
 
 ---

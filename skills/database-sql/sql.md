@@ -456,3 +456,423 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 ```
+
+---
+
+## Migration conventions
+
+### File naming
+
+Prisma auto-generates the timestamp prefix. The description after the prefix must follow the pattern:
+
+```
+<timestamp>_<verb>_<noun>[_<qualifier>]
+```
+
+| Pattern | Example migration name |
+|---|---|
+| Add table | `20240501120000_add_orders_table` |
+| Add column | `20240512093000_add_orders_shipped_at` |
+| Drop column | `20240612140000_drop_orders_legacy_status` |
+| Rename column | `20240712180000_rename_users_name_to_full_name` |
+| Add index | `20240812090000_add_orders_user_id_index` |
+| Add constraint | `20240912110000_add_orders_status_check_constraint` |
+| Backfill data | `20241012100000_backfill_orders_display_id` |
+| Create enum | `20241112083000_create_order_status_enum` |
+| Alter column type | `20241212150000_alter_products_price_to_decimal` |
+
+```bash
+# Generate with a descriptive name
+npx prisma migrate dev --name add_orders_shipped_at
+```
+
+### Migration file structure
+
+Every migration file must be self-documenting:
+
+```sql
+-- Migration: 20240512093000_add_orders_shipped_at
+-- Description: Adds shipped_at nullable timestamp to track when an order was dispatched.
+--              Column is nullable — existing rows remain valid without backfill.
+-- Reversibility: safe to roll back by dropping the column (no data loss)
+-- Breaking change: no — adding a nullable column is backward compatible
+
+ALTER TABLE "orders" ADD COLUMN "shipped_at" TIMESTAMP(3);
+```
+
+```sql
+-- Migration: 20240812090000_add_orders_user_id_index
+-- Description: Adds index on orders.user_id to speed up per-user order listing queries.
+--              Index is created CONCURRENTLY so it does not lock the table.
+-- Reversibility: drop the index — no data affected
+-- Breaking change: no
+
+CREATE INDEX CONCURRENTLY "orders_user_id_idx" ON "orders"("user_id");
+```
+
+### Safe migration checklist
+
+Run this checklist before committing any migration:
+
+```
+[ ] Column added as nullable (not NOT NULL without a default)
+[ ] NOT NULL added via NOT VALID + VALIDATE CONSTRAINT pattern (see Expand-Contract)
+[ ] Index created with CONCURRENTLY (never plain CREATE INDEX on a live table)
+[ ] No full-table rewrites (ALTER COLUMN TYPE on a large table = full rewrite; use a new column instead)
+[ ] No DROP COLUMN before all code reading it is removed and deployed
+[ ] No RENAME COLUMN — use expand-contract instead
+[ ] Data-backfill migration uses batched UPDATE, never a single UPDATE without WHERE
+[ ] Migration is idempotent where possible (IF NOT EXISTS / IF EXISTS guards)
+```
+
+### Batched backfill — never a single UPDATE on a large table
+
+```sql
+-- ❌ — locks the entire table until complete
+UPDATE "orders" SET "display_id" = id::text WHERE "display_id" IS NULL;
+
+-- ✅ — batched: process in chunks to avoid long lock holds
+DO $$
+DECLARE
+  batch_size INT := 1000;
+  rows_updated INT;
+BEGIN
+  LOOP
+    UPDATE "orders"
+    SET "display_id" = id::text
+    WHERE id IN (
+      SELECT id FROM "orders"
+      WHERE "display_id" IS NULL
+      LIMIT batch_size
+    );
+    GET DIAGNOSTICS rows_updated = ROW_COUNT;
+    EXIT WHEN rows_updated = 0;
+    PERFORM pg_sleep(0.05); -- yield to other transactions
+  END LOOP;
+END $$;
+```
+
+### Concurrently-created indexes
+
+Prisma does not generate `CONCURRENTLY` by default — hand-edit the SQL file after `prisma migrate dev`:
+
+```sql
+-- ❌ Prisma default (locks table)
+CREATE INDEX "orders_user_id_idx" ON "orders"("user_id");
+
+-- ✅ Hand-edited: non-blocking on live table
+CREATE INDEX CONCURRENTLY "orders_user_id_idx" ON "orders"("user_id");
+```
+
+> **Note:** `CONCURRENTLY` cannot run inside a transaction block. Prisma wraps each migration in a transaction by default. Add `-- This migration does not use a transaction` at the top of any migration that uses `CONCURRENTLY`:
+
+```sql
+-- This migration does not use a transaction
+-- Migration: 20240812090000_add_orders_user_id_index
+
+CREATE INDEX CONCURRENTLY "orders_user_id_idx" ON "orders"("user_id");
+```
+
+Prisma detects that comment and skips the `BEGIN`/`COMMIT` wrapping.
+
+### Expand-contract pattern (zero-downtime schema changes)
+
+Three separate deploy steps — never combine them:
+
+**Example A — Column rename (`name` → `fullName`)**
+
+```sql
+-- Step 1: EXPAND — add new column, keep old column
+-- 20240601_add_users_full_name
+ALTER TABLE "users" ADD COLUMN "full_name" TEXT;
+UPDATE "users" SET "full_name" = "name";   -- backfill existing rows
+```
+
+App (Step 1 deploy): Write to **both** `name` and `full_name`. Read from `name`.
+
+```sql
+-- Step 2: (deploy app reading from full_name first, fallback to name)
+-- No migration needed for this step
+```
+
+App (Step 2 deploy): Write to **both**. Read from `full_name`.
+
+```sql
+-- Step 3: CONTRACT — drop old column after all app versions read full_name
+-- 20240701_drop_users_name
+ALTER TABLE "users" DROP COLUMN "name";
+```
+
+---
+
+**Example B — Adding NOT NULL on a large table**
+
+```sql
+-- Step 1: Add nullable, backfill, add NOT VALID constraint
+ALTER TABLE "orders" ADD COLUMN "region" TEXT;
+UPDATE "orders" SET "region" = 'us-east-1' WHERE "region" IS NULL;
+ALTER TABLE "orders" ADD CONSTRAINT "orders_region_not_null"
+  CHECK ("region" IS NOT NULL) NOT VALID;
+
+-- Step 2 (separate migration, can run in maintenance window or off-peak)
+-- Validates existing rows without locking writes
+ALTER TABLE "orders" VALIDATE CONSTRAINT "orders_region_not_null";
+
+-- Step 3 (optional — replace CHECK with true NOT NULL)
+ALTER TABLE "orders" ALTER COLUMN "region" SET NOT NULL;
+ALTER TABLE "orders" DROP CONSTRAINT "orders_region_not_null";
+```
+
+---
+
+**Example C — Column removal**
+
+1. Deploy app code with all reads/writes to the column removed  
+2. Verify no queries reference the column in logs/APM  
+3. Then run the migration:
+
+```sql
+-- 20240801_drop_orders_legacy_status
+ALTER TABLE "orders" DROP COLUMN "legacy_status";
+```
+
+---
+
+## Seeders
+
+### Folder structure
+
+```
+prisma/
+├── schema.prisma
+├── migrations/
+│   └── 20240501120000_add_orders_table/
+│       └── migration.sql
+├── seed.ts                  ← entry point, registered in package.json
+└── seeders/
+    ├── 00-roles.seeder.ts   ← number prefix controls run order
+    ├── 01-users.seeder.ts
+    ├── 02-products.seeder.ts
+    └── 03-orders.seeder.ts
+```
+
+### package.json seed config
+
+```json
+{
+  "prisma": {
+    "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
+  }
+}
+```
+
+### seed.ts — entry point
+
+```ts
+// prisma/seed.ts
+import { PrismaClient } from '@prisma/client'
+import { seedRoles } from './seeders/00-roles.seeder'
+import { seedUsers } from './seeders/01-users.seeder'
+import { seedProducts } from './seeders/02-products.seeder'
+
+const prisma = new PrismaClient()
+
+async function main() {
+  console.log('🌱 Seeding database...')
+  await seedRoles(prisma)
+  await seedUsers(prisma)
+  await seedProducts(prisma)
+  console.log('✅ Seeding complete')
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ Seeding failed:', e)
+    process.exit(1)
+  })
+  .finally(() => prisma.$disconnect())
+```
+
+Run with:
+```bash
+npx prisma db seed
+# or automatically after migrate dev/reset:
+npx prisma migrate dev   # runs seed automatically after migrate
+npx prisma migrate reset # drops + migrates + seeds
+```
+
+### Idempotent seeders — always use upsert
+
+Every seeder must be safely re-runnable. Use `upsert` on a stable unique key, never `create`:
+
+```ts
+// ❌ — fails on second run with unique constraint error
+await prisma.role.create({ data: { name: 'admin' } })
+
+// ✅ — idempotent: creates on first run, updates on re-run
+await prisma.role.upsert({
+  where: { name: 'admin' },
+  update: {},          // nothing to update — name is the key
+  create: { name: 'admin', description: 'Full system access' },
+})
+```
+
+### Full seeder example
+
+```ts
+// prisma/seeders/00-roles.seeder.ts
+import type { PrismaClient } from '@prisma/client'
+
+const ROLES = [
+  { name: 'admin',   description: 'Full system access' },
+  { name: 'manager', description: 'Manage team and orders' },
+  { name: 'viewer',  description: 'Read-only access' },
+] as const
+
+export async function seedRoles(prisma: PrismaClient): Promise<void> {
+  console.log('  → Seeding roles...')
+  for (const role of ROLES) {
+    await prisma.role.upsert({
+      where:  { name: role.name },
+      update: { description: role.description },
+      create: role,
+    })
+  }
+  console.log(`  ✓ ${ROLES.length} roles seeded`)
+}
+```
+
+```ts
+// prisma/seeders/01-users.seeder.ts
+import type { PrismaClient } from '@prisma/client'
+import { hash } from 'bcryptjs'
+import { SEED_ADMIN_EMAIL } from '../../src/lib/constants'
+
+export async function seedUsers(prisma: PrismaClient): Promise<void> {
+  console.log('  → Seeding users...')
+
+  const adminRole = await prisma.role.findUniqueOrThrow({ where: { name: 'admin' } })
+
+  await prisma.user.upsert({
+    where:  { email: SEED_ADMIN_EMAIL },
+    update: {},
+    create: {
+      email:        SEED_ADMIN_EMAIL,
+      fullName:     'Admin User',
+      passwordHash: await hash('changeme-on-first-login', 12),
+      roleId:       adminRole.id,
+    },
+  })
+  console.log('  ✓ Admin user seeded')
+}
+```
+
+### Seeder dependency ordering
+
+Prefix numbers enforce run order and make dependencies explicit:
+
+```
+00-roles.seeder.ts      ← no dependencies
+01-users.seeder.ts      ← depends on roles (roleId FK)
+02-categories.seeder.ts ← no dependencies
+03-products.seeder.ts   ← depends on categories (categoryId FK)
+04-orders.seeder.ts     ← depends on users + products
+```
+
+FK constraints will throw if seeders run out of order — the prefix is the contract.
+
+### Environment rules
+
+| Environment | Seed behaviour |
+|---|---|
+| `development` | Full seed — roles + users + products + demo orders |
+| `test` | Minimal seed in `beforeEach` — only what the test needs, via test fixtures |
+| `staging` | Roles + admin user only — no synthetic business data |
+| `production` | **Never run seed script** — use one-time migration scripts for required lookup data |
+
+Gate environment-specific behaviour in `seed.ts`:
+
+```ts
+// prisma/seed.ts
+const ENV = process.env.NODE_ENV ?? 'development'
+
+async function main() {
+  await seedRoles(prisma)          // always — lookup data
+
+  if (ENV === 'development') {
+    await seedUsers(prisma)
+    await seedProducts(prisma)
+    await seedOrders(prisma)
+  } else if (ENV === 'staging') {
+    await seedUsers(prisma)        // admin user only
+  }
+  // production: no seed beyond roles
+}
+```
+
+### Required lookup data in production
+
+For data that production needs at deploy time (e.g. permission definitions, default config rows), use a **data migration** — not the seed script:
+
+```sql
+-- prisma/migrations/20240901_seed_permission_definitions/migration.sql
+INSERT INTO "permissions" ("name", "description") VALUES
+  ('orders:read',   'Read orders'),
+  ('orders:write',  'Create and update orders'),
+  ('orders:delete', 'Delete orders')
+ON CONFLICT ("name") DO NOTHING;
+```
+
+This runs as part of `prisma migrate deploy` and is tracked in migration history — unlike the seed script, it is guaranteed to run exactly once.
+
+### Test fixtures — never use the seed script in tests
+
+```ts
+// tests/fixtures/order.fixture.ts
+import type { PrismaClient } from '@prisma/client'
+
+export async function createTestOrder(
+  prisma: PrismaClient,
+  overrides: Partial<Parameters<typeof prisma.order.create>[0]['data']> = {}
+) {
+  const user = await prisma.user.create({
+    data: { email: `test-${Date.now()}@example.com`, fullName: 'Test User' },
+  })
+  return prisma.order.create({
+    data: { userId: user.id, status: 'PENDING', total: 49.99, ...overrides },
+  })
+}
+```
+
+```ts
+// tests/orders.service.test.ts
+beforeEach(async () => {
+  await prisma.$transaction([
+    prisma.order.deleteMany(),
+    prisma.user.deleteMany(),
+  ])
+  testOrder = await createTestOrder(prisma)
+})
+```
+
+### Migration + seed workflow summary
+
+```bash
+# New feature — create migration and run seed
+npx prisma migrate dev --name add_orders_shipped_at
+# → generates migration SQL, applies to dev DB, then runs seed automatically
+
+# Pull a fresh branch — reset and reseed
+npx prisma migrate reset
+# → drops dev DB, re-runs all migrations, then runs seed
+
+# Deploy to staging/production — migrations only, no seed
+npx prisma migrate deploy
+# → applies pending migrations; never runs seed
+
+# Inspect pending migrations before deploy
+npx prisma migrate status
+
+# Generate Prisma client after schema change
+npx prisma generate
+```
