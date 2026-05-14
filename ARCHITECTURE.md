@@ -65,114 +65,111 @@ Target architecture for projects built with this plugin. Every code generation c
 
 ## System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Browser                                                         │
-│  React SPA (Vite build → S3 → CloudFront CDN)                  │
-│  Auth: Cognito Hosted UI / Amplify Auth                         │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │ HTTPS  (JWT in Authorization header)
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  API Gateway (HTTP API)                                          │
-│  - JWT authorizer → validates Cognito tokens                    │
-│  - Routes: /api/v1/*  →  Lambda                                 │
-│  - Routes: /health    →  Lambda (unauthenticated)               │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Lambda (Node.js 20, Express via serverless-http)               │
-│                                                                  │
-│  Request lifecycle:                                              │
-│  API Gateway → handler.ts → app.ts → router → controller        │
-│                → middleware (auth, validate, error)             │
-│                → service (business logic)                       │
-│                → repository (Prisma / DynamoDB)                 │
-│                → response (ok / created / paginated)            │
-└──────┬──────────────────┬────────────────────────────────────────┘
-       │                  │
-       ▼                  ▼
-┌──────────────┐  ┌──────────────────┐
-│  RDS         │  │  DynamoDB         │
-│  PostgreSQL  │  │  (sessions /      │
-│  (Prisma)    │  │   hot lookups)    │
-└──────────────┘  └──────────────────┘
-       │
-       ▼
-┌──────────────────────────────────────┐
-│  Supporting AWS services             │
-│  AppConfig   → feature flags         │
-│  SSM         → runtime config        │
-│  Secrets Mgr → credentials           │
-│  CloudWatch  → logs + alarms         │
-│  Synthetics  → canary checks         │
-└──────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Browser["🌐 Browser"]
+        SPA["React SPA\nVite · Tailwind · React Router · React Query"]
+        COGCLIENT["Cognito Auth\nAmplify Auth / Hosted UI"]
+    end
+
+    subgraph CDN["☁️ AWS — Frontend"]
+        CF["CloudFront CDN\nEdge caching + HTTPS"]
+        S3["S3 Bucket\nStatic build artefacts"]
+    end
+
+    subgraph API["☁️ AWS — API"]
+        APIGW["API Gateway\nHTTP API · JWT Authorizer\n/api/v1/* → Lambda\n/health → Lambda (unauth)"]
+
+        subgraph LambdaBox["λ Lambda — Node.js 20 (Express via serverless-http)"]
+            MW["Middleware\nrequestId · pino-http · authenticate · validate"]
+            CTRL["Controller\nasyncHandler"]
+            SVC["Service\nBusiness logic"]
+            REPO["Repository\nPrisma · DynamoDB SDK"]
+        end
+    end
+
+    subgraph Data["☁️ AWS — Data"]
+        RDS[("RDS PostgreSQL\nPrisma ORM")]
+        DDB[("DynamoDB\nSessions · hot lookups")]
+    end
+
+    subgraph Obs["☁️ AWS — Config & Observability"]
+        APPCFG["AppConfig\nFeature flags · 30s TTL"]
+        SSM["SSM Parameter Store\nRuntime config"]
+        SM["Secrets Manager\nDB password · API keys"]
+        CW["CloudWatch\nLogs · Alarms · Dashboard"]
+        SYN["Synthetics\nCanary · every 1 min"]
+        SNS["SNS\nAlarm notifications"]
+    end
+
+    COGCLIENT -->|"AccessToken + IdToken"| SPA
+    SPA -->|"Vite build assets"| CF
+    CF --> S3
+    SPA -->|"HTTPS · Authorization: Bearer jwt"| APIGW
+    APIGW -->|"Verify JWT via Cognito JWKS"| COGCLIENT
+    APIGW --> MW
+    MW --> CTRL
+    CTRL --> SVC
+    SVC --> REPO
+    REPO --> RDS
+    REPO --> DDB
+    LambdaBox -->|"isFlagEnabled()"| APPCFG
+    LambdaBox -->|"getParameter()"| SSM
+    LambdaBox -->|"getSecretValue()"| SM
+    LambdaBox -->|"structured JSON logs"| CW
+    CW --> SNS
+    SYN -->|"GET /health + critical paths"| APIGW
+    SYN --> CW
 ```
 
 ---
 
 ## Request Flow (end to end)
 
-```
-Browser
-  │
-  │  1. User triggers action (e.g. submit order form)
-  │
-  ▼
-React component
-  │  useCreateOrder() hook (React Query mutation)
-  │
-  ▼
-orders.api.ts
-  │  POST /api/v1/orders  { Authorization: Bearer <jwt> }
-  │
-  ▼
-API Gateway
-  │  JWT authorizer: verify Cognito token → extract sub, email, groups
-  │  Route match → invoke Lambda
-  │
-  ▼
-handler.ts  (serverless-http wraps Express)
-  │
-  ▼
-middleware stack
-  │  1. requestId — attach correlation ID to every log
-  │  2. pino-http — log method, path, statusCode, duration
-  │  3. authenticate — attach req.user from verified JWT claims
-  │  4. validate — Zod parse req.body / req.params / req.query
-  │
-  ▼
-OrdersController.create()
-  │  asyncHandler wraps — catches and forwards errors
-  │
-  ▼
-OrdersService.createOrder()
-  │  Business logic: ownership check, inventory check, pricing
-  │  assertConsent() if sending marketing event
-  │
-  ▼
-OrdersRepository.create()
-  │  prisma.order.create({ data: ... })
-  │  prisma.$transaction() if multi-step
-  │
-  ▼
-PostgreSQL (RDS)
-  │  Returns created record
-  │
-  ▼ (back up the stack)
-Controller
-  │  return created(res, order)   → 201 { success: true, data: order }
-  │
-  ▼
-API Gateway → Browser
-  │
-  ▼
-React Query
-  │  Invalidates ['orders'] cache → UI re-fetches
-  │
-  ▼
-UI updated
+```mermaid
+flowchart TD
+    A(["👤 User action\ne.g. submit order form"]) --> B
+
+    subgraph FE["Frontend"]
+        B["React Component\nuseCreateOrder() — React Query mutation"]
+        C["orders.api.ts\nPOST /api/v1/orders\nAuthorization: Bearer jwt"]
+        M["React Query\ninvalidates 'orders' cache\nUI re-fetches + updates"]
+    end
+
+    subgraph GW["API Gateway"]
+        D["JWT Authorizer\nverify Cognito token\nextract sub · email · groups"]
+    end
+
+    subgraph LAM["λ Lambda"]
+        E["handler.ts\nserverless-http wraps Express"]
+
+        subgraph MWStack["Middleware stack — runs on every request"]
+            MW1["1. requestId\nattach x-request-id correlation ID"]
+            MW2["2. pino-http\nlog method · path · statusCode · duration"]
+            MW3["3. authenticate\nattach req.user from JWT claims"]
+            MW4["4. validate\nZod parse body · params · query"]
+        end
+
+        F["OrdersController.create()\nasyncHandler — catch → errorHandler"]
+        G["OrdersService.createOrder()\nownership check · inventory · pricing\nassertConsent() for marketing events"]
+        H["OrdersRepository.create()\nprisma.order.create()\nprisma.$transaction() if multi-step"]
+    end
+
+    DB[("PostgreSQL\nRDS")]
+
+    B --> C
+    C --> D
+    D --> E
+    E --> MW1 --> MW2 --> MW3 --> MW4
+    MW4 --> F
+    F --> G
+    G --> H
+    H <-->|"SQL"| DB
+    H --> G
+    G --> F
+    F --> K["created(res, order)\n201 · success: true · data: order"]
+    K --> L["Response → Browser"]
+    L --> M
 ```
 
 ---
@@ -219,7 +216,7 @@ frontend/
 │   │   ├── auth.ts                    ← Cognito Amplify Auth config
 │   │   ├── flags.ts                   ← Feature flag client (GET /api/v1/flags + useFlag hook)
 │   │   ├── api.ts                     ← Fetch wrapper — base URL, auth header, error normalisation
-│   │   └── logger.ts                  ← Client-side error logging (to CloudWatch via API or Sentry)
+│   │   └── logger.ts                  ← Client-side error logging
 │   │
 │   ├── router/
 │   │   └── index.tsx                  ← React Router — route definitions + auth guards
@@ -242,22 +239,44 @@ frontend/
 └── tsconfig.json
 ```
 
-### Feature structure rules
+### Feature data flow
 
-```
-features/<name>/
-  api/<name>.api.ts          ← ALL server calls for this feature live here
-  components/<Component>/    ← One folder per component
-    <Component>.tsx          ← Component implementation
-    <Component>.test.tsx     ← Unit + RTL tests alongside the component
-    index.ts                 ← Re-export default
-  types.ts                   ← Zod schemas first, then z.infer<> types
-  index.ts                   ← Public surface — only export what other features need
+```mermaid
+flowchart LR
+    subgraph Feature["src/features/orders/"]
+        TYPES["types.ts\nZod schemas\nTS inferred types"]
+        API["api/orders.api.ts\nuseOrders()\nuseCreateOrder()\nuseUpdateOrder()"]
+        COMP["components/\nOrderList/\nOrderForm/"]
+        IDX["index.ts\npublic barrel"]
+    end
+
+    subgraph Shared["src/shared/"]
+        SCOMP["components/\nButton · Modal · Table"]
+        HOOKS["hooks/\nuseDebounce · usePagination"]
+        UTILS["utils/\nformatDate · cn"]
+    end
+
+    subgraph Lib["src/lib/"]
+        QC["queryClient.ts"]
+        AUTH["auth.ts"]
+        APIL["api.ts\nfetch wrapper + auth header"]
+    end
+
+    PAGE["src/pages/\nOrdersPage.tsx"] --> COMP
+    PAGE --> IDX
+    COMP --> API
+    COMP --> SCOMP
+    COMP --> HOOKS
+    API --> APIL
+    API --> TYPES
+    APIL --> AUTH
+    APIL --> QC
 ```
 
-Never import across features directly — go through the `index.ts` barrel.  
-Never put API calls inside components — always in `api/<name>.api.ts`.  
-Never put business logic in pages — pages only compose feature components.
+**Rules:**
+- Never import directly across feature folders — go through `index.ts`
+- Never put API calls inside components — always in `api/<name>.api.ts`
+- Never put business logic in pages — pages only compose feature components
 
 ---
 
@@ -331,7 +350,29 @@ backend/
 └── package.json
 ```
 
-### Layer rules
+### Backend layer rules
+
+```mermaid
+flowchart LR
+    ROUTES["routes/\nExpress Router"] --> CTRL
+    CTRL["controllers/\nHTTP in · response out\nasyncHandler"] --> SVC
+    SVC["services/\nBusiness logic\nno req/res"] --> REPO
+    REPO["repositories/\nPrisma · DynamoDB\nno HTTP concepts"] --> DB
+
+    DB[("RDS / DynamoDB")]
+
+    CTRL --> TYPES
+    SVC --> TYPES
+    REPO --> TYPES
+    TYPES["types/\nZod schemas\nTS inferred types"]
+
+    MW["middleware/\nauthenticate · validate\nerrorHandler · requestId"] --> CTRL
+    ERR["errors/\nNotFoundError\nForbiddenError\nConflictError"] --> CTRL
+    ERR --> SVC
+    LIB["lib/\nprisma · logger\ncognito · flags\nresponse helpers"] --> REPO
+    LIB --> SVC
+    LIB --> MW
+```
 
 | Layer | Allowed imports | Forbidden |
 |---|---|---|
@@ -351,10 +392,10 @@ infra/
 │   └── app.ts                         ← CDK app entry — instantiate all stacks
 │
 ├── lib/
-│   ├── api-stack.ts                   ← Lambda + API Gateway HTTP API + Cognito JWT authorizer
-│   ├── data-stack.ts                  ← RDS PostgreSQL + DynamoDB tables
-│   ├── frontend-stack.ts             ← S3 bucket + CloudFront distribution + Route53 record
 │   ├── auth-stack.ts                  ← Cognito User Pool + App Client
+│   ├── data-stack.ts                  ← RDS PostgreSQL + DynamoDB tables
+│   ├── api-stack.ts                   ← Lambda + API Gateway HTTP API + Cognito JWT authorizer
+│   ├── frontend-stack.ts              ← S3 bucket + CloudFront distribution + Route53 record
 │   ├── monitoring-stack.ts            ← CloudWatch alarms + SLO dashboard + Synthetics canary
 │   └── pipeline-stack.ts             ← CI/CD — CodePipeline or GitHub Actions OIDC role
 │
@@ -365,18 +406,21 @@ infra/
 └── tsconfig.json
 ```
 
-### Stack dependency order
+### CDK stack dependency order
 
-```
-AuthStack          (Cognito — no dependencies)
-     ↓
-DataStack          (RDS, DynamoDB — no dependencies)
-     ↓
-ApiStack           (Lambda — depends on Auth + Data outputs)
-     ↓
-FrontendStack      (S3/CF — depends on Api domain output)
-     ↓
-MonitoringStack    (alarms + canary — depends on Api + Frontend)
+```mermaid
+flowchart TD
+    A["AuthStack\nCognito User Pool\nApp Client · JWKS endpoint"]
+    B["DataStack\nRDS PostgreSQL\nDynamoDB tables"]
+    C["ApiStack\nLambda · API Gateway\nJWT Authorizer · IAM roles"]
+    D["FrontendStack\nS3 · CloudFront\nRoute53 · ACM cert"]
+    E["MonitoringStack\nCloudWatch Alarms\nSLO Dashboard · Synthetics Canary\nSNS Alert Topic"]
+
+    A -->|"User Pool ARN\nJWKS URL"| C
+    B -->|"DB connection string\nTable ARNs"| C
+    C -->|"API domain\nLambda ARN"| D
+    C -->|"API endpoint"| E
+    D -->|"CloudFront domain\nDistribution ID"| E
 ```
 
 ---
@@ -392,9 +436,6 @@ model Order {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   deletedAt DateTime?                          // soft delete — never hard delete
-
-  // ─── PII fields (tag every one) ───────────
-  // (user model only — orders reference userId)
 
   // ─── Domain fields ────────────────────────
   userId    String
@@ -474,47 +515,65 @@ All API responses follow a consistent envelope. The `response.ts` helper enforce
 
 ## Authentication Flow
 
-```
-Browser                    Cognito                    API Gateway          Lambda
-   │                          │                            │                  │
-   │── POST /login ──────────▶│                            │                  │
-   │   (email + password)     │                            │                  │
-   │◀─ AccessToken + ─────────│                            │                  │
-   │   IdToken + RefreshToken │                            │                  │
-   │                          │                            │                  │
-   │── GET /api/v1/orders ────────────────────────────────▶│                  │
-   │   Authorization: Bearer <AccessToken>                 │                  │
-   │                          │                            │                  │
-   │                          │◀── Verify JWT (JWKS) ──────│                  │
-   │                          │─── Claims OK ─────────────▶│                  │
-   │                          │                            │── Invoke ────────▶│
-   │                          │                            │   event.requestContext│
-   │                          │                            │   .authorizer.jwt │
-   │                          │                            │   .claims         │
-   │◀─ 200 { data: […] } ────────────────────────────────────────────────────│
+```mermaid
+sequenceDiagram
+    actor User
+    participant Browser
+    participant Cognito as Amazon Cognito
+    participant APIGW as API Gateway
+    participant Lambda
+
+    User->>Browser: Enter email + password
+    Browser->>Cognito: InitiateAuth (email + password)
+    Cognito-->>Browser: AccessToken · IdToken · RefreshToken
+
+    Note over Browser: Tokens stored in memory (not localStorage)
+
+    User->>Browser: Trigger action (e.g. view orders)
+    Browser->>APIGW: GET /api/v1/orders\nAuthorization: Bearer AccessToken
+    APIGW->>Cognito: Verify JWT signature (JWKS endpoint)
+    Cognito-->>APIGW: Claims valid — sub · email · cognito:groups
+
+    APIGW->>Lambda: Invoke with requestContext.authorizer.jwt.claims
+    Note over Lambda: authenticate middleware\nattaches req.user.sub from claims
+    Lambda-->>APIGW: 200 { success: true, data: [...] }
+    APIGW-->>Browser: 200 { success: true, data: [...] }
+    Browser-->>User: Render orders list
+
+    Note over Browser,Cognito: AccessToken expires (1h) — use RefreshToken silently
+    Browser->>Cognito: InitiateAuth (REFRESH_TOKEN)
+    Cognito-->>Browser: New AccessToken
 ```
 
-The Lambda reads `req.user.sub` (Cognito user ID) set by the `authenticate` middleware — never trust user-supplied IDs.
+The Lambda always reads `req.user.sub` (Cognito user ID) — never trust a user-supplied ID in the request body.
 
 ---
 
 ## Feature Flag Flow
 
-```
-Lambda startup                AppConfig                    Frontend
-     │                            │                            │
-     │── GetLatestConfiguration ─▶│                            │
-     │◀─ { "newCheckout": true } ─│                            │
-     │   (cached in memory 30s)   │                            │
-     │                            │                            │
-     │                            │   GET /api/v1/flags ───────│
-     │◀───────────────────────────────────────────────────────│
-     │── { newCheckout: true } ───────────────────────────────▶│
-     │                            │                useFlag('newCheckout')
-     │                            │                → true → render new UI
+```mermaid
+sequenceDiagram
+    participant AppConfig as AWS AppConfig
+    participant Lambda as Lambda (Node.js)
+    participant Frontend as React Frontend
+
+    Note over Lambda: Cold start or 30s cache expiry
+    Lambda->>AppConfig: StartConfigurationSession + GetLatestConfiguration
+    AppConfig-->>Lambda: { "newCheckout": true, "darkMode": false }
+    Note over Lambda: Stored in module-level variable\nExpires after 30 seconds
+
+    Frontend->>Lambda: GET /api/v1/flags\n(Authorization: Bearer jwt)
+    Lambda-->>Frontend: { "newCheckout": true, "darkMode": false }
+
+    Note over Frontend: useFlag('newCheckout') → true\nRender new checkout UI
+
+    Note over AppConfig,Lambda: Flag toggled in AppConfig console
+    Lambda->>AppConfig: GetLatestConfiguration (next poll)
+    AppConfig-->>Lambda: { "newCheckout": false, "darkMode": false }
+    Note over Lambda: Cache updated — takes effect within 30s
 ```
 
-Flags are not secrets — it is safe to expose them to the frontend. Sensitive configuration (kill switches, server-side logic gates) stays backend-only.
+Flags are not secrets — it is safe to expose all flag values to the frontend. Sensitive configuration (server-side kill switches, auth logic gates) uses SSM or environment variables instead.
 
 ---
 
@@ -529,9 +588,9 @@ Flags are not secrets — it is safe to expose them to the frontend. Sensitive c
 SSM parameter naming convention: `/<project>/<env>/<key>`
 
 ```bash
-/<project>/staging/domain          → api-staging.example.com
-/<project>/prod/domain             → api.example.com
-/<project>/prod/db/password        → (Secrets Manager, not SSM)
+/<project>/staging/domain                   → api-staging.example.com
+/<project>/prod/domain                      → api.example.com
+/<project>/prod/db/password                 → (Secrets Manager, not SSM)
 /<project>/prod/cloudfront/distribution-id
 ```
 
@@ -593,38 +652,53 @@ Log group naming: `/aws/lambda/<project>-<env>`
 
 ## CI/CD Pipeline
 
-```
-PR opened
-    │
-    ▼
-GitHub Actions — ci.yml
-    ├── tsc --noEmit              (frontend + backend)
-    ├── eslint .                  (frontend + backend)
-    ├── vitest run --coverage     (backend unit tests)
-    ├── playwright test           (frontend e2e — against local docker stack)
-    └── cdk synth                 (infra — includes CDK Nag checks)
-    │
-    ▼ (all green)
-PR approved + merged to develop
-    │
-    ▼
-GitHub Actions — deploy.yml
-    ├── prisma migrate deploy     (staging DB)
-    ├── cdk deploy ApiStack       (staging Lambda + API Gateway)
-    ├── cdk deploy FrontendStack  (staging S3 + CloudFront)
-    ├── CloudFront invalidation
-    ├── /logs health staging      (error rate + latency check)
-    └── /test-smoke --env staging
-    │
-    ▼ (healthy)
-Manual approval gate
-    │
-    ▼
-Deploy to prod (same steps, prod env)
-    │
-    ▼
-/test-smoke --env prod
-    │
-    ▼ (1h + 24h later)
-/validate <issue#> --env prod
+```mermaid
+flowchart TD
+    A([PR opened]) --> CI
+
+    subgraph CI["GitHub Actions — ci.yml (runs on every PR)"]
+        CI1["tsc --noEmit\nfrontend + backend"]
+        CI2["eslint .\nfrontend + backend"]
+        CI3["vitest run --coverage\nunit tests · coverage gate ≥ 80%"]
+        CI4["playwright test\ne2e against local Docker stack"]
+        CI5["cdk synth\nCDK Nag security checks"]
+    end
+
+    CI1 & CI2 & CI3 & CI4 & CI5 --> GATE1{All checks\ngreen?}
+    GATE1 -- No --> FIX([Fix + push])
+    FIX --> A
+    GATE1 -- Yes --> MERGE(["PR approved\nmerge to develop"])
+
+    MERGE --> STG
+
+    subgraph STG["GitHub Actions — deploy.yml · staging (auto on merge to develop)"]
+        S1["prisma migrate deploy\nstaging DB"]
+        S2["cdk deploy ApiStack\nLambda + API Gateway"]
+        S3["cdk deploy FrontendStack\nS3 + CloudFront"]
+        S4["CloudFront invalidation"]
+        S5["/logs health staging\nerror rate + p95 latency"]
+        S6["/test-smoke --env staging\nread-only Playwright checks"]
+    end
+
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    S6 --> GATE2{Staging\nhealthy?}
+    GATE2 -- No --> RB1["/deploy rollback staging"]
+    GATE2 -- Yes --> APPROVE(["✅ Manual approval gate\nLead signs off"])
+
+    APPROVE --> PROD
+
+    subgraph PROD["GitHub Actions — deploy.yml · prod (manual trigger after approval)"]
+        P1["prisma migrate deploy\nprod DB"]
+        P2["cdk deploy ApiStack\nLambda + API Gateway"]
+        P3["cdk deploy FrontendStack\nS3 + CloudFront"]
+        P4["CloudFront invalidation"]
+        P5["/test-smoke --env prod\nread-only Playwright checks"]
+    end
+
+    P1 --> P2 --> P3 --> P4 --> P5
+    P5 --> GATE3{Smoke\npass?}
+    GATE3 -- No --> RB2["/deploy rollback prod"]
+    GATE3 -- Yes --> LIVE(["✅ Production live"])
+    LIVE -.->|"1h + 24h post-deploy"| VAL["/validate issue# --env prod\nerror delta · AC check · verdict"]
+    LIVE -.->|"every 1 min · always on"| CAN["CloudWatch Synthetics canary\n/health + critical paths"]
 ```
