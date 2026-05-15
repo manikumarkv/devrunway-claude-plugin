@@ -19,18 +19,28 @@ cases:
       and getStaticProps are Pages Router patterns — wrong in App Router.
 
   - id: next-02
-    name: "'use client' only pushed down to interactive leaves"
+    name: "layout.tsx is a Server Component — no 'use client'"
     scenario: |
-      Write a Next.js page layout and an interactive button component.
+      Write a Next.js app/layout.tsx that wraps children with a shared
+      navigation bar. Use the nextjs-standards skill rules.
+    must_not_contain:
+      - "'use client'"
+      - "getServerSideProps"
+    rationale: |
+      layout.tsx is a Server Component by default. Adding 'use client' to a
+      layout forces the entire subtree into client rendering and loses RSC benefits.
+
+  - id: next-06
+    name: "Interactive components use 'use client' directive"
+    scenario: |
+      Write a Next.js counter button component that increments a count on click.
       Use the nextjs-standards skill rules.
     must_contain:
       - "'use client'"
-    must_not_contain:
-      - "'use client'"
+      - "useState"
     rationale: |
-      'use client' must only appear in components that actually need
-      client-side interactivity (event handlers, useState, etc).
-      Marking layout.tsx or page.tsx as client loses server rendering.
+      Components that use React hooks or browser event handlers must be marked
+      with 'use client' to opt into the Client Components model.
 
   - id: next-03
     name: "Server Actions for form mutations"

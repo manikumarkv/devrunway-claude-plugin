@@ -27,7 +27,7 @@ cases:
     must_contain:
       - "defineProps<{"
     must_not_contain:
-      - "defineProps(['name'"]"
+      - "defineProps(['name'"
       - "defineProps({ name: String"
     rationale: |
       TypeScript generic syntax for defineProps gives full static type checking.
