@@ -573,6 +573,30 @@ _Date: 2026-05-14_
 
 ---
 
+### Session 9 — Quality Audit + Docs + Cleanup
+_Date: 2026-05-14_
+**Goal: quality audit of agent-generated layers, docs updates, setup cleanup, and mixed-skill splits.**
+
+**Completed:**
+
+1. **Quality audit** — Sampled agent-generated layers (#51–93); content quality confirmed high. Added `## Common mistakes` tables to 23 agent-generated .md files that were missing them (grpc, sqlalchemy, adobe-xd, sketch, azure-pipelines, rabbitmq, angular, bugsnag, azure-ad, openapi-fastapi, flagsmith, aws-appconfig, dotnet, serverless, azure-devops, bitbucket, azure, gcp, snyk, sonarqube, vault, huly, github-pm).
+
+2. **Docs updates** — README.md and ROADMAP.md architecture tables: removed all `*` stub markers (all 135 layers are implemented). README expands architecture listing to show all layer categories.
+
+3. **CONTRIBUTING.md** — Rewrote "What to contribute" to reflect zero remaining stubs; added two new contribution paths (improve existing / add new layer); added `## Common mistakes` table format spec; split step-by-step guide into "adding a new layer" and "improving an existing layer".
+
+4. **setup/SKILL.md** — Removed the entire "STUB layers" warning section (all stubs implemented); added Q36 "Primary programming language" (typescript | python | none) to Screen 6; wired `layers/language/typescript` install path; updated stack.json template with `"language"` field; updated error handling section.
+
+5. **Mixed skill splits** — Removed React/Sentry frontend section from `logging/framework/pino/logging-standards` (belonged in react-standards). Removed React Query/react-hook-form frontend section from `backend/node-express/error-handling`; added redirect to react-standards. Tightened `auth/cognito/security-standards` description to be explicit about AWS/Cognito/Express scope; added `paths:` frontmatter.
+
+6. **Frontmatter fixes** — Fixed 16 SKILL.md files with malformed `stack: value---` (missing newline before closing `---`).
+
+**Commits:**
+- `0962b67` chore(plugin): Session 9 — docs and setup cleanup
+- `711006a` chore(plugin): Session 9 — quality audit and frontmatter fixes
+
+---
+
 ### Session 8 — All Stubs Implemented
 _Date: 2026-05-14_
 **Goal: implement all 101 remaining stub layers.**
@@ -661,19 +685,14 @@ _Date: 2026-05-14_
 cat docs/ROADMAP.md   # always start here — check what's done
 ```
 
-**Status as of Session 8:** All 101 previously-stub layers are now fully implemented (SKILL.md + full standards .md). Zero stubs remain. 135 total SKILL.md files across the plugin.
+**Status as of Session 9:** All outstanding structural work is complete. 135 layers, 0 stubs, clean frontmatter, no mixed skills.
 
 **Outstanding work for next session:**
 
-1. **CONTRIBUTING.md** — Guide for community contributors building new layers
-2. **README.md** — Update project root README with modular install story + `/setup` demo
-3. **Split mixed skills** — These skills have both principles AND implementation mixed together:
-   - `layers/logging/framework/pino/logging-standards/` — split into core logging principles + pino SKILL
-   - `layers/backend/node-express/error-handling/` — split into core error principles + express SKILL
-   - `layers/auth/cognito/security-standards/` — split into core security principles + cognito SKILL
-4. **`/setup` wizard** — Add `layers/language/typescript/` as a language question or auto-detect from stack selections
-5. **`/install` command** — Create `core/skills/install/SKILL.md` that reads `stack.json` and tells Claude which layer skills to activate
-6. **Quality audit** — Review the agent-generated layer stubs (sessions 8 batches) for accuracy and depth vs the hand-crafted ones
+1. **`/install` command** — Create `core/skills/install/SKILL.md` that reads `stack.json` and activates the correct layer skills. This is the last major feature gap.
+2. **Further language layers** — `layers/language/python/` (patterns for typing, dataclasses, async/await conventions) now that `/setup` has a language question wired to `layers/language/typescript/`
+3. **Missing layers** — technologies not yet covered: `layers/testing/unit/dotnet-xunit`, `layers/testing/e2e/webdriverio`, `layers/testing/e2e/selenium`, `layers/logging/framework/morgan`, `layers/logging/provider/splunk`, `layers/logging/provider/grafana-loki`, `layers/logging/provider/newrelic`
+4. **Visual configurator** — webapp at `airunway.dev` for click-based stack configuration outputting stack.json
 
 ---
 
