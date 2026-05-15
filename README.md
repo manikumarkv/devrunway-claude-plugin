@@ -20,7 +20,7 @@ Inside Claude Code:
 
 ```bash
 # 1. Add the devrunway marketplace
-/plugin marketplace add manikumarkv/fullstack-sdlc-claude-plugin
+/plugin marketplace add manikumarkv/devrunway-claude-plugin
 
 # 2. Install the plugin
 /plugin install devrunway@devrunway

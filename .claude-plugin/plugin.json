@@ -1,13 +1,13 @@
 {
   "name": "devrunway",
   "description": "Modular SDLC plugin for any tech stack. Pick your tools, get tailored coding standards, MCP wiring, sub-agent context management, 35+ safety/quality hooks, and the full SDLC workflow — brainstorm to production.",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "license": "MIT",
   "author": {
     "name": "yamani"
   },
   "homepage": "https://devrunway.dev",
-  "repository": "https://github.com/manikumarkv/fullstack-sdlc-claude-plugin",
+  "repository": "https://github.com/manikumarkv/devrunway-claude-plugin",
   "mcpServers": {
     "github": {
       "command": "npx",
@@ -66,63 +66,75 @@
   },
   "userConfig": {
     "GITHUB_TOKEN": {
-      "description": "GitHub fine-grained Personal Access Token. Required scopes: Contents (read), Issues (read/write), Pull Requests (read/write), Metadata (read).",
-      "type": "secret",
+      "title": "GitHub Personal Access Token",
+      "description": "GitHub fine-grained PAT. Required scopes: Contents (read), Issues (read/write), Pull Requests (read/write), Metadata (read). Generate at github.com → Settings → Developer settings → Personal access tokens.",
+      "type": "string",
       "required": true
     },
     "FIGMA_TOKEN": {
+      "title": "Figma Access Token",
       "description": "Figma Personal Access Token (from Figma → Settings → Personal Access Tokens). Used for reading design files and components.",
-      "type": "secret",
+      "type": "string",
       "required": false
     },
     "JIRA_BASE_URL": {
+      "title": "Jira Base URL",
       "description": "Jira Cloud base URL (e.g. https://yourorg.atlassian.net). Required if project-management=jira.",
       "type": "string",
       "required": false
     },
     "JIRA_EMAIL": {
+      "title": "Jira Email",
       "description": "Jira account email. Required if project-management=jira.",
       "type": "string",
       "required": false
     },
     "JIRA_API_TOKEN": {
+      "title": "Jira API Token",
       "description": "Jira API token (Atlassian → Account → Security → API tokens). Required if project-management=jira.",
-      "type": "secret",
+      "type": "string",
       "required": false
     },
     "GITLAB_TOKEN": {
-      "description": "GitLab Personal Access Token. Required scopes: api, read_repository. Required if project-management=gitlab or source-control=gitlab.",
-      "type": "secret",
+      "title": "GitLab Personal Access Token",
+      "description": "GitLab PAT. Required scopes: api, read_repository. Required if project-management=gitlab or source-control=gitlab.",
+      "type": "string",
       "required": false
     },
     "GITLAB_API_URL": {
+      "title": "GitLab API URL",
       "description": "GitLab API URL (default https://gitlab.com/api/v4 for SaaS; set to self-hosted instance otherwise).",
       "type": "string",
       "required": false
     },
     "LINEAR_API_KEY": {
+      "title": "Linear API Key",
       "description": "Linear API key (Linear → Settings → API → Personal API keys). Required if project-management=linear.",
-      "type": "secret",
+      "type": "string",
       "required": false
     },
     "CONFLUENCE_BASE_URL": {
+      "title": "Confluence Base URL",
       "description": "Confluence Cloud base URL (e.g. https://yourorg.atlassian.net/wiki). Required if documents=confluence.",
       "type": "string",
       "required": false
     },
     "CONFLUENCE_EMAIL": {
+      "title": "Confluence Email",
       "description": "Atlassian account email. Required if documents=confluence.",
       "type": "string",
       "required": false
     },
     "CONFLUENCE_API_TOKEN": {
+      "title": "Confluence API Token",
       "description": "Confluence API token (Atlassian → Account → Security → API tokens). Required if documents=confluence.",
-      "type": "secret",
+      "type": "string",
       "required": false
     },
     "NOTION_API_KEY": {
+      "title": "Notion API Key",
       "description": "Notion internal integration token (Notion → Settings → Integrations → New integration). Required if documents=notion.",
-      "type": "secret",
+      "type": "string",
       "required": false
     }
   }
