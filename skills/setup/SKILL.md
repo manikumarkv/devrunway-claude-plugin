@@ -19,35 +19,80 @@ Configure the devrunway plugin for this project by running a 6-screen interactiv
 
 ## How to run this wizard
 
-Present each screen as a numbered list of questions. Wait for the user to answer **all questions on the current screen** before moving to the next. Accept answers on a single line (e.g. `1. github  2. github-actions  3. pnpm  4. none`) or one per line. If the user types `skip` for any question, treat it as `none`.
+Use the `AskUserQuestion` tool for every question. **Do not** print the questions as plain text and wait for the user to type — that's the wrong UX. Instead, batch each screen's questions into one or more `AskUserQuestion` calls so the user can click to select.
 
-After Screen 6, generate all three outputs without further prompting.
+Rules for the AskUserQuestion calls:
+
+- **Up to 4 questions per call.** If a screen has more than 4, make multiple calls.
+- **Up to 4 options per question.** Each option has a short `label` (the tech name, e.g. "GitHub") and a 1-line `description` (what it means / when to pick it). If a question has more than 4 documented choices, list the 4 most-common; the user can pick "Other" to type a different value.
+- **Include "None / skip" as the last option** when the question allows skipping (most do — only Source Control, Frontend framework, Backend framework, and Package Manager are usually required).
+- **`header`** for each question is a short chip-tag, max 12 chars (e.g. "Git host", "CI", "Pkg mgr", "Frontend").
+- **`multiSelect: false`** for every question — pick one option each.
+
+Briefly announce each screen before the call(s):
+
+```
+─────────────────────────────────────────────────
+  devrunway /setup  ·  Screen N of 6
+  <Screen title>
+─────────────────────────────────────────────────
+```
+
+After Screen 6, generate the two outputs (`stack.json` and `.mcp.json`) and the summary without further prompting.
 
 ---
 
 ## Screen 1 of 6 — Source Control & CI/CD
 
-Display this exact text:
+Announce the screen header, then call `AskUserQuestion` once with these four questions:
 
 ```
-─────────────────────────────────────────────────
-  devrunway /setup  ·  Screen 1 of 6
-  Source Control & CI/CD
-─────────────────────────────────────────────────
-
-Answer each question. Type the option key (e.g. "github") or "none".
-
-1. Git provider
-   github | gitlab | bitbucket | azure-devops | none
-
-2. CI/CD platform
-   github-actions | gitlab-ci | circleci | azure-pipelines | none
-
-3. Package manager
-   npm | pnpm | yarn | bun
-
-4. Code quality / scanning
-   github-security | sonarqube | snyk | none
+questions: [
+  {
+    question: "Git provider — where does your source code live?",
+    header: "Git host",
+    multiSelect: false,
+    options: [
+      { label: "GitHub",      description: "github.com or GitHub Enterprise" },
+      { label: "GitLab",      description: "gitlab.com or self-hosted GitLab" },
+      { label: "Bitbucket",   description: "Atlassian Bitbucket Cloud or Server" },
+      { label: "Azure DevOps", description: "Microsoft Azure DevOps Repos" }
+    ]
+  },
+  {
+    question: "CI/CD platform — what runs your tests and deploys?",
+    header: "CI",
+    multiSelect: false,
+    options: [
+      { label: "GitHub Actions", description: "YAML workflows in .github/workflows" },
+      { label: "GitLab CI",      description: ".gitlab-ci.yml pipelines" },
+      { label: "CircleCI",       description: ".circleci/config.yml" },
+      { label: "None / skip",    description: "Not using CI yet, or hosted in another tool" }
+    ]
+  },
+  {
+    question: "Package manager",
+    header: "Pkg mgr",
+    multiSelect: false,
+    options: [
+      { label: "npm",  description: "Default Node.js package manager" },
+      { label: "pnpm", description: "Fast, disk-efficient (recommended for monorepos)" },
+      { label: "yarn", description: "Classic Yarn 1.x or modern Yarn Berry" },
+      { label: "bun",  description: "Bun's built-in package manager" }
+    ]
+  },
+  {
+    question: "Code quality / security scanning",
+    header: "Scanning",
+    multiSelect: false,
+    options: [
+      { label: "GitHub Security", description: "Dependabot + code scanning + secret scanning" },
+      { label: "SonarQube",       description: "Static analysis platform (Cloud or self-hosted)" },
+      { label: "Snyk",            description: "Snyk Open Source + Code + Container" },
+      { label: "None / skip",     description: "Not using a dedicated scanner" }
+    ]
+  }
+]
 ```
 
 Wait for the user's answers, then proceed to Screen 2.
@@ -56,7 +101,9 @@ Wait for the user's answers, then proceed to Screen 2.
 
 ## Screen 2 of 6 — Frontend
 
-Display this exact text:
+Announce the screen header, then call `AskUserQuestion` (in batches of ≤4 questions) following the Screen 1 pattern. Each question listed below maps to one AskUserQuestion entry. Use the option keys as `label` values (with proper capitalisation), and add a 1-line `description` for each. Replace any 5th option (often `none`) with "None / skip" as the 4th option; if the question has 5 real options like Git provider, drop the least-common and rely on the auto-"Other" affordance.
+
+For reference, here are the questions to ask:
 
 ```
 ─────────────────────────────────────────────────
@@ -92,7 +139,9 @@ Wait for the user's answers, then proceed to Screen 3.
 
 ## Screen 3 of 6 — Backend & API
 
-Display this exact text:
+Announce the screen header, then call `AskUserQuestion` (in batches of ≤4 questions) following the Screen 1 pattern. Each question listed below maps to one AskUserQuestion entry. Use the option keys as `label` values (with proper capitalisation), and add a 1-line `description` for each. Replace any 5th option (often `none`) with "None / skip" as the 4th option; if the question has 5 real options like Git provider, drop the least-common and rely on the auto-"Other" affordance.
+
+For reference, here are the questions to ask:
 
 ```
 ─────────────────────────────────────────────────
@@ -119,7 +168,9 @@ Wait for the user's answers, then proceed to Screen 4.
 
 ## Screen 4 of 6 — Infrastructure
 
-Display this exact text:
+Announce the screen header, then call `AskUserQuestion` (in batches of ≤4 questions) following the Screen 1 pattern. Each question listed below maps to one AskUserQuestion entry. Use the option keys as `label` values (with proper capitalisation), and add a 1-line `description` for each. Replace any 5th option (often `none`) with "None / skip" as the 4th option; if the question has 5 real options like Git provider, drop the least-common and rely on the auto-"Other" affordance.
+
+For reference, here are the questions to ask:
 
 ```
 ─────────────────────────────────────────────────
@@ -158,7 +209,9 @@ Wait for the user's answers, then proceed to Screen 5.
 
 ## Screen 5 of 6 — Observability & Services
 
-Display this exact text:
+Announce the screen header, then call `AskUserQuestion` (in batches of ≤4 questions) following the Screen 1 pattern. Each question listed below maps to one AskUserQuestion entry. Use the option keys as `label` values (with proper capitalisation), and add a 1-line `description` for each. Replace any 5th option (often `none`) with "None / skip" as the 4th option; if the question has 5 real options like Git provider, drop the least-common and rely on the auto-"Other" affordance.
+
+For reference, here are the questions to ask:
 
 ```
 ─────────────────────────────────────────────────
@@ -194,7 +247,9 @@ Wait for the user's answers, then proceed to Screen 6.
 
 ## Screen 6 of 6 — Developer Tooling
 
-Display this exact text:
+Announce the screen header, then call `AskUserQuestion` (in batches of ≤4 questions) following the Screen 1 pattern. Each question listed below maps to one AskUserQuestion entry. Use the option keys as `label` values (with proper capitalisation), and add a 1-line `description` for each. Replace any 5th option (often `none`) with "None / skip" as the 4th option; if the question has 5 real options like Git provider, drop the least-common and rely on the auto-"Other" affordance.
+
+For reference, here are the questions to ask:
 
 ```
 ─────────────────────────────────────────────────
