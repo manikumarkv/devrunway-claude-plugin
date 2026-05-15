@@ -1,0 +1,43 @@
+skill: paypal-payment
+skill_files:
+  - layers/payment/paypal/SKILL.md
+version: 1
+
+cases:
+  - id: pp-01
+    name: "Orders API not legacy Payments API"
+    scenario: |
+      Write the server-side code to create a PayPal order and capture payment.
+      Use the paypal-payment skill rules.
+    must_contain:
+      - "orders.create("
+      - "orders.capture("
+    must_not_contain:
+      - "payment.create("
+    rationale: |
+      The Orders API is the current PayPal standard. The legacy Payments API
+      is deprecated and lacks modern features.
+
+  - id: pp-02
+    name: "Client ID and secret from environment variables"
+    scenario: |
+      Write the PayPal SDK configuration for a Node.js backend.
+      Use the paypal-payment skill rules.
+    must_contain:
+      - "process.env.PAYPAL_CLIENT_ID"
+      - "process.env.PAYPAL_CLIENT_SECRET"
+    rationale: |
+      PayPal credentials must come from environment variables.
+      Hardcoded client IDs and secrets are committed to source control.
+
+  - id: pp-03
+    name: "Webhook event validated before fulfillment"
+    scenario: |
+      Write the PayPal webhook handler that fulfills orders.
+      Use the paypal-payment skill rules.
+    must_contain:
+      - "webhookId"
+      - "verifyWebhookSignature("
+    rationale: |
+      PayPal webhook events must be verified before fulfilling orders.
+      Unverified webhooks allow payment bypass via forged events.

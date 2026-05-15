@@ -1,0 +1,62 @@
+skill: error-handling
+skill_files:
+  - layers/backend/node-express/error-handling/SKILL.md
+version: 1
+
+cases:
+  - id: err-01
+    name: "Service throws typed error classes not generic Error"
+    scenario: |
+      Write a UserService.getById(id) method that throws an appropriate error
+      when the user is not found. Use the error-handling skill rules.
+    must_contain:
+      - "NotFoundError"
+    must_not_contain:
+      - "new Error("
+      - "throw new Error"
+    rationale: |
+      Services must throw typed AppError subclasses (NotFoundError, ValidationError, etc).
+      Generic Error is never used in service code.
+
+  - id: err-02
+    name: "No try/catch in Express route controllers"
+    scenario: |
+      Write an Express DELETE /users/:id route that calls userService.deleteById.
+      Use the error-handling skill rules.
+    must_contain:
+      - "asyncHandler("
+    must_not_contain:
+      - "try {"
+      - "catch ("
+    rationale: |
+      asyncHandler wraps all async routes. try/catch in controllers violates
+      the centralized error handling pattern.
+
+  - id: err-03
+    name: "Error handler never exposes stack traces to client"
+    scenario: |
+      Write the centralized Express error handler middleware that formats
+      error responses. Use the error-handling skill rules.
+    must_contain:
+      - "statusCode"
+      - "code:"
+    must_not_contain:
+      - "err.stack"
+      - "stack:"
+    rationale: |
+      Stack traces and internal error details are never sent to clients.
+      Only statusCode and error code are included in the response.
+
+  - id: err-04
+    name: "ZodError mapped to 400 with field-level details"
+    scenario: |
+      In the centralized error handler, show how a ZodError is caught and
+      converted to a 400 response with field-level validation errors.
+      Use the error-handling skill rules.
+    must_contain:
+      - "ZodError"
+      - "400"
+      - "flatten()"
+    rationale: |
+      ZodError must be caught and mapped to 400 with field-level messages
+      via error.flatten() so clients know exactly which fields failed.

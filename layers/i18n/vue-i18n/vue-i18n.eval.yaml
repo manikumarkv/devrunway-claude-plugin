@@ -1,0 +1,41 @@
+skill: vue-i18n
+skill_files:
+  - layers/i18n/vue-i18n/SKILL.md
+version: 1
+
+cases:
+  - id: vuei18n-01
+    name: "useI18n composable in setup"
+    scenario: |
+      Write a Vue 3 component with a translated page title.
+      Use the vue-i18n skill rules.
+    must_contain:
+      - "useI18n("
+      - "const { t } = useI18n("
+    rationale: |
+      useI18n is the Composition API way to access translations.
+      It integrates with Vue reactivity so locale changes trigger re-renders.
+
+  - id: vuei18n-02
+    name: "Locale-specific message files"
+    scenario: |
+      Write the vue-i18n messages configuration for English and French.
+      Use the vue-i18n skill rules.
+    must_contain:
+      - "messages: {"
+      - "en: {"
+    rationale: |
+      Separate locale objects organise translations clearly.
+      A flat single-locale object cannot support multiple languages.
+
+  - id: vuei18n-03
+    name: "Pluralisation rules for count-dependent text"
+    scenario: |
+      Write a Vue component that shows '1 item' or 'N items' using vue-i18n.
+      Use the vue-i18n skill rules.
+    must_contain:
+      - "t("
+      - "plural"
+    rationale: |
+      vue-i18n's pluralisation rules handle language-specific plural forms.
+      Hardcoded conditional strings break for non-English pluralisation.

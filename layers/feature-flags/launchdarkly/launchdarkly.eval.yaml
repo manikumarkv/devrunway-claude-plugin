@@ -1,0 +1,44 @@
+skill: launchdarkly-flags
+skill_files:
+  - layers/feature-flags/launchdarkly/SKILL.md
+version: 1
+
+cases:
+  - id: ld-01
+    name: "Central flags constants file with prefixed names"
+    scenario: |
+      Write the flags constants file and show usage in a component.
+      Use the launchdarkly-flags skill rules.
+    must_contain:
+      - "flags.ts"
+      - "PAYMENTS_USE_STRIPE_V3"
+    must_not_contain:
+      - "'use-stripe-v3'"
+    rationale: |
+      A central flags.ts with typed constants prevents typos and scattered
+      magic strings. Prefixes (team-feature) provide namespacing.
+
+  - id: ld-02
+    name: "Context object with key and kind for targeting"
+    scenario: |
+      Write the LaunchDarkly context object for a logged-in user.
+      Use the launchdarkly-flags skill rules.
+    must_contain:
+      - "kind:"
+      - "key:"
+    rationale: |
+      The context object with kind and key enables multi-context targeting.
+      Missing kind defaults to 'user' and loses multi-kind targeting rules.
+
+  - id: ld-03
+    name: "testData source in unit tests not production SDK"
+    scenario: |
+      Write a unit test for a component that checks a feature flag.
+      Use the launchdarkly-flags skill rules.
+    must_contain:
+      - "TestData("
+    must_not_contain:
+      - "vi.mock('launchdarkly"
+    rationale: |
+      LaunchDarkly's TestData source controls flag values in tests without
+      mocking the SDK. vi.mock() prevents testing real SDK integration.

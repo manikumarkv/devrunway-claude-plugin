@@ -1,0 +1,44 @@
+skill: bugsnag-monitoring
+skill_files:
+  - layers/error-monitoring/bugsnag/SKILL.md
+version: 1
+
+cases:
+  - id: bugsnag-01
+    name: "Bugsnag.start called once at app initialization"
+    scenario: |
+      Write the Node.js app startup that initializes Bugsnag error monitoring.
+      Use the bugsnag-monitoring skill rules.
+    must_contain:
+      - "Bugsnag.start("
+      - "apiKey:"
+    rationale: |
+      Bugsnag.start must be called exactly once at app startup before any
+      errors can occur. Calling it per-request creates multiple clients.
+
+  - id: bugsnag-02
+    name: "User context set with ID only no PII"
+    scenario: |
+      Write the code to set Bugsnag user context after a user authenticates.
+      Use the bugsnag-monitoring skill rules.
+    must_contain:
+      - "setUser(id"
+    must_not_contain:
+      - "email"
+      - "name"
+    rationale: |
+      Only the user ID is needed for correlating errors to users.
+      Email and name in error tracking violates data minimization principles.
+
+  - id: bugsnag-03
+    name: "Bugsnag.notify for caught errors not console.error"
+    scenario: |
+      Write error handling for a payment service call that reports failures.
+      Use the bugsnag-monitoring skill rules.
+    must_contain:
+      - "Bugsnag.notify("
+    must_not_contain:
+      - "console.error("
+    rationale: |
+      Bugsnag.notify reports errors to the monitoring dashboard with context.
+      console.error only prints to logs — no alerts, trends, or grouping.

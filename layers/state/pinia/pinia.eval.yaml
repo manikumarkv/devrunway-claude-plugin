@@ -1,0 +1,45 @@
+skill: pinia-state
+skill_files:
+  - layers/state/pinia/SKILL.md
+version: 1
+
+cases:
+  - id: pinia-01
+    name: "Composition API style defineStore with ref and computed"
+    scenario: |
+      Write a Pinia store for a shopping cart with items state and a total
+      computed getter. Use the pinia-state skill rules.
+    must_contain:
+      - "defineStore("
+      - "ref("
+      - "computed("
+    must_not_contain:
+      - "state: () => ({"
+    rationale: |
+      Composition API style stores use ref/computed like Vue components.
+      Options API style (state: () => ({})) is the legacy Pinia pattern.
+
+  - id: pinia-02
+    name: "storeToRefs when destructuring store in components"
+    scenario: |
+      Write a Vue component that reads reactive state from a Pinia store
+      using destructuring. Use the pinia-state skill rules.
+    must_contain:
+      - "storeToRefs("
+    rationale: |
+      Destructuring a Pinia store directly loses reactivity. storeToRefs
+      wraps state and getters in refs that stay reactive.
+
+  - id: pinia-03
+    name: "Async actions as plain async functions"
+    scenario: |
+      Write a Pinia store with an action that fetches users from an API.
+      Use the pinia-state skill rules.
+    must_contain:
+      - "async function"
+      - "await "
+    must_not_contain:
+      - "actions:"
+    rationale: |
+      Composition API stores define actions as plain async functions.
+      Actions are not a separate key — they are just functions in the setup.

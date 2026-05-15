@@ -1,0 +1,44 @@
+skill: shadcn-ui
+skill_files:
+  - layers/ui-components/shadcn/SKILL.md
+version: 1
+
+cases:
+  - id: shadcn-01
+    name: "Import from components/ui not raw HTML elements"
+    scenario: |
+      Write a React form with a text input and a submit button.
+      Use the shadcn-ui skill rules.
+    must_contain:
+      - "@/components/ui/"
+    must_not_contain:
+      - "<input "
+      - "<button "
+    rationale: |
+      shadcn/ui components provide consistent design, accessibility, and
+      keyboard support. Raw HTML elements bypass the design system.
+
+  - id: shadcn-02
+    name: "cn() utility for conditional class composition"
+    scenario: |
+      Write a shadcn Button variant component with active and disabled states.
+      Use the shadcn-ui skill rules.
+    must_contain:
+      - "cn("
+      - "import { cn }"
+    rationale: |
+      cn() merges Tailwind classes cleanly, handling conflicts. String
+      concatenation causes class specificity issues.
+
+  - id: shadcn-03
+    name: "Form uses shadcn Form components with react-hook-form"
+    scenario: |
+      Write a registration form using shadcn form components with validation.
+      Use the shadcn-ui skill rules.
+    must_contain:
+      - "FormField"
+      - "FormItem"
+      - "FormControl"
+    rationale: |
+      shadcn Form components integrate react-hook-form with accessible
+      label/error linking. Raw inputs miss this integration.

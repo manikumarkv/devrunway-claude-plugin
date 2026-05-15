@@ -1,0 +1,42 @@
+skill: bullmq-queue
+skill_files:
+  - layers/cache-queue/bullmq/SKILL.md
+version: 1
+
+cases:
+  - id: bull-01
+    name: "defaultJobOptions with removeOnComplete and removeOnFail"
+    scenario: |
+      Write a BullMQ queue setup for processing email notifications.
+      Use the bullmq-queue skill rules.
+    must_contain:
+      - "defaultJobOptions"
+      - "removeOnComplete"
+      - "removeOnFail"
+    rationale: |
+      Without cleanup options, completed and failed jobs accumulate in Redis
+      indefinitely causing memory exhaustion.
+
+  - id: bull-02
+    name: "TypeScript interface for job payload"
+    scenario: |
+      Write a BullMQ queue and worker for sending welcome emails.
+      Use the bullmq-queue skill rules.
+    must_contain:
+      - "interface"
+      - "JobData"
+    rationale: |
+      Typed job payloads catch mismatches between the producer and consumer.
+      Untyped any payloads cause runtime errors that are hard to debug.
+
+  - id: bull-03
+    name: "Explicit concurrency on worker"
+    scenario: |
+      Write a BullMQ worker that processes image resize jobs with bounded
+      concurrency. Use the bullmq-queue skill rules.
+    must_contain:
+      - "concurrency:"
+      - "new Worker("
+    rationale: |
+      Concurrency limits how many jobs run simultaneously. Without a limit
+      the worker processes all queued jobs at once, overwhelming resources.

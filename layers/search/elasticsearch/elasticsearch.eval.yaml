@@ -1,0 +1,42 @@
+skill: elasticsearch-search
+skill_files:
+  - layers/search/elasticsearch/SKILL.md
+version: 1
+
+cases:
+  - id: es-01
+    name: "Bool query with must and filter clauses"
+    scenario: |
+      Write an Elasticsearch query to search products by keyword filtered
+      by category. Use the elasticsearch-search skill rules.
+    must_contain:
+      - "query: { bool:"
+      - "must:"
+      - "filter:"
+    rationale: |
+      Bool queries with must (scored) and filter (unscored) are the standard
+      pattern. match_all in production fetches unfiltered results.
+
+  - id: es-02
+    name: "Pagination with search_after not offset"
+    scenario: |
+      Write an Elasticsearch query that paginates through search results.
+      Use the elasticsearch-search skill rules.
+    must_contain:
+      - "search_after"
+    must_not_contain:
+      - "from:"
+    rationale: |
+      search_after is consistent for deep pagination. from/size becomes
+      increasingly expensive past 10,000 results (ES default limit).
+
+  - id: es-03
+    name: "Index alias not direct index name in queries"
+    scenario: |
+      Write the Elasticsearch query setup using an alias for the products index.
+      Use the elasticsearch-search skill rules.
+    must_contain:
+      - "alias"
+    rationale: |
+      Aliases decouple application code from index names. Direct index names
+      require code changes and downtime during index migration.

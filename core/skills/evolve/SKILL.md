@@ -52,6 +52,9 @@ git log --oneline -50 | grep -oE '/(scaffold|design|review|debug|deploy|branch|p
 
 # 7. Recent commits — what areas are changing most?
 git log --oneline -30 --name-only | grep 'src/' | grep -oE 'src/[^/]+/' | sort | uniq -c | sort -rn
+
+# 8. Eval reports — which skills are failing their own assertions?
+find docs/evals/ -name 'EVAL-*.md' 2>/dev/null | sort -r | head -20
 ```
 
 Read all REVIEW-*.md files found. Extract:
@@ -62,6 +65,12 @@ Read all REVIEW-*.md files found. Extract:
 Read all DEBUG-*.md files found. Extract:
 - Root cause categories
 - Which skills, if stronger, would have prevented the bug
+
+Read all EVAL-*.md files found in `docs/evals/`. Extract:
+- Skills with FAIL status — **highest priority, fix before other improvements**
+- Assertion patterns Claude consistently misses (must_contain not found)
+- Chronic failures (same assertion failed ≥2 runs) vs one-off
+- Skills with no .eval.yaml yet → flag as coverage gap
 
 ---
 
@@ -126,7 +135,13 @@ Write to `docs/evolve/EVOLVE-<date>.md`:
 ## Evidence summary
 - Review reports analysed: N
 - Debug reports analysed: N
+- Eval reports analysed: N
+- Skills with failing evals: N (must fix before other improvements)
 - Recurring issue categories: [list]
+
+## Eval failures (fix before shipping)
+| Skill | Failing case | Assertion | Runs failed | Suggested fix |
+|---|---|---|---|---|
 
 ## Skill improvements (prioritised)
 

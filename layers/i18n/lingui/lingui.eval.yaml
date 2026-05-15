@@ -1,0 +1,41 @@
+skill: lingui-i18n
+skill_files:
+  - layers/i18n/lingui/SKILL.md
+version: 1
+
+cases:
+  - id: lingui-01
+    name: "Macro imports for string extraction"
+    scenario: |
+      Write a React component with translated strings using Lingui.
+      Use the lingui-i18n skill rules.
+    must_contain:
+      - "import { t } from '@lingui/macro'"
+      - "t`"
+    rationale: |
+      Lingui macros (t\`\`) are extracted by the lingui extract command.
+      Raw strings not wrapped in macros are invisible to the extractor.
+
+  - id: lingui-02
+    name: "Trans macro for JSX interpolation"
+    scenario: |
+      Write a React component showing 'Hello, <strong>name</strong>' translated.
+      Use the lingui-i18n skill rules.
+    must_contain:
+      - "<Trans>"
+      - "import { Trans }"
+    rationale: |
+      Trans handles JSX elements inside translated strings.
+      String splitting around JSX breaks the translation unit.
+
+  - id: lingui-03
+    name: "Compiled .po files not hand-written JSON"
+    scenario: |
+      Show the Lingui workflow for compiling translations for production.
+      Use the lingui-i18n skill rules.
+    must_contain:
+      - ".po"
+      - "lingui compile"
+    rationale: |
+      Lingui extracts to .po files (industry standard for translators) then
+      compiles to JS. Hand-writing JSON message files bypasses this workflow.

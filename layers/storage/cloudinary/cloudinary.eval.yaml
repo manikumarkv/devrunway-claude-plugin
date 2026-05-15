@@ -1,0 +1,43 @@
+skill: cloudinary-storage
+skill_files:
+  - layers/storage/cloudinary/SKILL.md
+version: 1
+
+cases:
+  - id: cld-01
+    name: "Upload via server-generated signed params"
+    scenario: |
+      Write the server endpoint that signs Cloudinary upload parameters and
+      the client that uses them. Use the cloudinary-storage skill rules.
+    must_contain:
+      - "cloudinary.utils.api_sign_request("
+      - "signature"
+    must_not_contain:
+      - "CLOUDINARY_API_SECRET"
+    rationale: |
+      Cloudinary API secret must never reach the browser. Server signs
+      upload params; client uses the signature for direct upload.
+
+  - id: cld-02
+    name: "Transformations at delivery URL not pre-stored variants"
+    scenario: |
+      Write the code to display a product image at 400x400 with WebP format.
+      Use the cloudinary-storage skill rules.
+    must_contain:
+      - "cloudinary.url("
+      - "transformation:"
+    rationale: |
+      Cloudinary generates transformations on-demand via URL parameters.
+      Pre-storing resized variants wastes storage and misses responsive sizes.
+
+  - id: cld-03
+    name: "Organized folder structure and public_id"
+    scenario: |
+      Write the Cloudinary upload call for a user profile photo.
+      Use the cloudinary-storage skill rules.
+    must_contain:
+      - "folder:"
+      - "public_id:"
+    rationale: |
+      Organized folder structure and meaningful public_ids make assets
+      findable in the Cloudinary dashboard and enable bulk operations.

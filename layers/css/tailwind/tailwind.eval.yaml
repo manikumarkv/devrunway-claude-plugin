@@ -1,0 +1,45 @@
+skill: tailwind-css
+skill_files:
+  - layers/css/tailwind/SKILL.md
+version: 1
+
+cases:
+  - id: tw-01
+    name: "Tailwind utility classes not inline styles"
+    scenario: |
+      Write a React button component with padding, background, and text color.
+      Use the tailwind-css skill rules.
+    must_contain:
+      - "className=\""
+      - "px-"
+    must_not_contain:
+      - "style={{"
+      - "style=\""
+    rationale: |
+      Tailwind utility classes are the styling primitive. Inline styles bypass
+      the design system and can't be overridden with responsive prefixes.
+
+  - id: tw-02
+    name: "Mobile-first responsive with breakpoint prefixes"
+    scenario: |
+      Write a responsive React grid layout that is 1 column on mobile and
+      3 columns on desktop. Use the tailwind-css skill rules.
+    must_contain:
+      - "md:"
+      - "lg:"
+    rationale: |
+      Tailwind is mobile-first: base styles are for mobile, breakpoint prefixes
+      (sm:, md:, lg:) override for larger screens.
+
+  - id: tw-03
+    name: "theme.extend for custom design tokens"
+    scenario: |
+      Show the tailwind.config.ts where custom brand colors and spacing are
+      added without overriding Tailwind defaults. Use the tailwind-css skill rules.
+    must_contain:
+      - "theme: { extend:"
+    must_not_contain:
+      - "text-[#"
+    rationale: |
+      Custom values belong in theme.extend so they coexist with Tailwind defaults.
+      Arbitrary values (text-[#color]) scatter magic numbers through templates.

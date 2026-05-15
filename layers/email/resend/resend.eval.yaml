@@ -1,0 +1,41 @@
+skill: resend-email
+skill_files:
+  - layers/email/resend/SKILL.md
+version: 1
+
+cases:
+  - id: resend-01
+    name: "Resend client instantiated server-side with env key"
+    scenario: |
+      Write the Resend client setup and a function to send a welcome email.
+      Use the resend-email skill rules.
+    must_contain:
+      - "new Resend("
+      - "process.env.RESEND_API_KEY"
+    rationale: |
+      The Resend API key is server-only. The client is instantiated once
+      server-side. Frontend code must never import the Resend client.
+
+  - id: resend-02
+    name: "React Email templates for HTML emails"
+    scenario: |
+      Write a Resend email send call using a React Email template component.
+      Use the resend-email skill rules.
+    must_contain:
+      - "<Html>"
+      - "<Body>"
+      - "render("
+    rationale: |
+      React Email provides type-safe, testable email templates. HTML string
+      concatenation is fragile and hard to maintain.
+
+  - id: resend-03
+    name: "From address uses verified domain"
+    scenario: |
+      Write a transactional email send using Resend for a password reset.
+      Use the resend-email skill rules.
+    must_contain:
+      - "from: 'noreply@"
+    rationale: |
+      The from address must use a domain verified in Resend. Unverified
+      domains or generic email providers (gmail.com) have low deliverability.

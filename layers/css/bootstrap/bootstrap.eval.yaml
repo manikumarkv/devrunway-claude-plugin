@@ -1,0 +1,48 @@
+skill: bootstrap-css
+skill_files:
+  - layers/css/bootstrap/SKILL.md
+version: 1
+
+cases:
+  - id: bs-01
+    name: "React-Bootstrap components not raw div with class strings"
+    scenario: |
+      Write a React page layout with a header, sidebar, and main content area
+      using Bootstrap grid. Use the bootstrap-css skill rules.
+    must_contain:
+      - "Container"
+      - "Row"
+      - "Col"
+    must_not_contain:
+      - "className=\"container\""
+      - "className=\"row\""
+    rationale: |
+      React-Bootstrap provides typed components. Raw divs with Bootstrap
+      class strings lose type safety and IDE support.
+
+  - id: bs-02
+    name: "variant prop for button styles not className string"
+    scenario: |
+      Write a React form with primary and secondary buttons using Bootstrap.
+      Use the bootstrap-css skill rules.
+    must_contain:
+      - "variant=\"primary\""
+    must_not_contain:
+      - "className=\"btn btn-primary\""
+    rationale: |
+      React-Bootstrap's variant prop is the typed API for button styles.
+      Passing raw class strings bypasses component props and type checking.
+
+  - id: bs-03
+    name: "Grid system for layout not inline flex"
+    scenario: |
+      Write a responsive two-column Bootstrap layout that stacks on mobile.
+      Use the bootstrap-css skill rules.
+    must_contain:
+      - "<Row>"
+      - "<Col xs="
+    must_not_contain:
+      - "style={{display: 'flex'"
+    rationale: |
+      Bootstrap's grid (Row/Col) handles responsive breakpoints declaratively.
+      Inline flex styles duplicate what the grid already handles.

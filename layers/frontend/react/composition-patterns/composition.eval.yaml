@@ -1,0 +1,40 @@
+skill: composition-patterns
+skill_files:
+  - layers/frontend/react/composition-patterns/SKILL.md
+version: 1
+
+cases:
+  - id: comp-01
+    name: "Children prop for layout composition not prop drilling"
+    scenario: |
+      Write a React Card component that can wrap any content. Avoid prop
+      drilling layout details. Use the composition-patterns skill rules.
+    must_contain:
+      - "children"
+      - "React.ReactNode"
+    rationale: |
+      The children prop enables layout composition without prop drilling.
+      Passing content through deeply nested props creates tight coupling.
+
+  - id: comp-02
+    name: "forwardRef for exposing DOM refs to parents"
+    scenario: |
+      Write a reusable React TextInput component that allows parent components
+      to access the underlying input element. Use the composition-patterns skill rules.
+    must_contain:
+      - "forwardRef("
+    rationale: |
+      forwardRef forwards refs to the underlying DOM element.
+      This is needed for focus management, form libraries, and animations.
+
+  - id: comp-03
+    name: "Context for shared state in compound components"
+    scenario: |
+      Write a React Tabs compound component with Tabs, Tab, and TabPanel
+      sub-components that share state. Use the composition-patterns skill rules.
+    must_contain:
+      - "createContext("
+      - "useContext("
+    rationale: |
+      Compound components use Context to share state between sub-components.
+      This avoids prop drilling through component trees.

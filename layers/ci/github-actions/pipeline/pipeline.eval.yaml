@@ -1,0 +1,40 @@
+skill: pipeline
+skill_files:
+  - layers/ci/github-actions/pipeline/SKILL.md
+version: 1
+
+cases:
+  - id: ci-01
+    name: "PR checks run tsc, lint, and tests"
+    scenario: |
+      Write a GitHub Actions workflow that runs on pull requests to main and
+      verifies code quality. Use the pipeline skill rules.
+    must_contain:
+      - "tsc --noEmit"
+      - "eslint"
+      - "vitest"
+    rationale: |
+      All PRs must run type checking (tsc), linting (eslint), and tests (vitest)
+      before merge. Missing any check allows regressions.
+
+  - id: ci-02
+    name: "Secrets come from GitHub Secrets not hardcoded"
+    scenario: |
+      Write a GitHub Actions deploy job that pushes to AWS using credentials.
+      Use the pipeline skill rules.
+    must_contain:
+      - "secrets."
+    rationale: |
+      All credentials must come from GitHub Secrets (${{ secrets.AWS_KEY }}).
+      Hardcoded credentials in workflow files are a critical security risk.
+
+  - id: ci-03
+    name: "Production deploy is manual workflow_dispatch not auto-push"
+    scenario: |
+      Write a GitHub Actions workflow for deploying to production.
+      Use the pipeline skill rules.
+    must_contain:
+      - "workflow_dispatch"
+    rationale: |
+      Production deploys must be manually triggered via workflow_dispatch.
+      Auto-deploy on push to main bypasses required approval gates.

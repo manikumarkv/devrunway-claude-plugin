@@ -1,0 +1,42 @@
+skill: swagger-docs
+skill_files:
+  - layers/api-docs/swagger-express/swagger-docs/SKILL.md
+version: 1
+
+cases:
+  - id: swagger-01
+    name: "JSDoc @swagger annotations not manual JSON"
+    scenario: |
+      Write an Express GET /products route with Swagger documentation.
+      Use the swagger-docs skill rules.
+    must_contain:
+      - "@swagger"
+    must_not_contain:
+      - "openapi: '3.0'"
+    rationale: |
+      JSDoc @swagger annotations keep documentation co-located with routes.
+      Hardcoded JSON spec files diverge from the actual implementation.
+
+  - id: swagger-02
+    name: "swaggerUi.serve and swaggerUi.setup mounted correctly"
+    scenario: |
+      Write the Express app setup that mounts Swagger UI at /api-docs.
+      Use the swagger-docs skill rules.
+    must_contain:
+      - "swaggerUi.serve"
+      - "swaggerUi.setup("
+    rationale: |
+      Both serve (static files) and setup (spec configuration) must be
+      mounted for the Swagger UI to render correctly.
+
+  - id: swagger-03
+    name: "Schemas use $ref to reusable components"
+    scenario: |
+      Write a Swagger annotation for an endpoint that returns a User object.
+      Reference the schema from components. Use the swagger-docs skill rules.
+    must_contain:
+      - "$ref:"
+      - "components:"
+    rationale: |
+      Reusable schemas via $ref prevent duplication and keep the spec DRY.
+      Inline schemas repeated across routes diverge over time.

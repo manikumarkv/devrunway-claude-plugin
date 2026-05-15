@@ -1,0 +1,63 @@
+skill: api-conventions
+skill_files:
+  - core/skills/api-conventions/SKILL.md
+version: 1
+
+cases:
+  - id: api-01
+    name: "Success responses use { success: true, data } envelope"
+    scenario: |
+      Write an Express GET /orders route that returns a list of orders.
+      Use the api-conventions skill rules for response shape.
+    must_contain:
+      - "success: true"
+      - "data:"
+    must_not_contain:
+      - "res.json(orders)"
+    rationale: |
+      All success responses must use the { success: true, data } envelope.
+      Raw array/object responses violate the API contract.
+
+  - id: api-02
+    name: "Error responses use { success: false, error: { code } }"
+    scenario: |
+      Write the centralized error handler middleware that formats error
+      responses. Use the api-conventions skill rules.
+    must_contain:
+      - "success: false"
+      - "code:"
+    must_not_contain:
+      - "error: e.message"
+    rationale: |
+      Error responses must use { success: false, error: { code } } shape.
+      Never expose raw error messages.
+
+  - id: api-03
+    name: "Routes versioned under /api/v1/"
+    scenario: |
+      Write the Express router setup for user and product routes with
+      proper versioning. Use the api-conventions skill rules.
+    must_contain:
+      - "/api/v1/"
+    must_not_contain:
+      - "'/users'"
+      - "\"/users\""
+    rationale: |
+      All routes must be versioned under /api/v1/. Unversioned routes
+      break clients when the API changes.
+
+  - id: api-04
+    name: "Pagination uses cursor not offset"
+    scenario: |
+      Write a repository method that paginates over products using cursor-based
+      pagination. Return the next cursor and hasMore flag.
+      Use the api-conventions skill rules.
+    must_contain:
+      - "nextCursor"
+      - "hasMore"
+    must_not_contain:
+      - "offset:"
+      - "page:"
+    rationale: |
+      Cursor-based pagination is consistent for large/real-time datasets.
+      Offset pagination has N+1 problems and inconsistency on mutations.

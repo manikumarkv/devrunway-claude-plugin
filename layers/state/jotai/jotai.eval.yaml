@@ -1,0 +1,42 @@
+skill: jotai-state
+skill_files:
+  - layers/state/jotai/SKILL.md
+version: 1
+
+cases:
+  - id: jotai-01
+    name: "Atoms defined in atoms/ directory not inside components"
+    scenario: |
+      Write Jotai atoms for a user authentication state and a derived
+      isAuthenticated value. Use the jotai-state skill rules.
+    must_contain:
+      - "atom("
+      - "export const"
+    must_not_contain:
+      - "const userAtom = atom("
+    rationale: |
+      Atoms defined inside components are recreated on each render, losing
+      state. Atoms live at module level in an atoms/ directory.
+
+  - id: jotai-02
+    name: "Derived atoms with get for computed values"
+    scenario: |
+      Write a Jotai atom that computes the total price from a cart items atom.
+      Use the jotai-state skill rules.
+    must_contain:
+      - "atom(get =>"
+    rationale: |
+      Derived atoms (atom(get => get(baseAtom))) automatically update when
+      their dependencies change. Duplicating computation across components
+      causes stale values.
+
+  - id: jotai-03
+    name: "atomFamily for per-ID entity state"
+    scenario: |
+      Write Jotai atoms for managing individual todo items by id.
+      Use the jotai-state skill rules.
+    must_contain:
+      - "atomFamily("
+    rationale: |
+      atomFamily creates per-key atoms on demand. One large atom with a
+      record of all items causes every consumer to re-render on any update.

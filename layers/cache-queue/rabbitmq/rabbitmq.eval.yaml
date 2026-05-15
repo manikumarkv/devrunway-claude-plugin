@@ -1,0 +1,45 @@
+skill: rabbitmq-queue
+skill_files:
+  - layers/cache-queue/rabbitmq/SKILL.md
+version: 1
+
+cases:
+  - id: rmq-01
+    name: "Dead letter exchange for failed messages"
+    scenario: |
+      Write the RabbitMQ queue declaration with a dead letter exchange.
+      Use the rabbitmq-queue skill rules.
+    must_contain:
+      - "deadLetterExchange"
+      - "x-dead-letter-exchange"
+    rationale: |
+      A DLX captures messages that fail processing or expire. Without DLX,
+      failed messages are silently dropped.
+
+  - id: rmq-02
+    name: "Explicit ack/nack not noAck mode"
+    scenario: |
+      Write the RabbitMQ consumer that processes order events with proper
+      acknowledgment. Use the rabbitmq-queue skill rules.
+    must_contain:
+      - "channel.ack("
+      - "channel.nack("
+    must_not_contain:
+      - "{ noAck: true }"
+    rationale: |
+      Explicit ack/nack ensures messages are only removed from the queue
+      after successful processing. noAck mode loses messages on crash.
+
+  - id: rmq-03
+    name: "Connection URL from environment variable"
+    scenario: |
+      Write the RabbitMQ connection setup for a Node.js service.
+      Use the rabbitmq-queue skill rules.
+    must_contain:
+      - "process.env.RABBITMQ_URL"
+      - "amqplib.connect("
+    must_not_contain:
+      - "amqp://guest:guest@localhost"
+    rationale: |
+      Connection strings contain credentials and must come from environment
+      variables. Hardcoded URLs with credentials are committed to source control.

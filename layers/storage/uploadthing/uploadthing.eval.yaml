@@ -1,0 +1,41 @@
+skill: uploadthing-storage
+skill_files:
+  - layers/storage/uploadthing/SKILL.md
+version: 1
+
+cases:
+  - id: ut-01
+    name: "Upload router defined server-side with createUploadthing"
+    scenario: |
+      Write the UploadThing server router for profile image uploads.
+      Use the uploadthing-storage skill rules.
+    must_contain:
+      - "createUploadthing("
+      - "f({"
+    rationale: |
+      The upload router runs server-side and defines allowed file types and
+      sizes. Client credentials are never exposed in this pattern.
+
+  - id: ut-02
+    name: "File type and size constraints declared in router"
+    scenario: |
+      Write an UploadThing router that accepts only images under 4MB.
+      Use the uploadthing-storage skill rules.
+    must_contain:
+      - "maxFileSize"
+      - "image"
+    rationale: |
+      File type and size constraints in the router are enforced server-side.
+      Accepting any file without constraints allows malicious uploads.
+
+  - id: ut-03
+    name: "onUploadComplete handler processes the uploaded file"
+    scenario: |
+      Write the UploadThing route that saves the uploaded file URL to the
+      database after upload completes. Use the uploadthing-storage skill rules.
+    must_contain:
+      - "onUploadComplete("
+      - "fileUrl"
+    rationale: |
+      onUploadComplete is the hook to persist upload metadata after success.
+      Fire-and-forget uploads without completion handling lose the file URL.

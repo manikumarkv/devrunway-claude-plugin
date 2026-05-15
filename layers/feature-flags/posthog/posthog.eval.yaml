@@ -1,0 +1,42 @@
+skill: posthog-flags
+skill_files:
+  - layers/feature-flags/posthog/SKILL.md
+version: 1
+
+cases:
+  - id: ph-01
+    name: "useFeatureFlagEnabled hook for React components"
+    scenario: |
+      Write a React component that shows a new checkout flow behind a flag.
+      Use the posthog-flags skill rules.
+    must_contain:
+      - "useFeatureFlagEnabled("
+    must_not_contain:
+      - "if (process.env.FEATURE_"
+    rationale: |
+      useFeatureFlagEnabled integrates PostHog flags with React's render cycle.
+      Environment variables are static and cannot be changed without redeploy.
+
+  - id: ph-02
+    name: "User identified before flag evaluation"
+    scenario: |
+      Write the code that identifies a logged-in user and then checks their flags.
+      Use the posthog-flags skill rules.
+    must_contain:
+      - "posthog.identify("
+      - "distinctId"
+    rationale: |
+      Identifying the user before evaluating flags ensures targeting rules
+      apply correctly. Anonymous evaluation uses default values.
+
+  - id: ph-03
+    name: "getFeatureFlagPayload for A/B test variants"
+    scenario: |
+      Write the code to get the variant payload from a PostHog A/B test flag.
+      Use the posthog-flags skill rules.
+    must_contain:
+      - "getFeatureFlagPayload("
+      - "payload"
+    rationale: |
+      getFeatureFlagPayload returns the variant-specific JSON payload.
+      Boolean isFeatureEnabled only works for on/off — not multi-variant tests.

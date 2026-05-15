@@ -1,0 +1,43 @@
+skill: css-modules
+skill_files:
+  - layers/css/css-modules/SKILL.md
+version: 1
+
+cases:
+  - id: cssm-01
+    name: "Import styles from .module.css file"
+    scenario: |
+      Write a React component with a scoped CSS Module for a card layout.
+      Use the css-modules skill rules.
+    must_contain:
+      - "import styles from"
+      - ".module.css"
+    must_not_contain:
+      - "import './component.css'"
+    rationale: |
+      .module.css files are locally scoped. Plain .css imports are global
+      and can cause class name collisions.
+
+  - id: cssm-02
+    name: "Apply classes via styles object not string literals"
+    scenario: |
+      Write a React button component that applies a CSS Module class.
+      Use the css-modules skill rules.
+    must_contain:
+      - "className={styles."
+    must_not_contain:
+      - "className=\"button\""
+    rationale: |
+      styles.className uses the locally scoped generated class name.
+      String literals bypass CSS Modules scoping entirely.
+
+  - id: cssm-03
+    name: "composes for sharing utility styles"
+    scenario: |
+      Write CSS Modules that compose from a shared utilities module for
+      flexbox centering. Use the css-modules skill rules.
+    must_contain:
+      - "composes:"
+    rationale: |
+      composes lets one CSS Module class inherit from another, avoiding
+      duplication of shared utility properties across modules.

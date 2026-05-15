@@ -1,0 +1,41 @@
+skill: pusher-realtime
+skill_files:
+  - layers/realtime/pusher/SKILL.md
+version: 1
+
+cases:
+  - id: pusher-01
+    name: "Server-side authentication for private channels"
+    scenario: |
+      Write the Pusher channel authentication endpoint for a private channel.
+      Use the pusher-realtime skill rules.
+    must_contain:
+      - "pusher.authenticate("
+      - "auth_key"
+    rationale: |
+      Private channels require server-side authentication. Without it any
+      client can subscribe to any private channel.
+
+  - id: pusher-02
+    name: "Webhook signature verified before processing"
+    scenario: |
+      Write the Pusher webhook handler that processes channel events.
+      Use the pusher-realtime skill rules.
+    must_contain:
+      - "pusher.webhook("
+      - "isValid("
+    rationale: |
+      Pusher webhooks must be verified with the signing secret. Processing
+      unverified webhooks allows spoofed events.
+
+  - id: pusher-03
+    name: "Presence channels for user membership tracking"
+    scenario: |
+      Write the client code that tracks which users are in a chat room
+      using Pusher. Use the pusher-realtime skill rules.
+    must_contain:
+      - "presence-"
+      - "channel.members"
+    rationale: |
+      Presence channels expose membership data to all subscribers. They
+      are the correct Pusher mechanism for tracking who is online.

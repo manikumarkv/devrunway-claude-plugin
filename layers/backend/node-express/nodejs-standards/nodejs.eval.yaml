@@ -1,0 +1,76 @@
+skill: nodejs-standards
+skill_files:
+  - layers/backend/node-express/nodejs-standards/SKILL.md
+version: 1
+
+cases:
+  - id: node-01
+    name: "asyncHandler wraps every async route"
+    scenario: |
+      Write an Express GET /users route that fetches users from a service
+      and returns them. Use the nodejs-standards skill rules.
+    must_contain:
+      - "asyncHandler("
+    must_not_contain:
+      - "try {"
+      - "catch ("
+    rationale: |
+      All async routes must be wrapped with asyncHandler. No try/catch in
+      route handlers — asyncHandler forwards errors to the error middleware.
+
+  - id: node-02
+    name: "Response uses success/data envelope shape"
+    scenario: |
+      Write an Express GET /products route that returns a list of products
+      from a service. Follow the nodejs-standards response shape rules.
+    must_contain:
+      - "success: true"
+      - "data:"
+    must_not_contain:
+      - "res.json(products)"
+      - "res.json(users)"
+    rationale: |
+      All responses must use the { success, data } envelope shape.
+      Never send raw arrays or objects directly.
+
+  - id: node-03
+    name: "Logger used instead of console.*"
+    scenario: |
+      Write an Express middleware that logs every incoming request including
+      method, path, and timestamp. Use the nodejs-standards skill rules.
+    must_contain:
+      - "logger."
+    must_not_contain:
+      - "console.log"
+      - "console.error"
+    rationale: |
+      console.* is never used. All logging goes through the Pino logger.
+
+  - id: node-04
+    name: "req.body validated with Zod before access"
+    scenario: |
+      Write an Express POST /orders route handler that accepts orderId and
+      quantity in the body. Validate with Zod before using any body fields.
+      Use the nodejs-standards skill rules.
+    must_contain:
+      - ".parse(req.body)"
+    must_not_contain:
+      - "req.body.orderId"
+      - "req.body.quantity"
+    rationale: |
+      req.body must be parsed through Zod before any field is accessed.
+      Raw req.body access is forbidden.
+
+  - id: node-05
+    name: "Service layer has no req/res references"
+    scenario: |
+      Write a UserService class with a method getById(id) that fetches a user
+      from a repository. The service should be framework-agnostic.
+      Use the nodejs-standards skill rules.
+    must_not_contain:
+      - "req."
+      - "res."
+      - "next("
+    rationale: |
+      Service layer must not reference Express req/res/next objects.
+      Services are framework-agnostic and testable in isolation.

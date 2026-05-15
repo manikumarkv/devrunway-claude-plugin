@@ -1,0 +1,48 @@
+skill: angular-standards
+skill_files:
+  - layers/frontend/angular/SKILL.md
+version: 1
+
+cases:
+  - id: ng-01
+    name: "Standalone components not NgModule"
+    scenario: |
+      Write an Angular component that displays a product card.
+      Use the angular-standards skill rules.
+    must_contain:
+      - "standalone: true"
+      - "imports: ["
+    must_not_contain:
+      - "NgModule"
+      - "declarations:"
+    rationale: |
+      Standalone components eliminate NgModule boilerplate. NgModules are
+      the legacy Angular pattern and should not be used in new code.
+
+  - id: ng-02
+    name: "Signals for reactive state not Subject/BehaviorSubject"
+    scenario: |
+      Write an Angular service that manages a counter with increment and
+      decrement actions. Use the angular-standards skill rules.
+    must_contain:
+      - "signal("
+      - "computed("
+    must_not_contain:
+      - "BehaviorSubject"
+      - "Subject"
+    rationale: |
+      Angular Signals are the modern reactive primitive. BehaviorSubject
+      requires manual subscription management and teardown.
+
+  - id: ng-03
+    name: "inject() for dependency injection not constructor"
+    scenario: |
+      Write an Angular component that uses a UserService to load user data.
+      Use the angular-standards skill rules.
+    must_contain:
+      - "inject("
+    must_not_contain:
+      - "constructor(private"
+    rationale: |
+      inject() is the modern Angular DI pattern, usable outside constructors.
+      Constructor injection is the legacy pattern that ties DI to class init.

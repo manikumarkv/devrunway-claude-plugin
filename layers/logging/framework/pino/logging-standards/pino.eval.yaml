@@ -1,0 +1,62 @@
+skill: logging-standards
+skill_files:
+  - layers/logging/framework/pino/logging-standards/SKILL.md
+version: 1
+
+cases:
+  - id: pino-01
+    name: "Business events always include action field"
+    scenario: |
+      Write the code to log when an order is successfully created. Include
+      the orderId, userId, and total. Use the logging-standards skill rules.
+    must_contain:
+      - "action:"
+      - "logger."
+    must_not_contain:
+      - "console.log"
+    rationale: |
+      Every business event log must include an action field for structured
+      querying. console.log is never used.
+
+  - id: pino-02
+    name: "PII never logged — no email or password in log context"
+    scenario: |
+      Write the code to log a failed sign-in attempt. Include the reason and
+      attempt number but mask or omit PII. Use the logging-standards skill rules.
+    must_contain:
+      - "logger."
+    must_not_contain:
+      - "email:"
+      - "password"
+    rationale: |
+      PII (email, passwords, etc) must never appear in log context objects.
+      Use maskedEmail or omit entirely.
+
+  - id: pino-03
+    name: "Child logger binds requestId and userId"
+    scenario: |
+      Write Express middleware that creates a child logger for each request
+      binding the requestId and userId (if authenticated). Use the
+      logging-standards skill rules.
+    must_contain:
+      - "requestId"
+      - "userId"
+    must_not_contain:
+      - "console.log"
+    rationale: |
+      Every request must have a child logger binding requestId and userId
+      so all log lines in a request are correlated.
+
+  - id: pino-04
+    name: "External service calls log durationMs and action"
+    scenario: |
+      Write the code that calls the Stripe API to charge a customer. Log
+      the result including how long it took. Use the logging-standards skill rules.
+    must_contain:
+      - "durationMs"
+      - "action:"
+    must_not_contain:
+      - "console.log"
+    rationale: |
+      External calls must log durationMs and action for performance monitoring
+      and debugging slow dependencies.

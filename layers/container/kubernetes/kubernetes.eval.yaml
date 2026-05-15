@@ -1,0 +1,44 @@
+skill: kubernetes-container
+skill_files:
+  - layers/container/kubernetes/SKILL.md
+version: 1
+
+cases:
+  - id: k8s-01
+    name: "Resource requests and limits on every container"
+    scenario: |
+      Write a Kubernetes Deployment manifest for a Node.js API service.
+      Use the kubernetes-container skill rules.
+    must_contain:
+      - "resources:"
+      - "limits:"
+      - "requests:"
+    rationale: |
+      Resource limits prevent one pod from starving others. Requests enable
+      the scheduler to place pods correctly. Both are required.
+
+  - id: k8s-02
+    name: "Liveness and readiness probes configured"
+    scenario: |
+      Write a Kubernetes Deployment with health check probes for an HTTP service.
+      Use the kubernetes-container skill rules.
+    must_contain:
+      - "livenessProbe:"
+      - "readinessProbe:"
+    rationale: |
+      Liveness probes restart crashed containers. Readiness probes prevent
+      traffic to pods that aren't ready. Both are required for reliability.
+
+  - id: k8s-03
+    name: "Secrets from Kubernetes Secret not plain env values"
+    scenario: |
+      Write the environment variable section of a container spec that uses
+      a database password from a Kubernetes Secret. Use the kubernetes-container skill rules.
+    must_contain:
+      - "secretKeyRef"
+      - "secretName:"
+    must_not_contain:
+      - "value: \"password\""
+    rationale: |
+      Kubernetes Secrets store sensitive values separately from pod specs.
+      Plain value: fields in env expose secrets in YAML committed to git.

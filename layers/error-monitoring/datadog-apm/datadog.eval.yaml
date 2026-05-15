@@ -1,0 +1,41 @@
+skill: datadog-monitoring
+skill_files:
+  - layers/error-monitoring/datadog-apm/SKILL.md
+version: 1
+
+cases:
+  - id: dd-01
+    name: "dd-trace initialized before all other imports"
+    scenario: |
+      Write the Node.js app entry point with Datadog APM initialized.
+      Use the datadog-monitoring skill rules.
+    must_contain:
+      - "tracer.init("
+      - "require('dd-trace')"
+    rationale: |
+      dd-trace must be the first require/import so it can instrument all
+      subsequently loaded modules. Late initialization misses instrumentation.
+
+  - id: dd-02
+    name: "Custom spans for business-critical operations"
+    scenario: |
+      Write a function that processes a payment and creates a custom Datadog
+      span for the operation. Use the datadog-monitoring skill rules.
+    must_contain:
+      - "tracer.startSpan("
+      - "span.finish("
+    rationale: |
+      Custom spans provide visibility into business operations. Without them,
+      only library-level spans appear in APM traces.
+
+  - id: dd-03
+    name: "Log correlation with trace IDs"
+    scenario: |
+      Write a Pino logger configuration that includes Datadog trace correlation.
+      Use the datadog-monitoring skill rules.
+    must_contain:
+      - "dd.trace_id"
+      - "dd.span_id"
+    rationale: |
+      Log-trace correlation lets you jump from a log line to the APM trace.
+      Without trace IDs in logs, debugging requires separate manual searches.

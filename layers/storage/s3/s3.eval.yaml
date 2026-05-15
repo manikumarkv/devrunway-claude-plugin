@@ -1,0 +1,45 @@
+skill: s3-storage
+skill_files:
+  - layers/storage/s3/SKILL.md
+version: 1
+
+cases:
+  - id: s3-01
+    name: "Presigned URLs for uploads generated server-side"
+    scenario: |
+      Write the server endpoint that generates a presigned S3 URL for a
+      client file upload. Use the s3-storage skill rules.
+    must_contain:
+      - "PutObjectCommand"
+      - "getSignedUrl("
+    must_not_contain:
+      - "accessKeyId"
+    rationale: |
+      Presigned URLs let clients upload directly to S3 without passing
+      credentials. Server generates the URL; AWS credentials never go to browser.
+
+  - id: s3-02
+    name: "All public access blocked on buckets"
+    scenario: |
+      Write CDK or Terraform code that creates an S3 bucket for user data.
+      Use the s3-storage skill rules.
+    must_contain:
+      - "BlockPublicAccess"
+      - "BLOCK_ALL"
+    must_not_contain:
+      - "publicReadAccess: true"
+    rationale: |
+      S3 buckets must block all public access by default. Publicly readable
+      buckets expose all user files to anyone on the internet.
+
+  - id: s3-03
+    name: "MIME type validated server-side before presigning"
+    scenario: |
+      Write the server logic that validates an upload request before issuing
+      a presigned URL. Use the s3-storage skill rules.
+    must_contain:
+      - "ContentType"
+      - "allowedTypes"
+    rationale: |
+      MIME type must be validated server-side. Clients can send any
+      Content-Type, so trusting client headers enables malicious uploads.

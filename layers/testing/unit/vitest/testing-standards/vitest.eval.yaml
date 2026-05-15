@@ -1,0 +1,60 @@
+skill: testing-standards
+skill_files:
+  - layers/testing/unit/vitest/testing-standards/SKILL.md
+version: 1
+
+cases:
+  - id: test-01
+    name: "getByRole used not getByTestId"
+    scenario: |
+      Write a Vitest + Testing Library test for a login button that verifies
+      it renders and can be clicked. Use the testing-standards skill rules.
+    must_contain:
+      - "getByRole("
+    must_not_contain:
+      - "getByTestId("
+    rationale: |
+      getByRole queries test what users actually see. getByTestId is
+      an implementation detail that doesn't reflect real accessibility.
+
+  - id: test-02
+    name: "userEvent used not fireEvent"
+    scenario: |
+      Write a test that simulates a user typing in a search input and
+      clicking submit. Use the testing-standards skill rules.
+    must_contain:
+      - "userEvent"
+    must_not_contain:
+      - "fireEvent"
+    rationale: |
+      userEvent simulates real browser events (focus, input, etc).
+      fireEvent fires raw DOM events that don't match real user behavior.
+
+  - id: test-03
+    name: "MSW for HTTP mocking not vi.mock on fetch"
+    scenario: |
+      Write a Vitest test for a component that fetches users from an API.
+      Mock the HTTP call. Use the testing-standards skill rules.
+    must_contain:
+      - "msw"
+      - "server.use("
+    must_not_contain:
+      - "vi.mock('fetch')"
+      - "global.fetch"
+    rationale: |
+      MSW mocks at the network level so tests are realistic. Mocking fetch
+      directly is brittle and doesn't test real request/response cycles.
+
+  - id: test-04
+    name: "Component tests cover all 4 states"
+    scenario: |
+      Write tests for a UserList component that fetches users. Cover all
+      meaningful states. Use the testing-standards skill rules.
+    must_contain:
+      - "loading"
+      - "success"
+      - "empty"
+      - "error"
+    rationale: |
+      Components must be tested in all states: loading skeleton, success
+      with data, empty state, and error state.

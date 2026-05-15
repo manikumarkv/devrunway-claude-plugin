@@ -1,0 +1,44 @@
+skill: cognito-auth
+skill_files:
+  - layers/auth/cognito/cognito-auth/SKILL.md
+version: 1
+
+cases:
+  - id: cauth-01
+    name: "Amplify configured once at app root"
+    scenario: |
+      Write the app entry point that configures AWS Amplify for a React app.
+      Use the cognito-auth skill rules.
+    must_contain:
+      - "Amplify.configure("
+      - "aws-exports"
+    rationale: |
+      Amplify.configure must be called exactly once at app startup.
+      Calling it per component or per request creates multiple instances.
+
+  - id: cauth-02
+    name: "fetchAuthSession for current tokens not localStorage"
+    scenario: |
+      Write a function that retrieves the current user's access token for
+      use in API calls. Use the cognito-auth skill rules.
+    must_contain:
+      - "fetchAuthSession("
+    must_not_contain:
+      - "localStorage.getItem('token'"
+    rationale: |
+      fetchAuthSession handles token refresh automatically. localStorage
+      stores tokens insecurely and misses expiry handling.
+
+  - id: cauth-03
+    name: "signOut clears session completely"
+    scenario: |
+      Write the logout function for a Cognito-authenticated app.
+      Use the cognito-auth skill rules.
+    must_contain:
+      - "signOut("
+    must_not_contain:
+      - "localStorage.removeItem"
+      - "document.cookie"
+    rationale: |
+      signOut() calls Cognito to invalidate the session globally.
+      Just clearing local storage leaves server-side sessions active.

@@ -1,0 +1,42 @@
+skill: ably-realtime
+skill_files:
+  - layers/realtime/ably/SKILL.md
+version: 1
+
+cases:
+  - id: ably-01
+    name: "Token auth not API key in browser clients"
+    scenario: |
+      Write the client-side Ably connection setup for a browser app.
+      Use the ably-realtime skill rules.
+    must_contain:
+      - "authUrl"
+    must_not_contain:
+      - "new Ably.Realtime({ key:"
+    rationale: |
+      The Ably API key has full account access. Browser clients must use
+      token auth (authUrl) so only the server holds the API key.
+
+  - id: ably-02
+    name: "Unsubscribe on cleanup to prevent memory leaks"
+    scenario: |
+      Write a React hook that subscribes to an Ably channel and cleans up.
+      Use the ably-realtime skill rules.
+    must_contain:
+      - "channel.subscribe("
+      - "channel.unsubscribe("
+    rationale: |
+      Subscriptions accumulate if not cleaned up, causing message handler
+      functions to pile up and memory usage to grow.
+
+  - id: ably-03
+    name: "Presence for tracking who is connected"
+    scenario: |
+      Write the code that shows currently connected users in a collaborative
+      document using Ably. Use the ably-realtime skill rules.
+    must_contain:
+      - "channel.presence.enter("
+      - "channel.presence.get("
+    rationale: |
+      Ably Presence is the purpose-built API for tracking online users.
+      Polling via REST to check who is online wastes requests and lags.

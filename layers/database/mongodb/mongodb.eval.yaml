@@ -1,0 +1,43 @@
+skill: mongodb-nosql
+skill_files:
+  - layers/database/mongodb/SKILL.md
+version: 1
+
+cases:
+  - id: mongo-01
+    name: "findOne over find().limit(1)"
+    scenario: |
+      Write a MongoDB repository method that fetches a user by their email address.
+      Use the mongodb-nosql skill rules.
+    must_contain:
+      - "findOne("
+    must_not_contain:
+      - ".find("
+      - ".limit(1)"
+    rationale: |
+      findOne is semantically clear and stops at the first match.
+      find().limit(1) returns a cursor requiring an extra await and signals
+      intent incorrectly.
+
+  - id: mongo-02
+    name: "Index defined for every queried field"
+    scenario: |
+      Write MongoDB index definitions for a Users collection that is queried
+      by email and by createdAt for sorting. Use the mongodb-nosql skill rules.
+    must_contain:
+      - "createIndex("
+    rationale: |
+      Queries without matching indexes cause collection scans. Every field
+      used in a query filter or sort must have an index.
+
+  - id: mongo-03
+    name: "No unbounded array growth — use $slice on $push"
+    scenario: |
+      Write a MongoDB update that appends an activity event to a user's
+      recentActivity array, capped at 50 items. Use the mongodb-nosql skill rules.
+    must_contain:
+      - "$push"
+      - "$slice"
+    rationale: |
+      Unbounded array fields grow forever and cause document size bloat.
+      $slice caps the array to a maximum size on each $push.

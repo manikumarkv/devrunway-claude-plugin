@@ -1,0 +1,44 @@
+skill: sendgrid-email
+skill_files:
+  - layers/email/sendgrid/SKILL.md
+version: 1
+
+cases:
+  - id: sg-01
+    name: "API key from environment variable"
+    scenario: |
+      Write the SendGrid client setup and send a transactional email.
+      Use the sendgrid-email skill rules.
+    must_contain:
+      - "process.env.SENDGRID_API_KEY"
+      - "sgMail.setApiKey("
+    rationale: |
+      The SendGrid API key must come from an environment variable.
+      Hardcoded API keys get committed to source control and leaked.
+
+  - id: sg-02
+    name: "Dynamic templates not inline HTML strings"
+    scenario: |
+      Write a SendGrid email send using a pre-built dynamic template.
+      Use the sendgrid-email skill rules.
+    must_contain:
+      - "templateId"
+      - "dynamicTemplateData"
+    must_not_contain:
+      - "html:"
+    rationale: |
+      SendGrid dynamic templates are managed in the SendGrid UI with
+      versioning. Inline HTML strings in code are unversioned and not
+      testable by email designers.
+
+  - id: sg-03
+    name: "Unsubscribe group configured for marketing emails"
+    scenario: |
+      Write a marketing email send with SendGrid that respects unsubscribes.
+      Use the sendgrid-email skill rules.
+    must_contain:
+      - "asm:"
+      - "groupId"
+    rationale: |
+      Unsubscribe groups let recipients opt out of specific email types.
+      Required for CAN-SPAM/GDPR compliance on marketing emails.

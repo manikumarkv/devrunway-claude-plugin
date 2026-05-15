@@ -1,0 +1,44 @@
+skill: gcp-cloud
+skill_files:
+  - layers/cloud/gcp/SKILL.md
+version: 1
+
+cases:
+  - id: gcp-01
+    name: "Application Default Credentials not service account JSON"
+    scenario: |
+      Write the GCP client setup for a Cloud Storage operation.
+      Use the gcp-cloud skill rules.
+    must_contain:
+      - "GoogleAuth"
+    must_not_contain:
+      - "keyFilename:"
+      - "credentials:"
+    rationale: |
+      Application Default Credentials pick up credentials from the environment
+      automatically. Service account JSON files on disk are a security risk.
+
+  - id: gcp-02
+    name: "Project ID from environment variable"
+    scenario: |
+      Write the GCP Pub/Sub client setup for a Node.js service.
+      Use the gcp-cloud skill rules.
+    must_contain:
+      - "process.env.GCP_PROJECT_ID"
+    rationale: |
+      Project IDs vary by environment. Hardcoding them prevents deploying to
+      different environments without code changes.
+
+  - id: gcp-03
+    name: "Workload Identity not service account key files"
+    scenario: |
+      Write the GKE workload identity configuration for a pod.
+      Use the gcp-cloud skill rules.
+    must_contain:
+      - "workloadIdentityPool"
+      - "serviceAccountEmail"
+    must_not_contain:
+      - "keyFilename"
+    rationale: |
+      Workload Identity federates GKE pod identity to a GCP service account.
+      Mounting JSON key files into pods creates key management and rotation risks.

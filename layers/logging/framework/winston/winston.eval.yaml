@@ -1,0 +1,45 @@
+skill: winston-logging
+skill_files:
+  - layers/logging/framework/winston/SKILL.md
+version: 1
+
+cases:
+  - id: winston-01
+    name: "Structured JSON format in production"
+    scenario: |
+      Write the Winston logger configuration for a production Node.js service.
+      Use the winston-logging skill rules.
+    must_contain:
+      - "format.json("
+      - "format.combine("
+    must_not_contain:
+      - "format.simple("
+    rationale: |
+      JSON format is machine-readable and compatible with log aggregation tools.
+      Simple format is human-readable only and cannot be queried.
+
+  - id: winston-02
+    name: "Winston used not console.* alongside it"
+    scenario: |
+      Write a service function that logs operation steps using Winston.
+      Use the winston-logging skill rules.
+    must_contain:
+      - "winston.createLogger("
+      - "logger."
+    must_not_contain:
+      - "console.log"
+    rationale: |
+      console.* bypasses Winston's formatting, level filtering, and transports.
+      All logging must go through the Winston instance.
+
+  - id: winston-03
+    name: "Multiple transports for different environments"
+    scenario: |
+      Write the Winston setup with Console transport for development and
+      file transport for production. Use the winston-logging skill rules.
+    must_contain:
+      - "transports: ["
+      - "Console"
+    rationale: |
+      Multiple transports let you send logs to different destinations
+      based on environment. Hardcoded single transport limits flexibility.

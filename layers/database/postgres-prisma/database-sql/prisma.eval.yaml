@@ -1,0 +1,56 @@
+skill: database-sql
+skill_files:
+  - layers/database/postgres-prisma/database-sql/SKILL.md
+version: 1
+
+cases:
+  - id: prisma-01
+    name: "Multi-step database operations use $transaction"
+    scenario: |
+      Write a Prisma repository method that creates an order and deducts stock
+      from inventory in a single operation. Use the database-sql skill rules.
+    must_contain:
+      - "prisma.$transaction("
+    rationale: |
+      Multiple related writes must be wrapped in prisma.$transaction() to
+      ensure atomicity. Individual calls risk partial failure.
+
+  - id: prisma-02
+    name: "No raw SQL with string concatenation"
+    scenario: |
+      Write a Prisma query that filters orders by status. Use the
+      database-sql skill rules.
+    must_contain:
+      - "prisma."
+    must_not_contain:
+      - "SELECT * FROM"
+      - "+ status +"
+    rationale: |
+      Raw SQL with string concatenation enables SQL injection. Prisma's
+      query builder is always used. $queryRaw only with tagged templates.
+
+  - id: prisma-03
+    name: "findMany always includes a select clause"
+    scenario: |
+      Write a Prisma repository method that lists all active users.
+      Use the database-sql skill rules.
+    must_contain:
+      - "select:"
+      - "findMany("
+    rationale: |
+      findMany without select fetches all columns including sensitive fields.
+      Always select only the needed fields.
+
+  - id: prisma-04
+    name: "Soft delete with deletedAt not hard delete"
+    scenario: |
+      Write a Prisma repository method that deletes a user. Use the
+      database-sql skill rules.
+    must_contain:
+      - "deletedAt"
+    must_not_contain:
+      - "deleteMany("
+      - "delete("
+    rationale: |
+      User data must never be hard deleted. Soft deletes with deletedAt
+      preserve audit history and comply with data governance requirements.

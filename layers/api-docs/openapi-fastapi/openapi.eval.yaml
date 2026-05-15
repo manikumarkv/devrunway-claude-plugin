@@ -1,0 +1,39 @@
+skill: openapi-fastapi
+skill_files:
+  - layers/api-docs/openapi-fastapi/SKILL.md
+version: 1
+
+cases:
+  - id: openapi-01
+    name: "Pydantic BaseModel drives schema generation automatically"
+    scenario: |
+      Write a FastAPI endpoint that creates a product with automatic schema
+      documentation. Use the openapi-fastapi skill rules.
+    must_contain:
+      - "BaseModel"
+      - "response_model="
+    rationale: |
+      Pydantic models generate OpenAPI schemas automatically. Manual JSON
+      schema dicts duplicate work and diverge from the implementation.
+
+  - id: openapi-02
+    name: "Tags group related routes"
+    scenario: |
+      Write a FastAPI router for user endpoints with proper tagging for
+      OpenAPI documentation. Use the openapi-fastapi skill rules.
+    must_contain:
+      - "tags=["
+    rationale: |
+      Tags group related endpoints in the Swagger UI. Untagged routes
+      appear in a default group making the API hard to navigate.
+
+  - id: openapi-03
+    name: "Non-200 response codes declared"
+    scenario: |
+      Write a FastAPI POST /orders route that returns 201 on success and
+      documents error responses. Use the openapi-fastapi skill rules.
+    must_contain:
+      - "status_code=201"
+    rationale: |
+      Explicit status codes document the API contract accurately.
+      Default 200 for creation endpoints violates REST conventions.

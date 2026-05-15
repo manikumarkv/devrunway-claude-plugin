@@ -1,0 +1,41 @@
+skill: flagsmith-flags
+skill_files:
+  - layers/feature-flags/flagsmith/SKILL.md
+version: 1
+
+cases:
+  - id: flagsmith-01
+    name: "Server-side client not browser client for SSR"
+    scenario: |
+      Write the Flagsmith setup for a Next.js server component.
+      Use the flagsmith-flags skill rules.
+    must_contain:
+      - "flagsmith.getValue("
+      - "environmentID"
+    rationale: |
+      Server-side Flagsmith evaluation uses the environment key server-only.
+      Browser client SDK keys exposed in client code leak to users.
+
+  - id: flagsmith-02
+    name: "hasFeature checked before getValue"
+    scenario: |
+      Write code that safely reads a Flagsmith flag value.
+      Use the flagsmith-flags skill rules.
+    must_contain:
+      - "flagsmith.hasFeature("
+      - "flagsmith.getValue("
+    rationale: |
+      hasFeature confirms the flag exists before getValue reads it.
+      Calling getValue on a non-existent flag returns null/undefined.
+
+  - id: flagsmith-03
+    name: "Identity traits for targeted flag evaluation"
+    scenario: |
+      Write the code to evaluate a Flagsmith flag for a specific user segment.
+      Use the flagsmith-flags skill rules.
+    must_contain:
+      - "identity"
+      - "traits:"
+    rationale: |
+      Identity-based evaluation applies targeting rules per user.
+      Anonymous evaluation returns default values regardless of user segment.

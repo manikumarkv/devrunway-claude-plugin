@@ -1,0 +1,83 @@
+skill: zod-validation
+skill_files:
+  - layers/validation/zod/SKILL.md
+version: 1
+
+cases:
+  - id: zod-01
+    name: "API route uses .parse() not raw req.body"
+    scenario: |
+      Write an Express POST /users route handler that validates the request body
+      using Zod. The body should have name (string) and email (string).
+      Use the zod-validation skill rules.
+    must_contain:
+      - "z.object("
+      - ".parse("
+    must_not_contain:
+      - "req.body.name"
+      - "req.body.email"
+    rationale: |
+      Core rule: always parse request body through Zod schema before accessing fields.
+      Never access req.body.field directly.
+
+  - id: zod-02
+    name: "Form handler uses .safeParse() with success check"
+    scenario: |
+      Write a form submission handler function that validates user input with Zod
+      using safeParse. The input has email and password fields. Return validation
+      errors if invalid, proceed if valid. Use the zod-validation skill rules.
+    must_contain:
+      - "safeParse("
+      - "result.success"
+    must_not_contain:
+      - ".parse("
+    rationale: |
+      safeParse is used for user-facing forms where you want to handle errors
+      gracefully without throwing. Must check result.success.
+
+  - id: zod-03
+    name: "Types inferred from schema with z.infer"
+    scenario: |
+      Define a Zod schema for a User object with id (string), name (string),
+      email (string), and age (number). Derive the TypeScript type from the schema.
+      Use the zod-validation skill rules.
+    must_contain:
+      - "z.infer<typeof"
+    must_not_contain:
+      - "type User = {"
+      - "interface User"
+    rationale: |
+      Types must be inferred from Zod schemas with z.infer<typeof Schema>.
+      Never define a separate TypeScript type that duplicates the schema.
+
+  - id: zod-04
+    name: "User schema uses imported primitives not inline z.string().email()"
+    scenario: |
+      Write a User Zod schema that uses imported emailSchema and uuidSchema
+      primitives from a shared primitives module. Do NOT redefine them inline —
+      assume they are already exported from '../schemas/primitives'.
+      Use the zod-validation skill rules.
+    must_contain:
+      - "emailSchema"
+      - "uuidSchema"
+    must_not_contain:
+      - "email: z.string().email()"
+      - "id: z.string().uuid()"
+    rationale: |
+      Reusable primitives prevent inconsistent validation across the codebase.
+      emailSchema and uuidSchema should be imported, not redefined inline inside
+      every schema that needs them. Tests usage context, not the primitive definition.
+
+  - id: zod-05
+    name: "discriminatedUnion over plain union for tagged types"
+    scenario: |
+      Write a Zod schema for an API response that is either a success with data
+      or an error with a message. Use a discriminated union on a 'type' field.
+      Use the zod-validation skill rules.
+    must_contain:
+      - "z.discriminatedUnion("
+    must_not_contain:
+      - "z.union(["
+    rationale: |
+      discriminatedUnion gives better error messages and type narrowing than
+      plain z.union when there is a discriminant field.

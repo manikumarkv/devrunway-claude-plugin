@@ -1,0 +1,40 @@
+skill: cloudwatch-logging
+skill_files:
+  - layers/logging/provider/cloudwatch/SKILL.md
+version: 1
+
+cases:
+  - id: cw-01
+    name: "Log groups named by service and environment"
+    scenario: |
+      Write the CloudWatch log group configuration for a production API service.
+      Use the cloudwatch-logging skill rules.
+    must_contain:
+      - "logGroupName"
+    rationale: |
+      Structured log group names (e.g. /app/service/env) enable filtering
+      by service and environment in CloudWatch Insights.
+
+  - id: cw-02
+    name: "PutLogEvents with sequence token for ordering"
+    scenario: |
+      Write the CloudWatch log event sender with correct sequence handling.
+      Use the cloudwatch-logging skill rules.
+    must_contain:
+      - "PutLogEventsCommand"
+      - "sequenceToken"
+    rationale: |
+      CloudWatch requires a sequence token to order log events correctly.
+      Missing the token causes InvalidSequenceTokenException errors.
+
+  - id: cw-03
+    name: "Metric filters defined for alerting"
+    scenario: |
+      Write a CloudWatch metric filter that counts error log events.
+      Use the cloudwatch-logging skill rules.
+    must_contain:
+      - "MetricFilter"
+      - "filterPattern"
+    rationale: |
+      Metric filters extract numeric metrics from log events for alarms.
+      Without filters, structured log data cannot drive CloudWatch alarms.

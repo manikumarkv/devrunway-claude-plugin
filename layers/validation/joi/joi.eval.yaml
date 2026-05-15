@@ -1,0 +1,46 @@
+skill: joi-validation
+skill_files:
+  - layers/validation/joi/SKILL.md
+version: 1
+
+cases:
+  - id: joi-01
+    name: "Full error details returned with abortEarly false"
+    scenario: |
+      Write a Joi validation function for a request body with name and email.
+      Return all validation errors. Use the joi-validation skill rules.
+    must_contain:
+      - "abortEarly: false"
+      - "error.details"
+    must_not_contain:
+      - "abortEarly: true"
+    rationale: |
+      abortEarly: false returns all errors at once. error.details contains
+      field-level error information needed for client feedback.
+
+  - id: joi-02
+    name: "stripUnknown always set to remove extra fields"
+    scenario: |
+      Write a Joi schema validation call for an API endpoint body.
+      Use the joi-validation skill rules.
+    must_contain:
+      - "stripUnknown: true"
+    must_not_contain:
+      - "allowUnknown: true"
+    rationale: |
+      stripUnknown removes fields not in the schema, preventing unexpected
+      data from reaching the application. allowUnknown defeats this.
+
+  - id: joi-03
+    name: "No Joi.any() — use specific type validators"
+    scenario: |
+      Write a Joi schema for a product with id (string uuid), name (string),
+      price (number), and category (string enum). Use the joi-validation skill rules.
+    must_contain:
+      - "Joi.string()"
+      - "Joi.number()"
+    must_not_contain:
+      - "Joi.any()"
+    rationale: |
+      Joi.any() accepts any value and bypasses validation. Always use the
+      specific type validator matching the expected field type.

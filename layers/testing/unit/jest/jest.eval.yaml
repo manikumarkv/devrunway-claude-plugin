@@ -1,0 +1,42 @@
+skill: jest-testing
+skill_files:
+  - layers/testing/unit/jest/SKILL.md
+version: 1
+
+cases:
+  - id: jest-01
+    name: "describe and it blocks for structure"
+    scenario: |
+      Write Jest tests for a UserService.getById method.
+      Use the jest-testing skill rules.
+    must_contain:
+      - "describe("
+      - "it("
+      - "expect("
+    rationale: |
+      describe groups related tests; it describes a single behavior.
+      Top-level test() without describe makes large test files unorganised.
+
+  - id: jest-02
+    name: "jest.mock for module dependencies"
+    scenario: |
+      Write a Jest test for a service that depends on a repository.
+      Mock the repository. Use the jest-testing skill rules.
+    must_contain:
+      - "jest.mock("
+      - "mockReturnValue("
+    rationale: |
+      jest.mock replaces the module with a controllable fake. Direct imports
+      of implementations make unit tests depend on real infrastructure.
+
+  - id: jest-03
+    name: "beforeEach with cleanup to prevent test pollution"
+    scenario: |
+      Write Jest setup that ensures clean state between tests.
+      Use the jest-testing skill rules.
+    must_contain:
+      - "beforeEach("
+      - "clearAllMocks("
+    rationale: |
+      clearAllMocks resets mock call counts and return values between tests.
+      Without cleanup, mocks from one test bleed into the next.

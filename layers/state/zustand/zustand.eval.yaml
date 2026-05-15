@@ -1,0 +1,42 @@
+skill: zustand-state
+skill_files:
+  - layers/state/zustand/SKILL.md
+version: 1
+
+cases:
+  - id: zustand-01
+    name: "Selector-based access not full store subscription"
+    scenario: |
+      Write a React component that reads only the user's name from a Zustand
+      user store. Use the zustand-state skill rules.
+    must_contain:
+      - "useStore(s => s."
+    must_not_contain:
+      - "const store = useStore()"
+    rationale: |
+      Selector functions prevent unnecessary re-renders. Without a selector,
+      the component re-renders on any store change, not just the needed field.
+
+  - id: zustand-02
+    name: "Immer middleware for nested state updates"
+    scenario: |
+      Write a Zustand store for a shopping cart where items are nested objects.
+      Update a nested item quantity. Use the zustand-state skill rules.
+    must_contain:
+      - "immer("
+    must_not_contain:
+      - "...state"
+    rationale: |
+      Immer middleware allows direct mutations that are applied immutably.
+      Manual spread updates for deeply nested state are error-prone.
+
+  - id: zustand-03
+    name: "reset() action to restore initial state"
+    scenario: |
+      Write a Zustand authentication store that can be cleared on logout.
+      Use the zustand-state skill rules.
+    must_contain:
+      - "reset:"
+    rationale: |
+      Every store must have a reset action to restore initial state.
+      Logout, error recovery, and testing all require resetting store state.

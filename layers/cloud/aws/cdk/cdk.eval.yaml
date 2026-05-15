@@ -1,0 +1,44 @@
+skill: cdk
+skill_files:
+  - layers/cloud/aws/cdk/SKILL.md
+version: 1
+
+cases:
+  - id: cdk-01
+    name: "Lambda IAM uses grant methods not manual PolicyStatement"
+    scenario: |
+      Write CDK code that gives a Lambda function read access to an S3 bucket.
+      Use the cdk skill rules.
+    must_contain:
+      - "grant"
+    must_not_contain:
+      - "'*'"
+      - "PolicyStatement"
+    rationale: |
+      CDK grant methods (grantRead, grantReadWrite) set least-privilege
+      permissions automatically. Manual PolicyStatement with '*' is forbidden.
+
+  - id: cdk-02
+    name: "S3 bucket blocks all public access"
+    scenario: |
+      Write CDK code that creates an S3 bucket for storing user uploads.
+      Use the cdk skill rules.
+    must_contain:
+      - "BlockPublicAccess.BLOCK_ALL"
+    must_not_contain:
+      - "publicReadAccess: true"
+    rationale: |
+      All S3 buckets must block public access by default. Public access
+      must be explicitly reviewed and justified.
+
+  - id: cdk-03
+    name: "cdk-nag added to every CDK app"
+    scenario: |
+      Write the CDK app entry point (bin/app.ts) that creates a stack.
+      Use the cdk skill rules.
+    must_contain:
+      - "AwsSolutionsChecks"
+      - "Aspects.of("
+    rationale: |
+      cdk-nag must be applied to every CDK app to catch security and
+      best-practice violations at synthesis time.

@@ -1,0 +1,46 @@
+skill: grpc-api
+skill_files:
+  - layers/api-style/grpc/SKILL.md
+version: 1
+
+cases:
+  - id: grpc-01
+    name: "Proto3 with google.protobuf.Timestamp for times"
+    scenario: |
+      Write a protobuf definition for an Order message with id, userId,
+      total (money), and createdAt timestamp. Use the grpc-api skill rules.
+    must_contain:
+      - "proto3"
+      - "google.protobuf.Timestamp"
+    must_not_contain:
+      - "string created_at"
+      - "int64 timestamp"
+    rationale: |
+      google.protobuf.Timestamp is the canonical time type in proto3.
+      String or int64 timestamps lose timezone information and type safety.
+
+  - id: grpc-02
+    name: "Field numbers explicit with reserved blocks"
+    scenario: |
+      Write a protobuf UserRequest message that has previously removed fields.
+      Show reserved field numbers. Use the grpc-api skill rules.
+    must_contain:
+      - "reserved"
+      - "= 1;"
+    rationale: |
+      reserved blocks prevent field number reuse after field deletion,
+      avoiding wire compatibility bugs when old clients communicate with
+      new servers.
+
+  - id: grpc-03
+    name: "Generated files excluded from version control"
+    scenario: |
+      Write a .gitignore entry and build script that generates gRPC code
+      from protos. Use the grpc-api skill rules.
+    must_contain:
+      - ".gitignore"
+    must_not_contain:
+      - "generated files committed"
+    rationale: |
+      Generated protobuf files must not be committed. They are artifacts
+      produced from the .proto source files during the build.

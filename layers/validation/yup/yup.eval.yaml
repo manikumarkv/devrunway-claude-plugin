@@ -1,0 +1,48 @@
+skill: yup-validation
+skill_files:
+  - layers/validation/yup/SKILL.md
+version: 1
+
+cases:
+  - id: yup-01
+    name: "Types inferred from schema with yup.InferType"
+    scenario: |
+      Define a Yup schema for a User object with name (string, required) and
+      email (string, email, required). Derive the TypeScript type from it.
+      Use the yup-validation skill rules.
+    must_contain:
+      - "yup.InferType<typeof"
+    must_not_contain:
+      - "type User = {"
+      - "interface User"
+    rationale: |
+      Types must be inferred from the Yup schema with yup.InferType.
+      Never define a duplicate TypeScript type.
+
+  - id: yup-02
+    name: "Validation options set abortEarly false and stripUnknown true"
+    scenario: |
+      Write a function that validates an object against a Yup schema and
+      returns all errors at once. Strip unknown fields.
+      Use the yup-validation skill rules.
+    must_contain:
+      - "abortEarly: false"
+      - "stripUnknown: true"
+    must_not_contain:
+      - "abortEarly: true"
+    rationale: |
+      abortEarly: false returns all validation errors. stripUnknown: true
+      removes unexpected fields. These must always be set.
+
+  - id: yup-03
+    name: "Schema defined outside component not inline"
+    scenario: |
+      Write a React form component with a Yup schema for a name and email.
+      Use the yup-validation skill rules.
+    must_contain:
+      - "const schema = yup.object("
+    must_not_contain:
+      - "yup.object({"
+    rationale: |
+      Schemas defined inside React components are recreated on every render.
+      Always define schemas at module level.

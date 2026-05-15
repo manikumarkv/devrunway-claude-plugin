@@ -1,0 +1,43 @@
+skill: azure-cloud
+skill_files:
+  - layers/cloud/azure/SKILL.md
+version: 1
+
+cases:
+  - id: azure-01
+    name: "Managed Identity for Azure service auth"
+    scenario: |
+      Write the Azure SDK setup for a Node.js service that reads from Blob Storage.
+      Use the azure-cloud skill rules.
+    must_contain:
+      - "ManagedIdentityCredential"
+      - "DefaultAzureCredential"
+    must_not_contain:
+      - "storageAccountKey"
+      - "accessKeyId"
+    rationale: |
+      Managed Identity authenticates via Azure AD without credentials.
+      Storage account keys are long-lived secrets that must not be hardcoded.
+
+  - id: azure-02
+    name: "Separate resource groups per environment"
+    scenario: |
+      Write the Bicep or ARM template structure for dev and production deployments.
+      Use the azure-cloud skill rules.
+    must_contain:
+      - "resourceGroup"
+    rationale: |
+      Separate resource groups for dev/staging/prod provide isolation and
+      enable environment-specific RBAC policies.
+
+  - id: azure-03
+    name: "Key Vault for secret storage"
+    scenario: |
+      Write the Azure code that retrieves a database connection string from
+      Key Vault. Use the azure-cloud skill rules.
+    must_contain:
+      - "SecretClient"
+      - "keyVaultName"
+    rationale: |
+      Key Vault stores secrets with audit logs and rotation support.
+      App Settings store secrets in plain text with no audit trail.

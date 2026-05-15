@@ -1,0 +1,47 @@
+skill: dotnet-standards
+skill_files:
+  - layers/backend/dotnet/SKILL.md
+version: 1
+
+cases:
+  - id: dotnet-01
+    name: "Record types for DTOs not mutable classes"
+    scenario: |
+      Write a .NET DTO for a CreateProductRequest with name (string) and
+      price (decimal). Use the dotnet-standards skill rules.
+    must_contain:
+      - "record "
+    must_not_contain:
+      - "class CreateProductRequest"
+      - "class UserDto"
+    rationale: |
+      Records are immutable value types ideal for DTOs. Mutable classes
+      for DTOs risk accidental mutation after binding.
+
+  - id: dotnet-02
+    name: "Dependencies registered via AddScoped/AddSingleton"
+    scenario: |
+      Write the .NET DI registration for a UserService and IUserRepository.
+      Use the dotnet-standards skill rules.
+    must_contain:
+      - "AddScoped<"
+    must_not_contain:
+      - "new UserService("
+    rationale: |
+      Services are resolved through the DI container. Direct instantiation
+      with new bypasses lifetime management and testability.
+
+  - id: dotnet-03
+    name: "Async all the way — no .Result or async void"
+    scenario: |
+      Write a .NET service method that fetches a user from a repository
+      asynchronously. Use the dotnet-standards skill rules.
+    must_contain:
+      - "async Task<"
+      - "await "
+    must_not_contain:
+      - "async void"
+      - ".Result"
+    rationale: |
+      .Result blocks the thread and can cause deadlocks. async void
+      exceptions are unhandled. async Task<T> is always correct.

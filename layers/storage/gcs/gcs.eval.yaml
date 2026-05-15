@@ -1,0 +1,42 @@
+skill: gcs-storage
+skill_files:
+  - layers/storage/gcs/SKILL.md
+version: 1
+
+cases:
+  - id: gcs-01
+    name: "Signed URLs for uploads not direct credentials"
+    scenario: |
+      Write the server code that generates a signed GCS URL for a file upload.
+      Use the gcs-storage skill rules.
+    must_contain:
+      - "file.getSignedUrl("
+      - "action: 'write'"
+    rationale: |
+      Signed URLs allow direct client-to-GCS uploads without exposing
+      service account credentials to the browser.
+
+  - id: gcs-02
+    name: "Uniform bucket-level access enforced"
+    scenario: |
+      Write GCS bucket configuration that prevents object-level ACLs.
+      Use the gcs-storage skill rules.
+    must_contain:
+      - "uniformBucketLevelAccess"
+    must_not_contain:
+      - "makePublic()"
+    rationale: |
+      Uniform bucket-level access disables per-object ACLs and enforces
+      IAM-only access. makePublic() exposes files publicly.
+
+  - id: gcs-03
+    name: "MIME type validated before generating signed URL"
+    scenario: |
+      Write server validation for GCS upload requests that checks file type.
+      Use the gcs-storage skill rules.
+    must_contain:
+      - "mimetype"
+      - "allowedMimeTypes"
+    rationale: |
+      Clients can claim any MIME type. Server-side validation prevents
+      executables or oversized files from being uploaded.

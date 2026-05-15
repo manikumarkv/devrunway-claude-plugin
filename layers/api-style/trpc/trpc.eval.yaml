@@ -1,0 +1,45 @@
+skill: trpc-api
+skill_files:
+  - layers/api-style/trpc/SKILL.md
+version: 1
+
+cases:
+  - id: trpc-01
+    name: "All procedure inputs validated with Zod schema"
+    scenario: |
+      Write a tRPC procedure that creates a new product with name and price.
+      Use the trpc-api skill rules.
+    must_contain:
+      - ".input(z.object("
+    must_not_contain:
+      - ".query(async ({ ctx }) =>"
+    rationale: |
+      Every procedure that accepts input must validate it with .input(zodSchema).
+      Procedures without input validation accept arbitrary data.
+
+  - id: trpc-02
+    name: "Protected procedures for authenticated routes"
+    scenario: |
+      Write a tRPC procedure to get the current user's profile. Require
+      authentication. Use the trpc-api skill rules.
+    must_contain:
+      - "protectedProcedure"
+    must_not_contain:
+      - "t.procedure"
+    rationale: |
+      protectedProcedure enforces authentication at the procedure level.
+      Using the base t.procedure for auth routes skips the auth check.
+
+  - id: trpc-03
+    name: "TRPCError with typed codes for errors"
+    scenario: |
+      Write a tRPC query procedure that returns a user by id and throws
+      when not found. Use the trpc-api skill rules.
+    must_contain:
+      - "TRPCError"
+      - "code:"
+    must_not_contain:
+      - "throw new Error("
+    rationale: |
+      TRPCError with typed codes maps to HTTP status codes automatically.
+      Generic Error throws produce 500 Internal Server Error.

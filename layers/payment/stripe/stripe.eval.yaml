@@ -1,0 +1,42 @@
+skill: stripe-payment
+skill_files:
+  - layers/payment/stripe/SKILL.md
+version: 1
+
+cases:
+  - id: stripe-01
+    name: "Webhook signature verified before processing payment events"
+    scenario: |
+      Write the Stripe webhook handler for payment.intent.succeeded events.
+      Use the stripe-payment skill rules.
+    must_contain:
+      - "stripe.webhooks.constructEvent("
+      - "webhookSecret"
+    rationale: |
+      Webhook events must be verified with stripe.webhooks.constructEvent.
+      Unverified webhooks can be spoofed to grant access without payment.
+
+  - id: stripe-02
+    name: "Idempotency keys on all payment mutations"
+    scenario: |
+      Write the server-side code to create a Stripe PaymentIntent for an order.
+      Use the stripe-payment skill rules.
+    must_contain:
+      - "idempotencyKey"
+    rationale: |
+      Idempotency keys prevent duplicate charges if the request is retried.
+      Network errors during payment creation require safe retry.
+
+  - id: stripe-03
+    name: "No raw card data — use Stripe Elements or Checkout"
+    scenario: |
+      Write the frontend payment form for collecting card details.
+      Use the stripe-payment skill rules.
+    must_contain:
+      - "Elements"
+    must_not_contain:
+      - "cardNumber"
+      - "cvv"
+    rationale: |
+      Stripe Elements collects card data in Stripe's PCI-compliant iframe.
+      Handling raw card fields requires full PCI DSS compliance.

@@ -1,0 +1,44 @@
+skill: react-i18next
+skill_files:
+  - layers/i18n/react-i18next/SKILL.md
+version: 1
+
+cases:
+  - id: i18n-01
+    name: "useTranslation hook not direct i18n.t() in components"
+    scenario: |
+      Write a React header component with translated text.
+      Use the react-i18next skill rules.
+    must_contain:
+      - "useTranslation("
+      - "t('"
+    must_not_contain:
+      - "i18n.t('"
+    rationale: |
+      useTranslation hooks into React's lifecycle for language changes.
+      i18n.t() directly misses re-renders when the language switches.
+
+  - id: i18n-02
+    name: "Trans component for JSX interpolation"
+    scenario: |
+      Write a React component that shows 'Welcome, <name>!' where name is
+      a link. Use the react-i18next skill rules.
+    must_contain:
+      - "<Trans"
+      - "components={"
+    rationale: |
+      Trans handles JSX elements inside translated strings safely.
+      String concatenation with JSX breaks translation context.
+
+  - id: i18n-03
+    name: "Feature namespaces for translation keys"
+    scenario: |
+      Write the useTranslation setup for a payments feature.
+      Use the react-i18next skill rules.
+    must_contain:
+      - "useTranslation('payments')"
+    must_not_contain:
+      - "useTranslation('translation')"
+    rationale: |
+      Feature namespaces keep translation files small and loadable on demand.
+      All keys in one 'translation' namespace creates an unmanageable file.

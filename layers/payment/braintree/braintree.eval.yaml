@@ -1,0 +1,43 @@
+skill: braintree-payment
+skill_files:
+  - layers/payment/braintree/SKILL.md
+version: 1
+
+cases:
+  - id: bt-01
+    name: "Client token generated server-side"
+    scenario: |
+      Write the server endpoint and client setup for a Braintree payment flow.
+      Use the braintree-payment skill rules.
+    must_contain:
+      - "gateway.clientToken.generate("
+      - "clientToken"
+    rationale: |
+      The client token is generated server-side using the Braintree gateway
+      with server credentials. Client-side token generation exposes keys.
+
+  - id: bt-02
+    name: "Payment method nonce not raw card data"
+    scenario: |
+      Write the server-side code to charge a customer using Braintree.
+      Use the braintree-payment skill rules.
+    must_contain:
+      - "paymentMethodNonce"
+      - "gateway.transaction.sale("
+    must_not_contain:
+      - "cardNumber"
+    rationale: |
+      Braintree's nonce-based flow tokenizes card data client-side via
+      the Drop-in UI. The server only ever sees the nonce, never card data.
+
+  - id: bt-03
+    name: "Webhook verified with signature"
+    scenario: |
+      Write the Braintree webhook handler for subscription charges.
+      Use the braintree-payment skill rules.
+    must_contain:
+      - "gateway.webhookNotification.parse("
+      - "signature"
+    rationale: |
+      Braintree webhook payloads must be verified with the gateway signature.
+      Unverified webhooks allow attackers to fake payment confirmations.

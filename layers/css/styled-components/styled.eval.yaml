@@ -1,0 +1,44 @@
+skill: styled-components
+skill_files:
+  - layers/css/styled-components/SKILL.md
+version: 1
+
+cases:
+  - id: sc-01
+    name: "ThemeProvider with design tokens not hardcoded values"
+    scenario: |
+      Write a styled-component Button that uses colors and spacing from the
+      theme. Use the styled-components skill rules.
+    must_contain:
+      - "ThemeProvider"
+      - "theme.colors"
+    must_not_contain:
+      - "#"
+      - "px;"
+    rationale: |
+      All visual values come from the theme object via ThemeProvider.
+      Hardcoded hex/px values bypass the design system.
+
+  - id: sc-02
+    name: "Transient props with $ prefix to avoid DOM pollution"
+    scenario: |
+      Write a styled Button component with an active state prop.
+      Use the styled-components skill rules.
+    must_contain:
+      - "$"
+    must_not_contain:
+      - "isActive"
+    rationale: |
+      Props prefixed with $ are not forwarded to the DOM, preventing React
+      unknown prop warnings and invalid HTML attributes.
+
+  - id: sc-03
+    name: "css helper for conditional style blocks"
+    scenario: |
+      Write a styled component that conditionally applies a set of styles
+      based on a variant prop. Use the styled-components skill rules.
+    must_contain:
+      - "css`"
+    rationale: |
+      The css helper from styled-components enables tagged template syntax
+      for conditional style blocks with proper syntax highlighting.

@@ -1,0 +1,45 @@
+skill: python-django
+skill_files:
+  - layers/backend/python-django/SKILL.md
+version: 1
+
+cases:
+  - id: django-01
+    name: "ModelSerializer uses explicit field list not __all__"
+    scenario: |
+      Write a Django REST Framework serializer for a User model with
+      id, name, and email fields. Use the python-django skill rules.
+    must_contain:
+      - "ModelSerializer"
+      - "fields = ["
+    must_not_contain:
+      - "fields = \"__all__\""
+    rationale: |
+      fields = "__all__" exposes all model fields including sensitive ones.
+      Always declare an explicit field list.
+
+  - id: django-02
+    name: "select_related / prefetch_related to avoid N+1"
+    scenario: |
+      Write a Django view that lists orders with their related user and
+      product information. Use the python-django skill rules.
+    must_contain:
+      - "select_related("
+    must_not_contain:
+      - ".objects.all()"
+    rationale: |
+      QuerySets without select_related/prefetch_related cause N+1 queries
+      when accessing related objects. Always eager-load known relations.
+
+  - id: django-03
+    name: "transaction.atomic for multi-step operations"
+    scenario: |
+      Write a Django service function that creates an order and updates
+      inventory stock in a single atomic operation. Use the python-django skill rules.
+    must_contain:
+      - "transaction.atomic("
+    must_not_contain:
+      - "except Exception"
+    rationale: |
+      Multi-step database operations must be wrapped in transaction.atomic
+      to prevent partial writes on failure. Bare except swallows errors.

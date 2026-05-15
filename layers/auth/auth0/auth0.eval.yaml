@@ -1,0 +1,44 @@
+skill: auth0-auth
+skill_files:
+  - layers/auth/auth0/SKILL.md
+version: 1
+
+cases:
+  - id: auth0-01
+    name: "JWT verified with jwks-rsa for public key fetching"
+    scenario: |
+      Write Express middleware that validates an Auth0 JWT access token.
+      Use the auth0-auth skill rules.
+    must_contain:
+      - "jwks-rsa"
+      - "getSigningKey"
+    must_not_contain:
+      - "jwt.decode("
+    rationale: |
+      Auth0 JWTs are signed with RS256. jwks-rsa fetches the public key
+      from Auth0's JWKS endpoint. jwt.decode only decodes, never verifies.
+
+  - id: auth0-02
+    name: "aud and iss claims validated in token"
+    scenario: |
+      Write the JWT verification options for an Auth0-protected API.
+      Use the auth0-auth skill rules.
+    must_contain:
+      - "audience"
+      - "issuer"
+    rationale: |
+      Validating audience prevents token reuse across APIs. Validating
+      issuer prevents tokens from other Auth0 tenants being accepted.
+
+  - id: auth0-03
+    name: "Access tokens sent to API not ID tokens"
+    scenario: |
+      Write the frontend code that makes an authenticated API request after
+      Auth0 login. Use the auth0-auth skill rules.
+    must_contain:
+      - "accessToken"
+    must_not_contain:
+      - "idToken"
+    rationale: |
+      Access tokens are for API authorization. ID tokens contain user profile
+      data for the client and must never be sent to APIs.

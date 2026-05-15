@@ -1,0 +1,47 @@
+skill: nextjs-standards
+skill_files:
+  - layers/frontend/nextjs/SKILL.md
+version: 1
+
+cases:
+  - id: next-01
+    name: "Server Components are the default in App Router"
+    scenario: |
+      Write a Next.js page that displays a list of products fetched from the
+      database. Use the nextjs-standards skill rules.
+    must_contain:
+      - "async function"
+    must_not_contain:
+      - "getServerSideProps"
+      - "getStaticProps"
+    rationale: |
+      Next.js App Router uses Server Components by default. getServerSideProps
+      and getStaticProps are Pages Router patterns — wrong in App Router.
+
+  - id: next-02
+    name: "'use client' only pushed down to interactive leaves"
+    scenario: |
+      Write a Next.js page layout and an interactive button component.
+      Use the nextjs-standards skill rules.
+    must_contain:
+      - "'use client'"
+    must_not_contain:
+      - "'use client'"
+    rationale: |
+      'use client' must only appear in components that actually need
+      client-side interactivity (event handlers, useState, etc).
+      Marking layout.tsx or page.tsx as client loses server rendering.
+
+  - id: next-03
+    name: "Server Actions for form mutations"
+    scenario: |
+      Write a Next.js form that creates a new product using a Server Action.
+      Use the nextjs-standards skill rules.
+    must_contain:
+      - "'use server'"
+      - "revalidatePath("
+    must_not_contain:
+      - "fetch('/api/"
+    rationale: |
+      Server Actions handle form mutations without client-side fetch calls.
+      revalidatePath invalidates the cache so the UI reflects the mutation.

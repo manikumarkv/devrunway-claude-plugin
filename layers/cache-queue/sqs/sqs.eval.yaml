@@ -1,0 +1,41 @@
+skill: sqs-queue
+skill_files:
+  - layers/cache-queue/sqs/SKILL.md
+version: 1
+
+cases:
+  - id: sqs-01
+    name: "Dead letter queue configured on source queue"
+    scenario: |
+      Write the AWS CDK or CloudFormation definition for an SQS queue with
+      a dead letter queue. Use the sqs-queue skill rules.
+    must_contain:
+      - "deadLetterTargetArn"
+      - "maxReceiveCount"
+    rationale: |
+      A DLQ captures messages that exceed the max receive count.
+      Without a DLQ, poison pill messages loop forever consuming capacity.
+
+  - id: sqs-02
+    name: "Message deleted after successful processing"
+    scenario: |
+      Write an SQS Lambda consumer that processes orders and deletes messages.
+      Use the sqs-queue skill rules.
+    must_contain:
+      - "DeleteMessageCommand"
+      - "ReceiptHandle"
+    rationale: |
+      SQS does not auto-delete processed messages. The consumer must delete
+      after successful processing. Undeleted messages reappear after visibility timeout.
+
+  - id: sqs-03
+    name: "Visibility timeout set for job duration"
+    scenario: |
+      Write the SQS queue configuration for a video processing job queue.
+      Use the sqs-queue skill rules.
+    must_contain:
+      - "VisibilityTimeout"
+    rationale: |
+      Visibility timeout must exceed processing time. If processing takes
+      longer than the default 30s, the message becomes visible again and
+      is processed twice.

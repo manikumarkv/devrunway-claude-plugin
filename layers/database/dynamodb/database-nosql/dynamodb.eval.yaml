@@ -1,0 +1,43 @@
+skill: database-nosql
+skill_files:
+  - layers/database/dynamodb/database-nosql/SKILL.md
+version: 1
+
+cases:
+  - id: dynamo-01
+    name: "Query not Scan for data retrieval"
+    scenario: |
+      Write a DynamoDB operation to get all orders for a specific userId.
+      Use the database-nosql skill rules.
+    must_contain:
+      - "Query("
+    must_not_contain:
+      - "Scan("
+    rationale: |
+      Scan reads the entire table and is O(n) cost. Query uses the index
+      and is the only acceptable retrieval operation.
+
+  - id: dynamo-02
+    name: "PK/SK use entity-type prefixes"
+    scenario: |
+      Write the DynamoDB item structure for a User entity and an Order entity.
+      Show the key design. Use the database-nosql skill rules.
+    must_contain:
+      - "USER#"
+      - "ORDER#"
+    must_not_contain:
+      - "pk: userId"
+    rationale: |
+      Entity prefixes on PK/SK enable single-table design patterns and
+      prevent key collisions between entity types.
+
+  - id: dynamo-03
+    name: "ProjectionExpression limits fetched attributes"
+    scenario: |
+      Write a DynamoDB GetItem operation that fetches only the name and
+      email fields of a user. Use the database-nosql skill rules.
+    must_contain:
+      - "ProjectionExpression"
+    rationale: |
+      ProjectionExpression fetches only needed attributes, reducing cost
+      and network payload. Fetching all attributes wastes read capacity.

@@ -1,0 +1,73 @@
+skill: react-standards
+skill_files:
+  - layers/frontend/react/react-standards/SKILL.md
+version: 1
+
+cases:
+  - id: react-01
+    name: "Server state fetched with React Query not useEffect+fetch"
+    scenario: |
+      Write a React component that displays a list of users fetched from
+      GET /api/v1/users. Use the react-standards skill rules.
+    must_contain:
+      - "useQuery("
+    must_not_contain:
+      - "useEffect("
+      - "fetch("
+    rationale: |
+      Server state must use React Query (useQuery). useEffect+fetch is
+      forbidden for data fetching.
+
+  - id: react-02
+    name: "Forms use react-hook-form with zodResolver"
+    scenario: |
+      Write a React login form with email and password fields. Validate
+      with Zod schema. Use the react-standards skill rules.
+    must_contain:
+      - "useForm("
+      - "zodResolver("
+    must_not_contain:
+      - "useState("
+    rationale: |
+      Forms must use react-hook-form with zodResolver. useState for form
+      fields is forbidden.
+
+  - id: react-03
+    name: "No console.log in components"
+    scenario: |
+      Write a React component that shows product details fetched with React
+      Query. Include error and loading states. Use the react-standards skill rules.
+    must_not_contain:
+      - "console.log"
+      - "console.error"
+    rationale: |
+      console.* is never used in production React code. Use structured
+      logging or Sentry.
+
+  - id: react-04
+    name: "List filters stored in URL search params not useState"
+    scenario: |
+      Write a React component with a filter input that filters a product list.
+      The filter should persist in the URL. Use the react-standards skill rules.
+    must_contain:
+      - "useSearchParams("
+    must_not_contain:
+      - "const [filter"
+      - "useState('')"
+    rationale: |
+      List filters must live in URL search params so they are shareable
+      and survive page refresh. Local useState for filters is forbidden.
+
+  - id: react-05
+    name: "shadcn/ui components not raw HTML form elements"
+    scenario: |
+      Write a React form with a text input and submit button for creating
+      a new product. Use the react-standards skill rules.
+    must_contain:
+      - "@/components/ui/"
+    must_not_contain:
+      - "<input "
+      - "<button "
+    rationale: |
+      shadcn/ui components must be used instead of raw HTML form elements
+      to ensure consistent design system usage.

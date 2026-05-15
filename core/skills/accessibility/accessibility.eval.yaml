@@ -1,0 +1,54 @@
+skill: accessibility
+skill_files:
+  - core/skills/accessibility/SKILL.md
+version: 1
+
+cases:
+  - id: a11y-01
+    name: "Form inputs always have associated labels"
+    scenario: |
+      Write a React form with email and password inputs. Ensure proper
+      accessibility. Use the accessibility skill rules.
+    must_contain:
+      - "<label"
+    must_not_contain:
+      - "placeholder="
+    rationale: |
+      Every input must have an associated label element. Placeholder text
+      is not a label replacement — it disappears when typing.
+
+  - id: a11y-02
+    name: "Validation errors linked to inputs via aria-describedby"
+    scenario: |
+      Write a React form field component that shows a validation error message
+      below the input. Wire it for screen readers. Use the accessibility skill rules.
+    must_contain:
+      - "aria-describedby"
+    rationale: |
+      Error messages must be linked to their inputs via aria-describedby
+      so screen readers announce them when the field receives focus.
+
+  - id: a11y-03
+    name: "Informative images have meaningful alt text"
+    scenario: |
+      Write a React component that displays a product image with its name.
+      Use the accessibility skill rules.
+    must_contain:
+      - "alt="
+    must_not_contain:
+      - "alt=\"\""
+    rationale: |
+      Informative images must have descriptive alt text. Empty alt is only
+      for decorative images.
+
+  - id: a11y-04
+    name: "Interactive elements are keyboard reachable"
+    scenario: |
+      Write a React custom dropdown menu that is accessible by keyboard.
+      Use the accessibility skill rules.
+    must_contain:
+      - "onKeyDown"
+      - "tabIndex"
+    rationale: |
+      Custom interactive elements must handle keyboard events and be
+      focusable via tabIndex. Click-only handlers exclude keyboard users.

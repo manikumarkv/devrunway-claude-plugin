@@ -1,0 +1,46 @@
+skill: cypress-testing
+skill_files:
+  - layers/testing/e2e/cypress/SKILL.md
+version: 1
+
+cases:
+  - id: cy-01
+    name: "Semantic selectors not CSS class selectors"
+    scenario: |
+      Write a Cypress test that clicks a submit button and verifies a success
+      message. Use the cypress-testing skill rules.
+    must_contain:
+      - "cy.contains("
+    must_not_contain:
+      - "cy.get('.btn"
+      - "cy.get('#submit"
+    rationale: |
+      Semantic selectors test what users see. CSS class selectors are
+      implementation details that break when CSS is refactored.
+
+  - id: cy-02
+    name: "cy.intercept with alias for network waits"
+    scenario: |
+      Write a Cypress test that waits for an API call to complete before
+      asserting. Use the cypress-testing skill rules.
+    must_contain:
+      - "cy.intercept("
+      - "cy.wait('@"
+    must_not_contain:
+      - "cy.wait(2000)"
+      - "cy.wait(5000)"
+    rationale: |
+      cy.intercept + cy.wait('@alias') waits for the actual network request.
+      Hardcoded waits are flaky and either too long or not long enough.
+
+  - id: cy-03
+    name: "cy.intercept for API mocking in tests"
+    scenario: |
+      Write a Cypress test that mocks the product list API response.
+      Use the cypress-testing skill rules.
+    must_contain:
+      - "cy.intercept("
+      - "{ fixture:"
+    rationale: |
+      cy.intercept can serve fixture data without real API calls.
+      Tests using real APIs are slow and environment-dependent.

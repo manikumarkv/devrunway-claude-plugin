@@ -1,0 +1,41 @@
+skill: algolia-search
+skill_files:
+  - layers/search/algolia/SKILL.md
+version: 1
+
+cases:
+  - id: algolia-01
+    name: "InstantSearch hooks for search UI"
+    scenario: |
+      Write a React product search component using Algolia.
+      Use the algolia-search skill rules.
+    must_contain:
+      - "algoliasearch("
+      - "useSearchBox("
+      - "useHits("
+    rationale: |
+      InstantSearch hooks manage search state, debouncing, and UI updates.
+      Raw index.search() in components requires manual state management.
+
+  - id: algolia-02
+    name: "Admin client server-side only"
+    scenario: |
+      Write the Algolia setup for indexing products on the server.
+      Use the algolia-search skill rules.
+    must_contain:
+      - "process.env.ALGOLIA_ADMIN_KEY"
+    rationale: |
+      The admin key can write to and delete indexes. It must only appear
+      in server-side code never bundled into the browser.
+
+  - id: algolia-03
+    name: "Faceting attributes declared in index settings"
+    scenario: |
+      Write the Algolia index configuration for category and price facets.
+      Use the algolia-search skill rules.
+    must_contain:
+      - "attributesForFaceting"
+      - "facetFilters"
+    rationale: |
+      Faceting must be declared in index settings before it can be used.
+      Filtering in application code after fetching all results defeats the purpose.

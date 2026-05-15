@@ -1,0 +1,47 @@
+skill: mui-components
+skill_files:
+  - layers/ui-components/mui/SKILL.md
+version: 1
+
+cases:
+  - id: mui-01
+    name: "MUI components not raw HTML form elements"
+    scenario: |
+      Write a React login form with email and password fields using MUI.
+      Use the mui-components skill rules.
+    must_contain:
+      - "@mui/material"
+      - "<TextField"
+      - "<Button"
+    must_not_contain:
+      - "<input "
+      - "<button "
+    rationale: |
+      MUI components provide Material Design styling, accessibility, and
+      theme integration. Raw HTML elements bypass all of this.
+
+  - id: mui-02
+    name: "sx prop for one-off style overrides"
+    scenario: |
+      Write a MUI Card with custom bottom margin and padding applied as
+      a style override. Use the mui-components skill rules.
+    must_contain:
+      - "sx={{"
+    must_not_contain:
+      - "style={{margin:"
+    rationale: |
+      The sx prop is MUI's design-system-aware styling shorthand. style={{}}
+      uses raw CSS values that bypass the MUI theme.
+
+  - id: mui-03
+    name: "ThemeProvider with custom palette"
+    scenario: |
+      Write the MUI theme setup with custom primary and secondary brand colors.
+      Use the mui-components skill rules.
+    must_contain:
+      - "ThemeProvider"
+      - "createTheme("
+      - "palette:"
+    rationale: |
+      ThemeProvider applies custom colors globally. Hardcoded colors
+      in component props scatter magic values across the codebase.

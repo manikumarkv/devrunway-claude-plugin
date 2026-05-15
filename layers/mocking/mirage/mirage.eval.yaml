@@ -1,0 +1,41 @@
+skill: mirage-mocking
+skill_files:
+  - layers/mocking/mirage/SKILL.md
+version: 1
+
+cases:
+  - id: mirage-01
+    name: "createServer with models, factories, and routes"
+    scenario: |
+      Write a Mirage server setup for a user management app.
+      Use the mirage-mocking skill rules.
+    must_contain:
+      - "createServer("
+      - "routes("
+      - "models:"
+    rationale: |
+      createServer with models and routes provides a complete in-memory API.
+      Bare fetch mocking only handles specific URLs without model relationships.
+
+  - id: mirage-02
+    name: "Factories for generating test data"
+    scenario: |
+      Write Mirage factories for User and Product models.
+      Use the mirage-mocking skill rules.
+    must_contain:
+      - "Factory.extend("
+      - "factories:"
+    rationale: |
+      Factories generate realistic test data with one line of code.
+      Hardcoded response objects cause test data to go stale.
+
+  - id: mirage-03
+    name: "Passthrough for non-mocked routes"
+    scenario: |
+      Write a Mirage server that mocks the users API but passes through
+      analytics requests. Use the mirage-mocking skill rules.
+    must_contain:
+      - "this.passthrough("
+    rationale: |
+      passthrough lets non-mocked routes reach the real network.
+      Without it, all unhandled requests return 404 from Mirage.

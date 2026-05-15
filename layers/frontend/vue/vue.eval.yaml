@@ -1,0 +1,46 @@
+skill: vue-standards
+skill_files:
+  - layers/frontend/vue/SKILL.md
+version: 1
+
+cases:
+  - id: vue-01
+    name: "Composition API with script setup and TypeScript"
+    scenario: |
+      Write a Vue 3 component that displays a user profile. Use the
+      vue-standards skill rules.
+    must_contain:
+      - "<script setup lang=\"ts\">"
+      - "ref("
+    must_not_contain:
+      - "data()"
+      - "methods:"
+    rationale: |
+      <script setup> is the recommended Composition API syntax. Options API
+      (data(), methods:) is the legacy pattern and should not be used.
+
+  - id: vue-02
+    name: "defineProps with TypeScript generic not array syntax"
+    scenario: |
+      Write a Vue 3 child component that accepts name (string) and age (number)
+      props. Use the vue-standards skill rules.
+    must_contain:
+      - "defineProps<{"
+    must_not_contain:
+      - "defineProps(['name'"]"
+      - "defineProps({ name: String"
+    rationale: |
+      TypeScript generic syntax for defineProps gives full static type checking.
+      Array syntax provides no type information.
+
+  - id: vue-03
+    name: "Composables extract reusable reactive logic"
+    scenario: |
+      Write a Vue 3 composable that manages a paginated list of products
+      including loading state. Use the vue-standards skill rules.
+    must_contain:
+      - "export function use"
+      - "ref("
+    rationale: |
+      Composables (useXxx functions) are the Vue 3 pattern for sharing
+      stateful logic. Duplicating logic across components violates DRY.

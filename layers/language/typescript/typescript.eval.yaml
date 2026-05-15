@@ -1,0 +1,60 @@
+skill: typescript-patterns
+skill_files:
+  - layers/language/typescript/SKILL.md
+version: 1
+
+cases:
+  - id: ts-01
+    name: "unknown used instead of any for unsafe values"
+    scenario: |
+      Write a function that parses a JSON string from an external source and
+      returns the result. Type it properly. Use the typescript-patterns skill rules.
+    must_contain:
+      - "unknown"
+    must_not_contain:
+      - ": any"
+      - "as any"
+    rationale: |
+      any is forbidden. unknown is used for values whose type is not yet known,
+      forcing explicit narrowing before use.
+
+  - id: ts-02
+    name: "Discriminated unions for async state not boolean flags"
+    scenario: |
+      Define a TypeScript type for a data loading state that can be loading,
+      success with data, or error with a message. Use the typescript-patterns skill rules.
+    must_contain:
+      - "'loading'"
+      - "'success'"
+      - "'error'"
+    must_not_contain:
+      - "isLoading: boolean"
+      - "isError: boolean"
+    rationale: |
+      Discriminated unions model state machines correctly. Boolean flags
+      allow impossible combinations (isLoading: true AND isError: true).
+
+  - id: ts-03
+    name: "Exhaustive switch with never check"
+    scenario: |
+      Write a function that takes a discriminated union type (Payment with
+      type 'card' | 'bank' | 'paypal') and handles each case. Include
+      exhaustiveness checking. Use the typescript-patterns skill rules.
+    must_contain:
+      - "never"
+    rationale: |
+      Exhaustive checks with never ensure TypeScript errors when new union
+      members are added without handling.
+
+  - id: ts-04
+    name: "Branded types for IDs to prevent mix-ups"
+    scenario: |
+      Define branded TypeScript types for UserId and OrderId so they cannot
+      be accidentally swapped. Use the typescript-patterns skill rules.
+    must_contain:
+      - "brand"
+    must_not_contain:
+      - "type UserId = string"
+    rationale: |
+      Branded types prevent passing an OrderId where a UserId is expected.
+      Plain type aliases (type UserId = string) give no protection.

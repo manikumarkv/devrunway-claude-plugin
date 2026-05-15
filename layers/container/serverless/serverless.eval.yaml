@@ -1,0 +1,43 @@
+skill: serverless-framework
+skill_files:
+  - layers/container/serverless/SKILL.md
+version: 1
+
+cases:
+  - id: sls-01
+    name: "Per-function IAM statements not wildcard resource"
+    scenario: |
+      Write a Serverless Framework function that reads from a specific DynamoDB table.
+      Use the serverless-framework skill rules.
+    must_contain:
+      - "iamRoleStatements:"
+    must_not_contain:
+      - "\"Resource\": \"*\""
+    rationale: |
+      IAM least-privilege requires specific resource ARNs. Wildcard resource
+      gives the function access to all tables — a critical over-permission.
+
+  - id: sls-02
+    name: "Secrets from SSM or Secrets Manager not inline"
+    scenario: |
+      Write a Serverless Framework function that uses a database URL secret.
+      Use the serverless-framework skill rules.
+    must_contain:
+      - "ssm:"
+    must_not_contain:
+      - "DB_PASSWORD: mysecretpassword"
+    rationale: |
+      SSM Parameter Store and Secrets Manager keep secrets out of serverless.yml.
+      Inline secret values in YAML are committed to source control.
+
+  - id: sls-03
+    name: "Memory and timeout explicitly set per function"
+    scenario: |
+      Write a Serverless Framework definition for a CPU-intensive processing function.
+      Use the serverless-framework skill rules.
+    must_contain:
+      - "memorySize:"
+      - "timeout:"
+    rationale: |
+      Default settings (1024MB, 30s) are wrong for most functions. CPU-heavy
+      jobs need more memory; fast APIs need lower timeouts for cost control.

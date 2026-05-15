@@ -1,0 +1,43 @@
+skill: msw-mocking
+skill_files:
+  - layers/mocking/msw/SKILL.md
+version: 1
+
+cases:
+  - id: msw-01
+    name: "http.get handlers return HttpResponse.json"
+    scenario: |
+      Write an MSW handler for GET /api/users that returns mock users.
+      Use the msw-mocking skill rules.
+    must_contain:
+      - "http.get("
+      - "HttpResponse.json("
+    must_not_contain:
+      - "vi.mock('axios'"
+      - "global.fetch"
+    rationale: |
+      MSW intercepts at the network level so components and services work
+      with real fetch/axios. Mocking fetch directly only mocks one call site.
+
+  - id: msw-02
+    name: "server.use() overrides handlers per test"
+    scenario: |
+      Write a test that overrides the default success handler with an error response.
+      Use the msw-mocking skill rules.
+    must_contain:
+      - "server.use("
+      - "http.get("
+    rationale: |
+      server.use() overrides handlers for a single test without affecting others.
+      Defining all handlers in beforeAll forces sharing state across tests.
+
+  - id: msw-03
+    name: "Handlers exported from a shared handlers file"
+    scenario: |
+      Write the MSW handlers file for user API endpoints.
+      Use the msw-mocking skill rules.
+    must_contain:
+      - "export const handlers = ["
+    rationale: |
+      A shared handlers file provides consistent mocking across all tests.
+      Inline handlers per test create duplication and inconsistency.

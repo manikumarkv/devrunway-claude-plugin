@@ -1,0 +1,47 @@
+skill: redux-state
+skill_files:
+  - layers/state/redux-toolkit/SKILL.md
+version: 1
+
+cases:
+  - id: redux-01
+    name: "createSlice not hand-written action creators and reducers"
+    scenario: |
+      Write a Redux slice for a products feature with add, remove, and update
+      actions. Use the redux-state skill rules.
+    must_contain:
+      - "createSlice("
+      - "reducers:"
+    must_not_contain:
+      - "switch (action.type)"
+    rationale: |
+      createSlice generates action creators and reduces boilerplate.
+      Hand-written switch reducers and action creators are error-prone.
+
+  - id: redux-02
+    name: "RTK Query for server state not createAsyncThunk"
+    scenario: |
+      Write RTK Query endpoints to fetch and create products.
+      Use the redux-state skill rules.
+    must_contain:
+      - "createApi("
+      - "endpoints:"
+    must_not_contain:
+      - "createAsyncThunk"
+    rationale: |
+      RTK Query handles caching, loading states, and invalidation automatically.
+      createAsyncThunk requires manual cache management.
+
+  - id: redux-03
+    name: "Typed hooks useAppDispatch and useAppSelector"
+    scenario: |
+      Write the typed Redux hooks setup and show usage in a component.
+      Use the redux-state skill rules.
+    must_contain:
+      - "useAppDispatch("
+      - "useAppSelector("
+    must_not_contain:
+      - "useDispatch<AppDispatch>()"
+    rationale: |
+      Typed hooks (useAppDispatch, useAppSelector) are defined once and
+      provide full TypeScript inference everywhere they're used.

@@ -1,0 +1,47 @@
+skill: sqlalchemy-orm
+skill_files:
+  - layers/database/sqlalchemy/SKILL.md
+version: 1
+
+cases:
+  - id: sqla-01
+    name: "Mapped type annotations on model columns"
+    scenario: |
+      Write a SQLAlchemy model for a User table with id, name, and email columns.
+      Use the sqlalchemy-orm skill rules.
+    must_contain:
+      - "Mapped["
+      - "mapped_column("
+    must_not_contain:
+      - "Column(String)"
+      - "Column(Integer)"
+    rationale: |
+      Mapped[T] with mapped_column() is the modern SQLAlchemy 2.0 style.
+      Legacy Column() syntax loses static type safety.
+
+  - id: sqla-02
+    name: "AsyncSession for async route handlers"
+    scenario: |
+      Write a FastAPI dependency that provides a database session for async routes.
+      Use the sqlalchemy-orm skill rules.
+    must_contain:
+      - "AsyncSession"
+      - "async_sessionmaker"
+    must_not_contain:
+      - "Session("
+    rationale: |
+      Sync Session blocks the async event loop. AsyncSession works with
+      async/await and keeps the server responsive.
+
+  - id: sqla-03
+    name: "Eager loading with selectinload for relations"
+    scenario: |
+      Write a SQLAlchemy query that fetches orders with their related user
+      and product. Use the sqlalchemy-orm skill rules.
+    must_contain:
+      - "selectinload("
+    must_not_contain:
+      - "lazy=\"dynamic\""
+    rationale: |
+      selectinload/joinedload eagerly fetches relations in a separate query.
+      lazy="dynamic" causes N+1 queries when iterating relations.

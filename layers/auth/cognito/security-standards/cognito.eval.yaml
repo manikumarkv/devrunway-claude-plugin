@@ -1,0 +1,62 @@
+skill: security-standards
+skill_files:
+  - layers/auth/cognito/security-standards/SKILL.md
+version: 1
+
+cases:
+  - id: cognito-01
+    name: "JWT verified with aws-jwt-verify not decoded only"
+    scenario: |
+      Write the Express auth middleware that verifies a Cognito JWT from the
+      Authorization header. Use the security-standards skill rules.
+    must_contain:
+      - "CognitoJwtVerifier"
+      - "verifier.verify("
+    must_not_contain:
+      - "jwt.decode("
+      - "atob("
+    rationale: |
+      JWTs must be cryptographically verified with aws-jwt-verify.
+      jwt.decode() only decodes without verification — never acceptable.
+
+  - id: cognito-02
+    name: "Authorization uses Cognito groups not username/email"
+    scenario: |
+      Write a requireGroup middleware that restricts a route to Admin users.
+      Use the security-standards skill rules.
+    must_contain:
+      - "groups"
+      - "requireGroup("
+    must_not_contain:
+      - "req.user.role"
+      - "claims.role"
+    rationale: |
+      Authorization must use Cognito group membership, not custom role fields
+      or username/email-based checks.
+
+  - id: cognito-03
+    name: "No wildcard CORS in production"
+    scenario: |
+      Write the Express CORS configuration for a production API that allows
+      requests from https://app.example.com. Use the security-standards skill rules.
+    must_contain:
+      - "origin:"
+    must_not_contain:
+      - "origin: '*'"
+    rationale: |
+      CORS must never use wildcard origin in production. Only explicitly
+      listed origins are allowed.
+
+  - id: cognito-04
+    name: "All inputs validated with Zod at system boundary"
+    scenario: |
+      Write an Express POST /products route with req.body validation using Zod.
+      Include authMiddleware and Zod parsing. Use security-standards skill rules.
+    must_contain:
+      - ".parse(req.body)"
+    must_not_contain:
+      - "req.body.name"
+      - "req.body.price"
+    rationale: |
+      ALL inputs at system boundaries must go through Zod validation.
+      Never access req.body fields directly.

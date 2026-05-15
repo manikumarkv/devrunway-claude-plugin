@@ -1,0 +1,43 @@
+skill: redis-cache
+skill_files:
+  - layers/cache-queue/redis/SKILL.md
+version: 1
+
+cases:
+  - id: redis-01
+    name: "Structured key names with entity prefix"
+    scenario: |
+      Write Redis key definitions for user session and product cache entries.
+      Use the redis-cache skill rules.
+    must_contain:
+      - "user:"
+      - "session:"
+    rationale: |
+      Structured key names with prefixes enable pattern-based operations
+      and avoid collisions between different entity types.
+
+  - id: redis-02
+    name: "TTL on every key set"
+    scenario: |
+      Write the code to cache a user profile in Redis for 1 hour.
+      Use the redis-cache skill rules.
+    must_contain:
+      - "EX "
+    must_not_contain:
+      - "set(key, value)"
+    rationale: |
+      Every key must have a TTL to prevent unbounded memory growth.
+      set() without expiry creates keys that live forever.
+
+  - id: redis-03
+    name: "SCAN not KEYS * for production key iteration"
+    scenario: |
+      Write the code to iterate over all user session keys in Redis.
+      Use the redis-cache skill rules.
+    must_contain:
+      - "SCAN"
+    must_not_contain:
+      - "KEYS *"
+    rationale: |
+      KEYS * blocks the Redis server while scanning the full keyspace.
+      SCAN iterates incrementally without blocking other commands.

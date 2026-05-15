@@ -1,0 +1,48 @@
+skill: valibot-validation
+skill_files:
+  - layers/validation/valibot/SKILL.md
+version: 1
+
+cases:
+  - id: valibot-01
+    name: "safeParse with v.flatten for structured errors"
+    scenario: |
+      Write a form submission handler that validates input with Valibot and
+      returns structured field errors on failure. Use the valibot-validation skill rules.
+    must_contain:
+      - "v.safeParse("
+      - "v.flatten("
+    must_not_contain:
+      - "v.parse("
+    rationale: |
+      safeParse does not throw on failure. v.flatten structures the issues
+      into a form-friendly format. v.parse throws and should not be used
+      for user-facing validation.
+
+  - id: valibot-02
+    name: "Types inferred from schema with v.InferOutput"
+    scenario: |
+      Define a Valibot schema for a Product with name (string) and price (number).
+      Derive the TypeScript type. Use the valibot-validation skill rules.
+    must_contain:
+      - "v.InferOutput<typeof"
+    must_not_contain:
+      - "interface Product"
+      - "type Product = {"
+    rationale: |
+      Types must be inferred from Valibot schemas. Defining parallel TypeScript
+      interfaces creates duplication and divergence risk.
+
+  - id: valibot-03
+    name: "No v.any() — use specific validators"
+    scenario: |
+      Write a Valibot schema for a CreateUser request with email and role fields.
+      Use the valibot-validation skill rules.
+    must_contain:
+      - "v.string()"
+      - "v.object("
+    must_not_contain:
+      - "v.any()"
+    rationale: |
+      v.any() accepts anything and bypasses type safety. Always use specific
+      validators that match the expected field types.

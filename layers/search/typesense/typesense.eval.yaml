@@ -1,0 +1,40 @@
+skill: typesense-search
+skill_files:
+  - layers/search/typesense/SKILL.md
+version: 1
+
+cases:
+  - id: ts-search-01
+    name: "Search-only API key for browser client"
+    scenario: |
+      Write the Typesense client setup for a React search component.
+      Use the typesense-search skill rules.
+    must_contain:
+      - "process.env.TYPESENSE_SEARCH_KEY"
+    rationale: |
+      The search-only key allows read-only searches. The admin key can
+      create and delete collections and must never reach the browser.
+
+  - id: ts-search-02
+    name: "Collection schema with typed fields"
+    scenario: |
+      Write the Typesense collection creation for a products index.
+      Use the typesense-search skill rules.
+    must_contain:
+      - "client.collections().create("
+      - "fields:"
+    rationale: |
+      Declaring field types enables faceting, sorting, and proper indexing.
+      Schema-less indexing loses type safety and faceting capability.
+
+  - id: ts-search-03
+    name: "InstantSearch adapter for React UI"
+    scenario: |
+      Write the Typesense InstantSearch setup for a React search page.
+      Use the typesense-search skill rules.
+    must_contain:
+      - "TypesenseInstantSearchAdapter"
+      - "instantsearch("
+    rationale: |
+      The InstantSearch adapter provides pre-built UI components.
+      Raw search() in components requires reimplementing debouncing and state.

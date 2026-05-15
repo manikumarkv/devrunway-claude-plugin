@@ -1,0 +1,46 @@
+skill: graphql-api
+skill_files:
+  - layers/api-style/graphql/SKILL.md
+version: 1
+
+cases:
+  - id: graphql-01
+    name: "Schema-first SDL with type definitions"
+    scenario: |
+      Write a GraphQL schema for a User type with queries to get a user by id
+      and list all users. Use the graphql-api skill rules.
+    must_contain:
+      - "type Query {"
+      - "type User {"
+    must_not_contain:
+      - "buildSchema"
+    rationale: |
+      Schema-first development defines the contract before implementation.
+      SDL type definitions are the source of truth.
+
+  - id: graphql-02
+    name: "DataLoader for batching relation queries"
+    scenario: |
+      Write a GraphQL resolver for a Post type that loads the author User.
+      Avoid N+1 queries. Use the graphql-api skill rules.
+    must_contain:
+      - "DataLoader"
+      - "batchLoadFn"
+    rationale: |
+      DataLoader batches and caches per-request DB lookups. Without it
+      a list of 100 posts fires 100 individual user queries (N+1).
+
+  - id: graphql-03
+    name: "Cursor-based connection pagination"
+    scenario: |
+      Write a GraphQL query and resolver for paginating through a list of
+      products. Use the graphql-api skill rules.
+    must_contain:
+      - "edges"
+      - "pageInfo"
+    must_not_contain:
+      - "offset:"
+      - "limit:"
+    rationale: |
+      Connections pattern (edges/pageInfo) is the GraphQL standard for
+      pagination. Offset pagination is unreliable with real-time data.

@@ -1,0 +1,40 @@
+skill: appconfig-flags
+skill_files:
+  - layers/feature-flags/aws-appconfig/SKILL.md
+version: 1
+
+cases:
+  - id: apc-01
+    name: "AppConfig client is a singleton not per-request"
+    scenario: |
+      Write the AppConfig client setup for a Node.js Lambda function.
+      Use the appconfig-flags skill rules.
+    must_contain:
+      - "AppConfigDataClient"
+    rationale: |
+      AppConfig clients should be created once (outside handler) and reused.
+      Creating a new client per Lambda invocation wastes memory and connection time.
+
+  - id: apc-02
+    name: "GetLatestConfiguration with token for incremental fetching"
+    scenario: |
+      Write the code to poll AppConfig for feature flag updates.
+      Use the appconfig-flags skill rules.
+    must_contain:
+      - "GetLatestConfigurationCommand"
+      - "configurationToken"
+    rationale: |
+      The configuration token enables incremental fetching — only changed
+      config is returned. Fetching without token wastes bandwidth.
+
+  - id: apc-03
+    name: "Configuration parsed as JSON for flag access"
+    scenario: |
+      Write the code that reads AppConfig and checks a feature flag boolean.
+      Use the appconfig-flags skill rules.
+    must_contain:
+      - "JSON.parse("
+      - "configuration"
+    rationale: |
+      AppConfig returns raw bytes. JSON.parse converts it to a usable object.
+      Accessing the raw buffer string produces incorrect flag values.

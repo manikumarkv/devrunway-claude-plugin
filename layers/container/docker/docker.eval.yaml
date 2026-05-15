@@ -1,0 +1,42 @@
+skill: docker-container
+skill_files:
+  - layers/container/docker/SKILL.md
+version: 1
+
+cases:
+  - id: docker-01
+    name: "Non-root user in Dockerfile"
+    scenario: |
+      Write a production Dockerfile for a Node.js Express app.
+      Use the docker-container skill rules.
+    must_contain:
+      - "USER node"
+    must_not_contain:
+      - "USER root"
+    rationale: |
+      Running containers as root gives attackers full container access if
+      they exploit a vulnerability. Non-root user limits the blast radius.
+
+  - id: docker-02
+    name: "Multi-stage build to exclude dev dependencies"
+    scenario: |
+      Write a multi-stage Dockerfile that builds a TypeScript app and runs
+      only the compiled output. Use the docker-container skill rules.
+    must_contain:
+      - "AS builder"
+      - "AS runner"
+    rationale: |
+      Multi-stage builds exclude dev dependencies and build tools from the
+      final image, reducing size and attack surface.
+
+  - id: docker-03
+    name: ".dockerignore excludes node_modules and env files"
+    scenario: |
+      Write a .dockerignore file for a Node.js project.
+      Use the docker-container skill rules.
+    must_contain:
+      - ".dockerignore"
+      - "node_modules"
+    rationale: |
+      .dockerignore prevents node_modules (large) and .env files (secrets)
+      from being sent to the Docker build context.

@@ -1,0 +1,46 @@
+skill: chakra-ui
+skill_files:
+  - layers/ui-components/chakra/SKILL.md
+version: 1
+
+cases:
+  - id: chakra-01
+    name: "Chakra components not raw div/span"
+    scenario: |
+      Write a React profile card with image, name, and bio using Chakra UI.
+      Use the chakra-ui skill rules.
+    must_contain:
+      - "@chakra-ui/react"
+      - "<Box"
+      - "<Stack"
+    must_not_contain:
+      - "<div style="
+    rationale: |
+      Chakra components are styled with theme tokens and responsive props.
+      Raw div with inline styles bypasses the design system.
+
+  - id: chakra-02
+    name: "useColorMode for dark/light theme switching"
+    scenario: |
+      Write a Chakra UI toggle button that switches between light and dark mode.
+      Use the chakra-ui skill rules.
+    must_contain:
+      - "useColorMode("
+      - "colorMode"
+    must_not_contain:
+      - "localStorage.getItem('theme'"
+    rationale: |
+      useColorMode is Chakra's built-in dark mode API. localStorage-based
+      theme switching misses Chakra's system preference detection.
+
+  - id: chakra-03
+    name: "ChakraProvider wraps app once at root"
+    scenario: |
+      Write the React app entry point with Chakra UI configured.
+      Use the chakra-ui skill rules.
+    must_contain:
+      - "ChakraProvider"
+      - "theme={"
+    rationale: |
+      ChakraProvider must wrap the entire app exactly once. Multiple instances
+      or missing provider causes theme and component rendering failures.

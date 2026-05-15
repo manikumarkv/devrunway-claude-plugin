@@ -1,0 +1,43 @@
+skill: ses-email
+skill_files:
+  - layers/email/ses/SKILL.md
+version: 1
+
+cases:
+  - id: ses-01
+    name: "SESClient via IAM role not hardcoded access keys"
+    scenario: |
+      Write the AWS SES client setup for sending transactional emails.
+      Use the ses-email skill rules.
+    must_contain:
+      - "SESClient"
+      - "fromEnv()"
+    must_not_contain:
+      - "accessKeyId"
+    rationale: |
+      SES must be accessed via IAM roles (fromEnv picks up role credentials).
+      Hardcoded access keys are a critical security risk.
+
+  - id: ses-02
+    name: "Verified sender identity in Source field"
+    scenario: |
+      Write an SES SendEmail call for a password reset notification.
+      Use the ses-email skill rules.
+    must_contain:
+      - "SendEmailCommand"
+      - "Source:"
+    rationale: |
+      SES requires the Source email to be a verified identity. Unverified
+      senders are rejected and emails never delivered.
+
+  - id: ses-03
+    name: "Structured body with Text and HTML parts"
+    scenario: |
+      Write an SES email with both plaintext and HTML body.
+      Use the ses-email skill rules.
+    must_contain:
+      - "Body: { Text:"
+      - "Html:"
+    rationale: |
+      Email clients prefer HTML but fall back to plaintext. Both parts
+      ensure deliverability across all email clients.

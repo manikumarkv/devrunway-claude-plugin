@@ -1,0 +1,47 @@
+skill: socketio-realtime
+skill_files:
+  - layers/realtime/socketio/SKILL.md
+version: 1
+
+cases:
+  - id: sio-01
+    name: "Auth middleware validates connection before handling events"
+    scenario: |
+      Write Socket.IO server setup with JWT authentication middleware.
+      Use the socketio-realtime skill rules.
+    must_contain:
+      - "io.use("
+      - "socket.handshake"
+      - "next("
+    rationale: |
+      io.use() middleware runs before the connection is established.
+      Without auth middleware, unauthenticated clients can emit events.
+
+  - id: sio-02
+    name: "Rooms for targeted message delivery not broadcast-all"
+    scenario: |
+      Write a Socket.IO handler that sends an order update only to the
+      specific user who owns the order. Use the socketio-realtime skill rules.
+    must_contain:
+      - "socket.join("
+      - "io.to("
+    must_not_contain:
+      - "io.emit("
+    rationale: |
+      Rooms target messages to specific users/groups. io.emit broadcasts
+      to all connected clients, leaking data and wasting bandwidth.
+
+  - id: sio-03
+    name: "Typed event constants in shared events file"
+    scenario: |
+      Write the shared event constants file and show a server emit using it.
+      Use the socketio-realtime skill rules.
+    must_contain:
+      - "events.ts"
+      - "const EVENTS"
+    must_not_contain:
+      - "'message'"
+      - "'update'"
+    rationale: |
+      Typed event constants prevent typos and provide IDE autocomplete.
+      Hardcoded string literals scattered across server and client diverge.

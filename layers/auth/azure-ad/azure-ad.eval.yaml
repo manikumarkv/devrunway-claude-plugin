@@ -1,0 +1,46 @@
+skill: azure-ad-auth
+skill_files:
+  - layers/auth/azure-ad/SKILL.md
+version: 1
+
+cases:
+  - id: azad-01
+    name: "MSAL used for token acquisition not raw JWT decode"
+    scenario: |
+      Write the browser-side Azure AD authentication setup for a React SPA.
+      Use the azure-ad-auth skill rules.
+    must_contain:
+      - "PublicClientApplication"
+      - "acquireTokenSilent("
+    must_not_contain:
+      - "jwt.decode("
+    rationale: |
+      MSAL handles token acquisition, caching, and refresh automatically.
+      jwt.decode only decodes without cryptographic verification.
+
+  - id: azad-02
+    name: "Silent token refresh with interactive fallback"
+    scenario: |
+      Write the function that gets a valid access token for API calls,
+      refreshing silently or prompting interactively. Use the azure-ad-auth skill rules.
+    must_contain:
+      - "acquireTokenSilent"
+      - "acquireTokenPopup"
+    must_not_contain:
+      - "localStorage.setItem('token'"
+    rationale: |
+      acquireTokenSilent refreshes tokens without user interaction.
+      Falling back to acquireTokenPopup handles expired refresh tokens.
+      Storing tokens in localStorage is insecure.
+
+  - id: azad-03
+    name: "Audience validated in token verification"
+    scenario: |
+      Write the server-side middleware that validates an Azure AD JWT.
+      Use the azure-ad-auth skill rules.
+    must_contain:
+      - "audience"
+      - "clientId"
+    rationale: |
+      Audience validation ensures the token was issued for this specific API.
+      Without it, a token issued for another app could be used here.

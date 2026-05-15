@@ -1,0 +1,44 @@
+skill: python-fastapi
+skill_files:
+  - layers/backend/python-fastapi/SKILL.md
+version: 1
+
+cases:
+  - id: fastapi-01
+    name: "APIRouter with prefix not bare @app decorators"
+    scenario: |
+      Write FastAPI routes for user CRUD operations. Use the python-fastapi skill rules.
+    must_contain:
+      - "APIRouter"
+      - "prefix="
+    must_not_contain:
+      - "@app.get("
+      - "@app.post("
+    rationale: |
+      Routes must be organised in APIRouters with a prefix. Bare @app
+      decorators in route files bypass the modular router structure.
+
+  - id: fastapi-02
+    name: "Response model declared on every route"
+    scenario: |
+      Write a FastAPI GET /users/{id} route that returns a user.
+      Use the python-fastapi skill rules.
+    must_contain:
+      - "response_model="
+    rationale: |
+      response_model enforces the response schema and generates accurate
+      OpenAPI documentation. Routes without response_model return arbitrary data.
+
+  - id: fastapi-03
+    name: "Async functions with Depends for injection"
+    scenario: |
+      Write a FastAPI route that fetches a product from a database using
+      dependency injection. Use the python-fastapi skill rules.
+    must_contain:
+      - "async def"
+      - "Depends("
+    must_not_contain:
+      - "time.sleep("
+    rationale: |
+      Routes must be async to avoid blocking the event loop. Depends()
+      handles dependency injection cleanly. time.sleep blocks the loop.

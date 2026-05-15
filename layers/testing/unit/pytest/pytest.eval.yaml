@@ -1,0 +1,45 @@
+skill: pytest-testing
+skill_files:
+  - layers/testing/unit/pytest/SKILL.md
+version: 1
+
+cases:
+  - id: pytest-01
+    name: "pytest fixtures for dependencies"
+    scenario: |
+      Write pytest tests for a user service that needs a database session.
+      Use the pytest-testing skill rules.
+    must_contain:
+      - "@pytest.fixture"
+      - "def test_"
+    rationale: |
+      pytest fixtures provide dependencies to tests cleanly. Class-based
+      setUp is the unittest pattern — pytest style uses fixtures.
+
+  - id: pytest-02
+    name: "assert statements not assertEqual"
+    scenario: |
+      Write a pytest test for an API endpoint that returns a user.
+      Use the pytest-testing skill rules.
+    must_contain:
+      - "assert response.status_code"
+      - "assert "
+    must_not_contain:
+      - "self.assertEqual("
+      - "self.assertTrue("
+    rationale: |
+      pytest uses plain assert for all assertions. assertEqual and assertTrue
+      are unittest methods — they work but lose pytest's introspection output.
+
+  - id: pytest-03
+    name: "capsys/capfd for output capture not print"
+    scenario: |
+      Write a pytest test that verifies log output without using print.
+      Use the pytest-testing skill rules.
+    must_contain:
+      - "capsys"
+    must_not_contain:
+      - "print("
+    rationale: |
+      capsys captures stdout/stderr for assertion. print in tests
+      creates noisy output and cannot be asserted against.

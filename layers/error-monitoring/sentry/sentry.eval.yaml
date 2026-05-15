@@ -1,0 +1,43 @@
+skill: sentry-monitoring
+skill_files:
+  - layers/error-monitoring/sentry/SKILL.md
+version: 1
+
+cases:
+  - id: sentry-01
+    name: "PII scrubbed in beforeSend hook"
+    scenario: |
+      Write the Sentry.init() call with PII scrubbing configured.
+      Use the sentry-monitoring skill rules.
+    must_contain:
+      - "beforeSend"
+      - "password"
+    rationale: |
+      beforeSend scrubs sensitive data before events reach Sentry servers.
+      Without it, passwords, tokens, and PII can appear in Sentry issues.
+
+  - id: sentry-02
+    name: "User context includes only ID not email or name"
+    scenario: |
+      Write the code to set the Sentry user context after authentication.
+      Use the sentry-monitoring skill rules.
+    must_contain:
+      - "Sentry.setUser({ id:"
+    must_not_contain:
+      - "email:"
+      - "name:"
+    rationale: |
+      Only the user ID is needed for issue attribution. Email and name are
+      PII that must not be sent to Sentry without explicit data processing agreement.
+
+  - id: sentry-03
+    name: "ErrorBoundary wraps the React app root"
+    scenario: |
+      Write the React app root with Sentry error boundary configured.
+      Use the sentry-monitoring skill rules.
+    must_contain:
+      - "Sentry.ErrorBoundary"
+      - "fallback="
+    rationale: |
+      ErrorBoundary catches React rendering errors and reports them to Sentry.
+      Without it, render crashes show a blank screen with no error report.

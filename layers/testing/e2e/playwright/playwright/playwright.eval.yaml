@@ -1,0 +1,45 @@
+skill: playwright
+skill_files:
+  - layers/testing/e2e/playwright/playwright/SKILL.md
+version: 1
+
+cases:
+  - id: pw-01
+    name: "Semantic selectors not CSS class selectors"
+    scenario: |
+      Write a Playwright test that clicks a submit button and verifies a
+      success message appears. Use the playwright skill rules.
+    must_contain:
+      - "getByRole("
+    must_not_contain:
+      - ".querySelector("
+      - "locator('."
+    rationale: |
+      Semantic selectors (getByRole, getByLabel) are resilient to CSS changes
+      and test real accessibility. CSS selectors break on refactoring.
+
+  - id: pw-02
+    name: "No waitForTimeout — use expect with auto-retry"
+    scenario: |
+      Write a Playwright test that waits for a loading spinner to disappear
+      after form submission. Use the playwright skill rules.
+    must_contain:
+      - "expect("
+    must_not_contain:
+      - "waitForTimeout("
+    rationale: |
+      waitForTimeout creates flaky tests. Playwright's expect() auto-retries
+      until the assertion passes or times out.
+
+  - id: pw-03
+    name: "Page objects are classes with navigation methods and no assertions"
+    scenario: |
+      Write a Playwright Page Object for a login page with methods to
+      fill credentials and submit. Use the playwright skill rules.
+    must_contain:
+      - "class "
+    must_not_contain:
+      - "expect("
+    rationale: |
+      Page objects encapsulate navigation and interaction. Assertions belong
+      in the test file, not in page object methods.

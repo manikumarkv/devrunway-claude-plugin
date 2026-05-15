@@ -1,0 +1,45 @@
+skill: firebase-auth
+skill_files:
+  - layers/auth/firebase/SKILL.md
+version: 1
+
+cases:
+  - id: firebase-01
+    name: "verifyIdToken server-side not trusting client uid"
+    scenario: |
+      Write a server-side middleware that validates a Firebase ID token from
+      the Authorization header. Use the firebase-auth skill rules.
+    must_contain:
+      - "admin.auth().verifyIdToken("
+      - "decodedToken"
+    must_not_contain:
+      - "req.body.uid"
+      - "req.headers.uid"
+    rationale: |
+      Firebase ID tokens must be verified server-side with the Admin SDK.
+      Never trust a uid or userId sent directly by the client.
+
+  - id: firebase-02
+    name: "Custom claims used for role-based authorization"
+    scenario: |
+      Write the code that sets an admin role on a Firebase user and checks
+      it in a protected route. Use the firebase-auth skill rules.
+    must_contain:
+      - "setCustomUserClaims("
+      - "claims.role"
+    rationale: |
+      Custom claims are the Firebase pattern for RBAC. They travel with
+      the ID token and are verified server-side automatically.
+
+  - id: firebase-03
+    name: "Tokens never stored in localStorage"
+    scenario: |
+      Write the Firebase auth state listener that provides the current user
+      to a React app. Use the firebase-auth skill rules.
+    must_contain:
+      - "onAuthStateChanged("
+    must_not_contain:
+      - "localStorage.setItem('token'"
+    rationale: |
+      Firebase manages token storage securely via onAuthStateChanged.
+      Storing tokens in localStorage exposes them to XSS attacks.
