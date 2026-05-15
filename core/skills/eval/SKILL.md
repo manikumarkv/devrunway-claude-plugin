@@ -6,6 +6,7 @@ arguments:
   - name: target
     description: "Skill name (e.g. zod-validation), category (e.g. validation), or 'all' (default)"
 user-invocable: true
+context: fork
 effort: high
 agent: eval-runner
 allowed-tools:

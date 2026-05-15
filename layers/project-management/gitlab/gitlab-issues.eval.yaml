@@ -1,0 +1,46 @@
+skill: gitlab-issues
+skill_files:
+  - layers/project-management/gitlab/SKILL.md
+version: 1
+
+cases:
+  - id: gitlab-issues-01
+    name: "MR description uses Closes keyword to auto-close issue"
+    scenario: |
+      Write the description body for a GitLab Merge Request that resolves
+      issue #142 (a bug fix). Include the issue link that will auto-close
+      the issue on merge. Use the gitlab-issues skill rules.
+    must_contain:
+      - "Closes #142"
+    must_not_contain:
+      - "manually close"
+    rationale: |
+      MRs should use the Closes keyword so issues close automatically on merge.
+
+  - id: gitlab-issues-02
+    name: "Issue uses scoped labels for priority and status"
+    scenario: |
+      Show the labels block of a new GitLab issue for a high-priority bug
+      that's ready to be picked up. Use the gitlab-issues skill rules.
+    must_contain:
+      - "priority::high"
+      - "status::ready"
+    must_not_contain:
+      - "priority: high"
+      - "status: ready"
+    rationale: |
+      Scoped labels (category::value) are required so the board filters
+      correctly and priorities are mutually exclusive.
+
+  - id: gitlab-issues-03
+    name: "MCP tools preferred over glab CLI"
+    scenario: |
+      The assistant needs to create a new GitLab issue programmatically and
+      the `gitlab` MCP is active. Show which tool/command to call.
+      Use the gitlab-issues skill rules.
+    must_contain:
+      - "mcp__gitlab__create_issue"
+    must_not_contain:
+      - "glab issue create"
+    rationale: |
+      When MCP is active, prefer mcp__gitlab__* tools over CLI fallbacks.

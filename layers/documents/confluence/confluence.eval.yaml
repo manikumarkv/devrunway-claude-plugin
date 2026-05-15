@@ -1,0 +1,37 @@
+skill: confluence
+skill_files:
+  - layers/documents/confluence/SKILL.md
+version: 1
+
+cases:
+  - id: confluence-01
+    name: "ADR uses the standard template with Status, Context, Decision sections"
+    scenario: |
+      Write the markdown body for a new Architecture Decision Record in
+      Confluence about choosing PostgreSQL over MongoDB for the orders service.
+      Use the confluence skill rules.
+    must_contain:
+      - "Status:"
+      - "Context"
+      - "Decision"
+      - "Alternatives"
+      - "Consequences"
+    must_not_contain:
+      - "TODO fill this in"
+    rationale: |
+      ADRs must follow the mandated template — Status, Context, Decision,
+      Alternatives, Consequences. Free-form ADRs are not allowed.
+
+  - id: confluence-02
+    name: "MCP tools preferred over REST API"
+    scenario: |
+      The assistant needs to fetch an existing Confluence page and the
+      `confluence` MCP is active. Show which tool to call.
+      Use the confluence skill rules.
+    must_contain:
+      - "mcp__confluence__get_page"
+    must_not_contain:
+      - "curl"
+      - "/wiki/rest/api"
+    rationale: |
+      When MCP is active, prefer mcp__confluence__* tools over manual REST.

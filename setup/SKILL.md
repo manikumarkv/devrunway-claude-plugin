@@ -215,10 +215,13 @@ Display this exact text:
     msw | mirage | json-server | none
 
 35. Project management
-    github | jira | linear | huly | none
+    github | jira | gitlab | linear | huly | none
 
 36. Primary programming language (for language-specific pattern standards)
     typescript | python | none
+
+37. Documentation / knowledge-base tool (where specs, ADRs, runbooks live)
+    confluence | notion | none
 ```
 
 Wait for the user's answers. After receiving answers to Screen 6, generate all outputs.
@@ -267,7 +270,8 @@ Write this file to `stack.json` in the project root (the directory where the use
   "testing-api": "<answer to Q33>",
   "mocking": "<answer to Q34>",
   "project-management": "<answer to Q35>",
-  "language": "<answer to Q36>"
+  "language": "<answer to Q36>",
+  "documents": "<answer to Q37>"
 }
 ```
 
@@ -327,6 +331,45 @@ Only generate `.mcp.json` if the user selected one or more tools that have MCP s
 }
 ```
 
+### gitlab (selected when Q1 = `gitlab` OR Q35 = `gitlab`)
+
+```json
+"gitlab": {
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-gitlab"],
+  "env": {
+    "GITLAB_PERSONAL_ACCESS_TOKEN": "<get from gitlab.com → User Settings → Access Tokens (scopes: api, read_repository)>",
+    "GITLAB_API_URL": "<https://gitlab.com/api/v4 for SaaS; self-hosted URL otherwise>"
+  }
+}
+```
+
+### confluence (selected when Q37 = `confluence`)
+
+```json
+"confluence": {
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-confluence"],
+  "env": {
+    "CONFLUENCE_BASE_URL": "<your-org.atlassian.net/wiki>",
+    "CONFLUENCE_EMAIL": "<your-email>",
+    "CONFLUENCE_API_TOKEN": "<get from id.atlassian.com → Security → API tokens>"
+  }
+}
+```
+
+### notion (selected when Q37 = `notion`)
+
+```json
+"notion": {
+  "command": "npx",
+  "args": ["-y", "@notionhq/notion-mcp-server"],
+  "env": {
+    "NOTION_API_KEY": "<get from notion.so → Settings → Integrations → New internal integration>"
+  }
+}
+```
+
 If none of the above tools are selected, do **not** write `.mcp.json`.
 
 If `.mcp.json` already exists in the project root, read its current contents first and **merge** the new entries into the existing `mcpServers` object rather than overwriting unrelated servers.
@@ -359,7 +402,7 @@ Your stack summary:
   Cloud          : <Q16>  |  DB : <Q18>  |  Auth : <Q19>
   Logging        : <Q24> → <Q25>  |  Errors : <Q26>
   Testing        : <Q31> + <Q32> + <Q33> + <Q34>
-  Design         : <Q11>  |  PM : <Q35>  |  Language : <Q36>
+  Design         : <Q11>  |  PM : <Q35>  |  Language : <Q36>  |  Docs : <Q37>
 
 stack.json written to ./stack.json
 
@@ -495,10 +538,13 @@ Then for each non-`none` answer, print the corresponding `/install` command usin
 | Q34 | `json-server` | `layers/mocking/json-server` |
 | Q35 | `github` | `layers/project-management/github` |
 | Q35 | `jira` | `layers/project-management/jira` |
+| Q35 | `gitlab` | `layers/project-management/gitlab` |
 | Q35 | `linear` | `layers/project-management/linear` |
 | Q35 | `huly` | `layers/project-management/huly` |
 | Q36 | `typescript` | `layers/language/typescript` |
 | Q36 | `python` | _(no layer yet — python patterns covered in backend layers)_ |
+| Q37 | `confluence` | `layers/documents/confluence` |
+| Q37 | `notion` | `layers/documents/notion` |
 
 After the install commands, if `.mcp.json` was written, append:
 

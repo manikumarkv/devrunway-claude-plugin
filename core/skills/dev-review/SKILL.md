@@ -45,6 +45,18 @@ Show the file list and any immediate type/lint errors before starting the full r
 
 ---
 
+## Step 1b — Fetch applicable standards
+
+Call `stack-dispatcher` via the Task tool. Pass:
+- `task` — "review changed files for standards violations"
+- `target_files` — the list from `git diff` above
+
+The dispatcher returns a rule set from only the installed layers whose `paths:` patterns match the changed files. Use these rules during Step 2's review **in addition to** the core checklist below.
+
+Do **not** Read layer detail files (`layers/*/*/*.md`) directly. The dispatcher's consultants do that in isolated context.
+
+---
+
 ## Step 2 — Full review
 
 Read every changed file. Review against each standard below. Collect all findings before presenting them — do not interrupt the review to discuss individual items.

@@ -6,6 +6,7 @@ arguments:
   - name: input
     description: "GitHub issue number, or path to the design doc"
 user-invocable: true
+context: fork
 effort: medium
 allowed-tools:
   - Read
@@ -67,6 +68,20 @@ Show the full plan to the user before doing anything:
 > Ready? (yes / update the plan first)
 
 If the user says "update the plan first" — stop and let them edit the design doc. They resume by running `/dev-code <number>` again.
+
+---
+
+## Standards lookup (before each phase)
+
+Before generating code for a new **phase**, call the `stack-dispatcher` agent via the Task tool. Pass:
+- `task` — the phase summary (e.g. "implement Express route handlers for /users")
+- `target_files` — the files this phase will create or edit
+
+The dispatcher returns a concentrated rule set (≤300 lines) drawn from only the installed layers whose `paths:` patterns match these files. Use those rules — and only those rules — to inform the code you generate in this phase.
+
+Do **not** Read layer detail files (`*.md` in `layers/<category>/<tech>/`) directly. The dispatcher and its layer-consultant sub-agents handle that in their own context windows. Reading them inline defeats the purpose of forking this skill.
+
+Call the dispatcher **once per phase**, not once per file — phases generally touch related files, and one consultation covers them.
 
 ---
 

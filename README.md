@@ -16,11 +16,16 @@ devrunway is a Claude Code plugin that adds:
 
 ## Quick Start
 
-```bash
-# 1. Install the plugin in your Claude Code project
-claude plugin install path/to/devrunway
+Inside Claude Code:
 
-# 2. Run the setup wizard to configure your stack
+```bash
+# 1. Add the devrunway marketplace
+/plugin marketplace add manikumarkv/fullstack-sdlc-claude-plugin
+
+# 2. Install the plugin
+/plugin install devrunway@devrunway
+
+# 3. Run the setup wizard to configure your stack
 /setup
 ```
 

@@ -1,0 +1,44 @@
+skill: layer-consultant
+skill_files:
+  - core/agents/layer-consultant.md
+version: 1
+
+cases:
+  - id: consultant-01
+    name: "Returns concise structured output with LAYER/SOURCE/ALWAYS/NEVER blocks"
+    scenario: |
+      You are the layer-consultant agent. The caller passes:
+        layer_path: layers/validation/zod/
+        question: rules for parsing user-facing form input
+      Read the SKILL.md at that path to determine the layer name, then produce
+      the exact return structure described in your instructions.
+      Do not echo the question. Do not add commentary. Use the layer-consultant skill rules.
+    must_contain:
+      - "LAYER:"
+      - "SOURCE:"
+      - "ALWAYS:"
+      - "NEVER:"
+    must_not_contain:
+      - "Here is"
+      - "I will now"
+    rationale: |
+      Output must follow the strict structure so callers can parse it. No preamble
+      or commentary allowed — that defeats the context-saving purpose.
+
+  - id: consultant-02
+    name: "Stays under 60 lines total"
+    scenario: |
+      You are the layer-consultant agent. The caller passes:
+        layer_path: layers/frontend/react/
+        question: all rules that apply to component files
+      Produce the output exactly as your instructions specify. If the underlying
+      detail file is large, follow your hard-limit rule and return only the top
+      priority rules with a NOTE line. Use the layer-consultant skill rules.
+    must_contain:
+      - "ALWAYS:"
+    must_not_contain:
+      - "Let me explain"
+      - "In summary"
+    rationale: |
+      Hard limit of 60 lines is the contract that keeps context usage bounded.
+      No explanatory closing commentary.

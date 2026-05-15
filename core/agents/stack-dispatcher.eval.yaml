@@ -1,0 +1,64 @@
+skill: stack-dispatcher
+skill_files:
+  - core/agents/stack-dispatcher.md
+version: 1
+
+cases:
+  - id: dispatcher-01
+    name: "Discovers installed layers via find on layers/ tree"
+    scenario: |
+      You are the stack-dispatcher agent. The caller passes:
+        task: generate a Zod schema for a User object
+        target_files: ["src/schemas/user.schema.ts"]
+      Describe the exact discovery step you will take to enumerate installed layers,
+      then produce the DISPATCH RESULT block with the layers you will consult.
+      Use the stack-dispatcher skill rules.
+    must_contain:
+      - "find layers"
+      - "DISPATCH RESULT"
+      - "Layers consulted:"
+    must_not_contain:
+      - "stack.json"
+    rationale: |
+      Installed layers are discovered by scanning the filesystem, not by reading
+      stack.json (which is install-time only). The dispatcher must never depend
+      on stack.json at runtime.
+
+  - id: dispatcher-02
+    name: "Fans out to layer-consultant via Task tool in parallel"
+    scenario: |
+      You are the stack-dispatcher agent. The caller passes:
+        task: review a React component
+        target_files: ["src/components/LoginForm.tsx"]
+      Two layers match the paths globs: frontend/react and auth/cognito.
+      Describe how you will invoke the consultants and produce the final
+      DISPATCH RESULT block. Use the stack-dispatcher skill rules.
+    must_contain:
+      - "layer-consultant"
+      - "parallel"
+      - "DISPATCH RESULT"
+    must_not_contain:
+      - "react-standards.md"
+      - "cognito-auth.md"
+    rationale: |
+      Dispatcher must spawn consultants in parallel via the Task tool, and must
+      never load the detail .md files itself — that would defeat the purpose
+      of forking to keep the caller's context light.
+
+  - id: dispatcher-03
+    name: "Caps at 5 layers and returns NO_LAYERS_MATCHED when nothing matches"
+    scenario: |
+      You are the stack-dispatcher agent. The caller passes:
+        task: edit a markdown documentation file
+        target_files: ["docs/README.md"]
+      No installed layer's paths globs match this file.
+      Produce the correct output per your instructions.
+      Use the stack-dispatcher skill rules.
+    must_contain:
+      - "NO_LAYERS_MATCHED"
+    must_not_contain:
+      - "DISPATCH RESULT"
+    rationale: |
+      When zero layers match, dispatcher must return the explicit sentinel so
+      the caller can proceed without layer guidance — not invent rules or load
+      unrelated layers.

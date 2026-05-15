@@ -6,6 +6,7 @@ arguments:
   - name: input
     description: "GitHub issue number, or path to a dev-brainstorm doc"
 user-invocable: true
+context: fork
 effort: high
 allowed-tools:
   - Read
@@ -42,6 +43,18 @@ find src/ -type f | grep -v node_modules | head -40
 ```
 
 Read every relevant doc before writing a single line of the plan. The design must reflect the **recommended approach** from the brainstorm doc if one exists.
+
+---
+
+## Step 1b — Consult installed layers
+
+Once you know what will be built, call `stack-dispatcher` via the Task tool. Pass:
+- `task` — short summary of the feature being designed
+- `target_files` — the anticipated files this design will touch (e.g. `src/routes/users.ts`, `src/components/UserList.tsx`)
+
+The dispatcher returns a concentrated rule set from only the installed, file-pattern-matched layers. Use this rule set when designing the phases — it tells you which conventions each phase must follow without loading thousands of lines of standards prose into this context.
+
+Do **not** Read layer detail files directly. The dispatcher's consultants do that in isolated sub-agents.
 
 ---
 

@@ -1,7 +1,8 @@
 {
   "name": "devrunway",
-  "description": "Modular SDLC plugin for any tech stack. Pick your tools, get tailored coding standards, MCP wiring, and SDLC workflow — from requirements to production.",
-  "version": "3.2.0",
+  "description": "Modular SDLC plugin for any tech stack. Pick your tools, get tailored coding standards, MCP wiring, sub-agent context management, 35+ safety/quality hooks, and the full SDLC workflow — brainstorm to production.",
+  "version": "4.0.0",
+  "license": "MIT",
   "author": {
     "name": "yamani"
   },
@@ -21,6 +22,46 @@
       "env": {
         "FIGMA_ACCESS_TOKEN": "${user_config.FIGMA_TOKEN}"
       }
+    },
+    "jira": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-jira"],
+      "env": {
+        "JIRA_BASE_URL": "${user_config.JIRA_BASE_URL}",
+        "JIRA_EMAIL": "${user_config.JIRA_EMAIL}",
+        "JIRA_API_TOKEN": "${user_config.JIRA_API_TOKEN}"
+      }
+    },
+    "gitlab": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gitlab"],
+      "env": {
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "${user_config.GITLAB_TOKEN}",
+        "GITLAB_API_URL": "${user_config.GITLAB_API_URL}"
+      }
+    },
+    "linear": {
+      "command": "npx",
+      "args": ["-y", "@linear/mcp-server"],
+      "env": {
+        "LINEAR_API_KEY": "${user_config.LINEAR_API_KEY}"
+      }
+    },
+    "confluence": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-confluence"],
+      "env": {
+        "CONFLUENCE_BASE_URL": "${user_config.CONFLUENCE_BASE_URL}",
+        "CONFLUENCE_EMAIL": "${user_config.CONFLUENCE_EMAIL}",
+        "CONFLUENCE_API_TOKEN": "${user_config.CONFLUENCE_API_TOKEN}"
+      }
+    },
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "env": {
+        "NOTION_API_KEY": "${user_config.NOTION_API_KEY}"
+      }
     }
   },
   "userConfig": {
@@ -31,6 +72,56 @@
     },
     "FIGMA_TOKEN": {
       "description": "Figma Personal Access Token (from Figma → Settings → Personal Access Tokens). Used for reading design files and components.",
+      "type": "secret",
+      "required": false
+    },
+    "JIRA_BASE_URL": {
+      "description": "Jira Cloud base URL (e.g. https://yourorg.atlassian.net). Required if project-management=jira.",
+      "type": "string",
+      "required": false
+    },
+    "JIRA_EMAIL": {
+      "description": "Jira account email. Required if project-management=jira.",
+      "type": "string",
+      "required": false
+    },
+    "JIRA_API_TOKEN": {
+      "description": "Jira API token (Atlassian → Account → Security → API tokens). Required if project-management=jira.",
+      "type": "secret",
+      "required": false
+    },
+    "GITLAB_TOKEN": {
+      "description": "GitLab Personal Access Token. Required scopes: api, read_repository. Required if project-management=gitlab or source-control=gitlab.",
+      "type": "secret",
+      "required": false
+    },
+    "GITLAB_API_URL": {
+      "description": "GitLab API URL (default https://gitlab.com/api/v4 for SaaS; set to self-hosted instance otherwise).",
+      "type": "string",
+      "required": false
+    },
+    "LINEAR_API_KEY": {
+      "description": "Linear API key (Linear → Settings → API → Personal API keys). Required if project-management=linear.",
+      "type": "secret",
+      "required": false
+    },
+    "CONFLUENCE_BASE_URL": {
+      "description": "Confluence Cloud base URL (e.g. https://yourorg.atlassian.net/wiki). Required if documents=confluence.",
+      "type": "string",
+      "required": false
+    },
+    "CONFLUENCE_EMAIL": {
+      "description": "Atlassian account email. Required if documents=confluence.",
+      "type": "string",
+      "required": false
+    },
+    "CONFLUENCE_API_TOKEN": {
+      "description": "Confluence API token (Atlassian → Account → Security → API tokens). Required if documents=confluence.",
+      "type": "secret",
+      "required": false
+    },
+    "NOTION_API_KEY": {
+      "description": "Notion internal integration token (Notion → Settings → Integrations → New integration). Required if documents=notion.",
       "type": "secret",
       "required": false
     }

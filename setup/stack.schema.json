@@ -40,7 +40,8 @@
     "testing-e2e",
     "testing-api",
     "mocking",
-    "project-management"
+    "project-management",
+    "documents"
   ],
   "additionalProperties": false,
   "properties": {
@@ -222,7 +223,12 @@
     "project-management": {
       "description": "Project / issue tracking tool (Q35).",
       "type": "string",
-      "enum": ["github", "jira", "linear", "huly", "none"]
+      "enum": ["github", "jira", "gitlab", "linear", "huly", "none"]
+    },
+    "documents": {
+      "description": "Documentation / knowledge-base tool (Q37).",
+      "type": "string",
+      "enum": ["confluence", "notion", "none"]
     }
   }
 }

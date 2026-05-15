@@ -6,6 +6,7 @@ arguments:
   - name: target
     description: "Skill name to fix, 'new <technology>' to generate from scratch, or 'all' to fix every failing skill"
 user-invocable: true
+context: fork
 effort: high
 agent: skill-forge
 allowed-tools:

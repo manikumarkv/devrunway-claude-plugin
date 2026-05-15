@@ -69,6 +69,23 @@ Universal skills active for **all** stacks:
 
 ---
 
+## Sub-agent context management
+
+Heavy skills (`/dev-code`, `/dev-design`, `/eval`, `/forge`, `/dev-review`, `/security-review`) declare `context: fork` in their frontmatter. They run in **their own context window** and return concise summaries to the main thread — so multi-thousand-line layer standards files never bloat your session.
+
+Within a forked skill, layer standards are loaded on demand via two agents:
+
+| Agent | Role |
+|---|---|
+| `stack-dispatcher` | Scans `layers/*/*/SKILL.md` on disk, matches each layer's `paths:` globs against the files being worked on, and fans out to consultants in parallel |
+| `layer-consultant` | Loads one layer's detail file (e.g. `react-standards.md`), distills the rules relevant to the question, returns ≤60 lines |
+
+**Runtime source of truth:** whichever `layers/<category>/<tech>/SKILL.md` files exist on disk are the installed layers. `stack.json` is install-time only — the dispatcher does not consult it at runtime.
+
+**Pattern:** when you write a new skill that consumes layer standards, do not Read `layers/*/*/*.md` files inline. Instead, call `stack-dispatcher` via the Task tool with `task` + `target_files`, and use the rule set it returns.
+
+---
+
 ## Review skills — run both before `/pr create`
 
 | Command | Agent | What it checks |

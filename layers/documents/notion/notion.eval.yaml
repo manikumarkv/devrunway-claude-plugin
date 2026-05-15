@@ -1,0 +1,50 @@
+skill: notion
+skill_files:
+  - layers/documents/notion/SKILL.md
+version: 1
+
+cases:
+  - id: notion-01
+    name: "Documentation type goes in a database, not a loose page"
+    scenario: |
+      The team wants to start tracking Architecture Decision Records in Notion.
+      Recommend where they should live in the workspace and how new records
+      should be created. Use the notion skill rules.
+    must_contain:
+      - "database"
+      - "template"
+    must_not_contain:
+      - "loose page"
+      - "free-form page"
+    rationale: |
+      Documentation types like ADRs must live in a Notion database with a
+      shared template — never as loose pages in the sidebar.
+
+  - id: notion-02
+    name: "Database entries have Owner and Status properties"
+    scenario: |
+      Define the properties for a new Runbook database in Notion. Use the
+      notion skill rules.
+    must_contain:
+      - "Owner"
+      - "Status"
+    must_not_contain:
+      - "Just a title"
+    rationale: |
+      Every doc database requires Owner (person) and Status (select)
+      properties at minimum.
+
+  - id: notion-03
+    name: "MCP tools preferred and IDs used over titles"
+    scenario: |
+      The assistant needs to update a Notion page programmatically and the
+      `notion` MCP is active. Show how to identify the target page and which
+      tool to call. Use the notion skill rules.
+    must_contain:
+      - "mcp__notion__update_page"
+      - "page ID"
+    must_not_contain:
+      - "by title"
+    rationale: |
+      MCP tools are preferred and pages must be addressed by UUID, not title
+      (titles can change).
