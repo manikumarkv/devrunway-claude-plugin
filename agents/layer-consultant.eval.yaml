@@ -1,6 +1,6 @@
 skill: layer-consultant
 skill_files:
-  - core/agents/layer-consultant.md
+  - agents/layer-consultant.md
 version: 1
 
 cases:

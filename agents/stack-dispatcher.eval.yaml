@@ -1,6 +1,6 @@
 skill: stack-dispatcher
 skill_files:
-  - core/agents/stack-dispatcher.md
+  - agents/stack-dispatcher.md
 version: 1
 
 cases:

@@ -80,12 +80,11 @@ MCP servers configured in .mcp.json (auto-registered on plugin install):
 ## Architecture
 
 ```
-core/          ← always active; universal SDLC for any stack
-  skills/      ← 32 slash commands (product-plan, dev-code, pr, deploy…)
-  agents/      ← code-reviewer, security-reviewer, debugger
-  hooks/       ← destructive-git-guard, session-summary
+skills/        ← universal slash commands (product-plan, dev-code, pr, eval, forge, friction…)
+agents/        ← code-reviewer, security-reviewer, debugger, stack-dispatcher, layer-consultant
+hooks/         ← 35 active safety + quality hooks (destructive-git-guard, secrets-leak-guard, …)
 
-layers/        ← pick what matches your stack
+layers/        ← 135 technology layers, auto-loaded by file pattern
   frontend/      react | vue | angular | nextjs
   backend/       node-express | python-fastapi | python-django | dotnet
   cloud/         aws | gcp | azure

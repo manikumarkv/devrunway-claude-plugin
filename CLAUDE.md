@@ -7,25 +7,18 @@ This repo IS the Claude Code plugin — not an app. Files here define skills, ag
 ## Architecture
 
 ```
-core/        ← always installed; universal SDLC for any stack
-layers/      ← technology-specific layers; install only what you use
-setup/       ← /setup wizard; generates stack.json + .mcp.json + install commands
+skills/      ← universal slash commands + background reference skills (auto-discovered by Claude Code)
+agents/      ← code-reviewer, security-reviewer, stack-dispatcher, layer-consultant
+hooks/       ← hook scripts + hooks.json registration
+layers/      ← 135 technology-specific layers (auto-load by paths: globs)
+setup/       ← stack.schema.json (validation schema for stack.json)
 ```
 
-### core/ — always active
-| Directory | Purpose |
-|---|---|
-| `core/skills/` | ~32 universal slash commands + background reference skills |
-| `core/agents/` | `code-reviewer`, `security-reviewer`, `debugger` |
-| `core/hooks/` | `destructive-git-guard.sh`, `session-summary.sh` |
-
-### layers/ — install what matches your stack
-Each layer is a self-contained directory with its own skills and `stack:` frontmatter. Layers cover: frontend, backend, cloud, database, auth, CI, testing, logging, state, validation, design, and more.
+All 135 layer skills come bundled with the plugin. There is no per-layer install step — the `stack-dispatcher` agent reads `stack.json` and the files you edit at runtime and loads only the relevant layer detail files into a sub-agent.
 
 **First time in a project?** Run `/setup` to configure your stack. It generates:
-1. `stack.json` — declares which layers you use
+1. `stack.json` — declares which technologies you use
 2. `.mcp.json` — pre-configures MCP servers for your tools (Figma, GitHub, Jira, etc.)
-3. `/install` commands — the exact layers to install
 
 ---
 

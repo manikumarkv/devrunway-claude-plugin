@@ -26,7 +26,7 @@ The point is volume and honesty, not polish. 30 seconds per entry. If you're thi
 - **skill-gap** — the rule isn't encoded in any layer's `SKILL.md` or detail file
 - **false-positive-hook** — a hook fired on code that's actually fine
 - **false-negative-hook** — a hook should have fired but didn't
-- **pipeline-skip** — a `core/skills/<name>/SKILL.md` step was skipped or ran out of order
+- **pipeline-skip** — a `skills/<name>/SKILL.md` step was skipped or ran out of order
 - **UX** — the plugin behaved correctly but the experience was bad (confusing output, too much noise, wrong default, etc.)
 - **other** — anything else
 

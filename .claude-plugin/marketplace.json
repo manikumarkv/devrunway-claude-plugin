@@ -10,7 +10,7 @@
       "name": "devrunway",
       "source": "./.",
       "description": "Modular SDLC plugin for any tech stack. Pick your tools, get tailored coding standards, MCP wiring, sub-agent context management, 35+ safety/quality hooks, and the full SDLC workflow — brainstorm to production.",
-      "version": "4.0.3",
+      "version": "4.0.4",
       "license": "MIT",
       "homepage": "https://devrunway.dev",
       "repository": "https://github.com/manikumarkv/devrunway-claude-plugin",

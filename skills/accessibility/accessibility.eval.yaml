@@ -1,6 +1,6 @@
 skill: accessibility
 skill_files:
-  - core/skills/accessibility/SKILL.md
+  - skills/accessibility/SKILL.md
 version: 1
 
 cases:

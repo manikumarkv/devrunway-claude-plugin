@@ -89,7 +89,7 @@ For each of the top 3 patterns, propose a concrete fix and write a draft eval ca
 | `skill-gap` | Add a draft `.eval.yaml` case under `docs/quality/draft-evals/<skill-slug>-<short-name>.eval.yaml` with a `must_contain` assertion derived from the "Expected" field. Note: run `/forge fix <skill>` after the draft is accepted. |
 | `hook-fp` | Note which regex needs tightening; point at the hook script. Recommend: add the false-positive content as a regression test in `tests/hooks/<hook>.test.sh` (once that suite exists) so it stays fixed. |
 | `hook-fn` | Recommend extending the regex to catch the missed pattern. Reference the relevant entry's "Expected" field. |
-| `pipeline` | Point at the orchestrating skill (`core/skills/<name>/SKILL.md`). Recommend a clarifying instruction or an explicit step. |
+| `pipeline` | Point at the orchestrating skill (`skills/<name>/SKILL.md`). Recommend a clarifying instruction or an explicit step. |
 | `ux` | Recommend a copy / default / phrasing change. Reference the friction's "Expected" field. |
 | `other` | Surface the entries; defer to user judgement. |
 

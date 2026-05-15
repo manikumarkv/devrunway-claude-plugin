@@ -10,7 +10,7 @@ CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string /
 
 # Skip the plugin's own hook + skill files (they describe these patterns)
 case "$FILE" in
-  */hooks/scripts/*|*/core/agents/*|*/docs/HOOKS.md|*/CAPABILITIES.md|*/docs/CAPABILITIES.md)
+  */hooks/scripts/*|*/agents/*|*/docs/HOOKS.md|*/CAPABILITIES.md|*/docs/CAPABILITIES.md)
     echo '{"continue": true}'; exit 0 ;;
 esac
 
