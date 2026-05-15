@@ -6,12 +6,17 @@ devrunway is built around a modular layer system. Each layer teaches Claude the 
 
 ## What to contribute
 
-The best place to start is a stub layer — any layer marked `🫥 Stub` in [docs/ROADMAP.md](docs/ROADMAP.md). Examples:
+Three ways to contribute:
 
-- `layers/frontend/vue/` — Vue 3 + Pinia standards
-- `layers/backend/python-fastapi/` — FastAPI + Pydantic standards
-- `layers/testing/unit/jest/` — Jest mock patterns
-- `layers/css/styled-components/` — styled-components conventions
+**1. Improve an existing layer** — All 135 layers are implemented, but every layer can get sharper. Common improvements:
+- Add more code examples for edge cases
+- Expand the "Common mistakes" table
+- Update for a new major version of the library
+- Add a missing pattern you hit in production
+
+**2. Add a new layer** — A technology that devrunway doesn't cover yet. Check [docs/ROADMAP.md](docs/ROADMAP.md) and open an issue before building so we can agree on the path and avoid duplication.
+
+**3. Add a new layer category** — If you need a category that doesn't exist (e.g. `layers/analytics/`), open an issue first so we can agree on the naming convention before you build.
 
 ---
 
@@ -89,10 +94,18 @@ mcp:
 The companion `.md` file is the full standards document. It should cover:
 
 1. **Setup / config** — how to configure the tool in a project
-2. **Key patterns** — the 10-15 most important patterns Claude must know
-3. **Anti-patterns** — what NOT to do (with brief reason)
-4. **Testing** — how to write tests for code using this tech
-5. **Examples** — short, concrete code snippets
+2. **Key patterns** — the 10-15 most important patterns Claude must know, with working code examples
+3. **Testing** — how to write tests for code using this tech
+4. **Common mistakes table** — always the last section, in this format:
+
+```markdown
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Doing X the wrong way | Do Y instead |
+| Forgetting to Z | Always Z because ... |
+```
 
 Length guide: 200–600 lines. Enough to be authoritative, short enough to fit in context.
 
@@ -100,16 +113,18 @@ Length guide: 200–600 lines. Enough to be authoritative, short enough to fit i
 
 ## Step-by-step guide
 
-1. **Find a stub** in [docs/ROADMAP.md](docs/ROADMAP.md) or open an issue to propose a new one
+### Adding a new layer
+
+1. **Open an issue** proposing the layer — include the technology, the `layers/<category>/<tech>/` path, and why it's not covered by an existing layer.
 
 2. **Fork the repo** and create a branch:
    ```bash
    git checkout -b feat/layer-jest
    ```
 
-3. **Remove the stub README** and create the two skill files:
+3. **Create the layer directory** with the two required files:
    ```bash
-   rm layers/testing/unit/jest/README.md
+   mkdir -p layers/testing/unit/jest
    # Create SKILL.md and jest-standards.md
    ```
 
@@ -119,6 +134,14 @@ Length guide: 200–600 lines. Enough to be authoritative, short enough to fit i
    - Title: `feat(layer): add jest-standards`
    - Description: what patterns the layer covers, what you tested it on
    - At least one example of Claude applying the standard correctly
+
+### Improving an existing layer
+
+1. **Fork the repo** and create a branch: `fix/layer-react-signals` or `feat/layer-zod-async`
+2. **Edit the relevant `.md` file** — make your changes, keep the "Common mistakes" table at the end
+3. **Submit a PR** with:
+   - Title: `fix(layer): add async refinement pattern to zod-validation`
+   - Description: what was missing or wrong, link to official docs if relevant
 
 ---
 
@@ -132,12 +155,6 @@ A layer PR will be merged when:
 - [ ] No duplicate content with `core/` (core covers universal principles; layers cover tech-specific implementation)
 - [ ] Anti-patterns section explains *why*, not just *what*
 - [ ] The stub `README.md` is deleted
-
----
-
-## Adding a new layer category
-
-If you need a category that doesn't exist yet (e.g. `layers/analytics/`), open an issue first so we can agree on the naming convention before you build.
 
 ---
 

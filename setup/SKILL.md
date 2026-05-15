@@ -216,59 +216,12 @@ Display this exact text:
 
 35. Project management
     github | jira | linear | huly | none
+
+36. Primary programming language (for language-specific pattern standards)
+    typescript | python | none
 ```
 
 Wait for the user's answers. After receiving answers to Screen 6, generate all outputs.
-
----
-
-## STUB layers
-
-The following layer values are **not yet implemented**. If the user selects any of them, print a warning in this exact format before the install commands:
-
-```
-⚠️  layers/<category>/<tech> is not yet implemented (STUB).
-    Vote or contribute: https://github.com/yamani/devrunway/issues
-    Falling back to core skills only for <category>.
-```
-
-### Known STUB values (by question)
-
-| Q | STUB values |
-|---|---|
-| 1 (git provider) | `gitlab`, `bitbucket`, `azure-devops` |
-| 2 (CI/CD) | `gitlab-ci`, `circleci`, `azure-pipelines` |
-| 4 (code quality) | `sonarqube`, `snyk` |
-| 5 (frontend) | `vue`, `angular`, `nextjs` |
-| 6 (CSS) | `styled-components`, `css-modules`, `bootstrap` |
-| 7 (UI components) | `mui`, `ant-design`, `chakra` |
-| 8 (state) | `redux-toolkit`, `jotai`, `pinia` |
-| 9 (i18n) | `lingui`, `vue-i18n` |
-| 10 (component docs) | `storybook`, `ladle` |
-| 11 (design) | `sketch`, `adobe-xd` |
-| 12 (backend) | `python-fastapi`, `python-django`, `dotnet` |
-| 13 (API style) | `graphql`, `trpc`, `grpc` |
-| 14 (validation) | `yup`, `valibot`, `joi` |
-| 15 (API docs) | `openapi-fastapi` |
-| 16 (cloud) | `gcp`, `azure` |
-| 17 (container) | `docker`, `kubernetes`, `vercel`, `railway` |
-| 18 (database) | `mongodb`, `sqlalchemy` |
-| 19 (auth) | `firebase`, `auth0`, `azure-ad` |
-| 20 (cache/queue) | `bullmq`, `rabbitmq` |
-| 21 (storage) | `gcs`, `cloudinary`, `uploadthing` |
-| 23 (feature flags) | `launchdarkly`, `flagsmith` |
-| 24 (logging framework) | `winston`, `morgan` |
-| 25 (logging provider) | `datadog`, `splunk`, `grafana-loki`, `newrelic` |
-| 26 (error monitoring) | `datadog-apm`, `bugsnag` |
-| 27 (realtime) | `pusher`, `ably` |
-| 28 (search) | `algolia`, `elasticsearch` |
-| 29 (payment) | `paypal`, `braintree` |
-| 30 (email) | `sendgrid` |
-| 31 (unit testing) | `jest`, `pytest` |
-| 32 (E2E testing) | `cypress`, `selenium`, `webdriverio` |
-| 33 (API testing) | `postman`, `insomnia` |
-| 34 (mocking) | `mirage`, `json-server` |
-| 35 (PM) | `jira`, `linear`, `huly` |
 
 ---
 
@@ -313,7 +266,8 @@ Write this file to `stack.json` in the project root (the directory where the use
   "testing-e2e": "<answer to Q32>",
   "testing-api": "<answer to Q33>",
   "mocking": "<answer to Q34>",
-  "project-management": "<answer to Q35>"
+  "project-management": "<answer to Q35>",
+  "language": "<answer to Q36>"
 }
 ```
 
@@ -405,7 +359,7 @@ Your stack summary:
   Cloud          : <Q16>  |  DB : <Q18>  |  Auth : <Q19>
   Logging        : <Q24> → <Q25>  |  Errors : <Q26>
   Testing        : <Q31> + <Q32> + <Q33> + <Q34>
-  Design         : <Q11>  |  PM : <Q35>
+  Design         : <Q11>  |  PM : <Q35>  |  Language : <Q36>
 
 stack.json written to ./stack.json
 
@@ -543,6 +497,8 @@ Then for each non-`none` answer, print the corresponding `/install` command usin
 | Q35 | `jira` | `layers/project-management/jira` |
 | Q35 | `linear` | `layers/project-management/linear` |
 | Q35 | `huly` | `layers/project-management/huly` |
+| Q36 | `typescript` | `layers/language/typescript` |
+| Q36 | `python` | _(no layer yet — python patterns covered in backend layers)_ |
 
 After the install commands, if `.mcp.json` was written, append:
 
@@ -572,4 +528,3 @@ Your stack is now configured. Happy building.
 
 - If the user provides an answer that is not in the allowed options for a question, respond: `"<value>" is not a valid option for question <N>. Valid options are: <list>. Please re-answer question <N>.`
 - If `stack.json` already exists in the project root, read it and ask the user: `stack.json already exists. Overwrite it? (yes / no)` — abort if they say no.
-- Do not generate `.mcp.json` entries for STUB layers. STUB layers only receive the warning; they are still written to `stack.json` as-is.

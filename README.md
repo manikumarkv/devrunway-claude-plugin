@@ -81,33 +81,37 @@ core/          ← always active; universal SDLC for any stack
   hooks/       ← destructive-git-guard, session-summary
 
 layers/        ← pick what matches your stack
-  frontend/      react | vue* | angular* | nextjs*
-  backend/       node-express | python-fastapi* | python-django* | dotnet*
-  cloud/         aws | gcp* | azure*
-  database/      postgres-prisma | dynamodb | mongodb* | sqlalchemy*
-  auth/          cognito | firebase* | auth0* | azure-ad*
-  css/           tailwind | styled-components* | css-modules* | bootstrap*
-  ui-components/ shadcn | mui* | ant-design* | chakra*
-  state/         zustand | redux-toolkit* | jotai* | pinia*
-  validation/    zod | yup* | valibot* | joi*
+  frontend/      react | vue | angular | nextjs
+  backend/       node-express | python-fastapi | python-django | dotnet
+  cloud/         aws | gcp | azure
+  database/      postgres-prisma | dynamodb | mongodb | sqlalchemy
+  auth/          cognito | firebase | auth0 | azure-ad
+  css/           tailwind | styled-components | css-modules | bootstrap
+  ui-components/ shadcn | mui | ant-design | chakra
+  state/         zustand | redux-toolkit | jotai | pinia
+  validation/    zod | yup | valibot | joi
   testing/
-    unit/        vitest | jest* | pytest*
-    e2e/         playwright | cypress* | selenium*
-    api/         bruno | postman* | insomnia*
-  mocking/       msw | mirage* | json-server*
+    unit/        vitest | jest | pytest
+    e2e/         playwright | cypress | selenium
+    api/         bruno | postman | insomnia
+  mocking/       msw | mirage | json-server
   logging/
-    framework/   pino | winston* | morgan*
-    provider/    cloudwatch | datadog* | splunk* | newrelic*
-  error-monitoring/ sentry | datadog-apm* | bugsnag*
-  ci/            github-actions | gitlab-ci* | circleci*
-  design/        figma | sketch* | adobe-xd*
-  payment/       stripe | paypal* | braintree*
-  storage/       s3 | cloudinary* | gcs*
-  ... and more
+    framework/   pino | winston | morgan
+    provider/    cloudwatch | datadog | splunk | newrelic
+  error-monitoring/ sentry | datadog-apm | bugsnag
+  ci/            github-actions | gitlab-ci | circleci | azure-pipelines
+  design/        figma | sketch | adobe-xd
+  payment/       stripe | paypal | braintree
+  storage/       s3 | cloudinary | gcs | uploadthing
+  search/        algolia | elasticsearch | typesense
+  realtime/      socketio | pusher | ably
+  cache-queue/   redis | bullmq | sqs | rabbitmq
+  feature-flags/ launchdarkly | aws-appconfig | flagsmith | posthog
+  secrets/       aws-secrets-manager | vault | doppler | env-only
+  source-control/ github | gitlab | bitbucket | azure-devops
+  ... and more (135 layers total)
 
 setup/         ← /setup wizard
-
-* = stub (not yet implemented — community contributions welcome)
 ```
 
 ---
