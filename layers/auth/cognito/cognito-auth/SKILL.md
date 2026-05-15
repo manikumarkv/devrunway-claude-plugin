@@ -25,6 +25,8 @@ Install if missing: `npm install aws-amplify`
 **`src/config/aws.ts`**
 ```ts
 import { Amplify } from 'aws-amplify';
+// Legacy projects: import awsconfig from './aws-exports'; Amplify.configure(awsconfig);
+// New projects: configure directly with env vars
 
 Amplify.configure({
   Auth: {

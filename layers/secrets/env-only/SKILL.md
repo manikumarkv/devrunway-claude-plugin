@@ -13,13 +13,13 @@ Full standards in [env-only.md](env-only.md). Always-on summary:
 **The golden rule:** Secret values live only in environment variables. Never in source code, config files, or version control.
 
 **.env file discipline:**
-- `.env` — never committed; contains real secrets for local dev
-- `.env.example` — always committed; contains keys with placeholder values
-- `.env.test` — committed only if it contains no real secrets (use fake values)
+- `.env` — never committed; in `.gitignore`; contains real secrets for local dev
+- `.env.example` — always committed; contains keys with placeholder values; documents all required variables
+- `VITE_` prefix exposes variables to the browser bundle — never use `VITE_` for secrets
 - `.env.production` — never exists as a file; production vars live in the deployment platform
 
 **Validation at startup:**
-- Validate all required env vars at app startup — fail loudly if any are missing
+- Validate all required env vars at app startup using `z.object({ ... }).parse(process.env)` — fail loudly if any are missing
 - Never read `process.env.VAR` scattered across the codebase — centralise in one config module
 - A missing env var at startup is better than a cryptic runtime error at 3 AM
 

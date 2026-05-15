@@ -15,12 +15,16 @@ paths:
 Full standards in [jest.md](jest.md). Always-on summary:
 
 **Structure:**
-- One `describe` per module/class; one `describe` per method inside
+- One `describe(` per module/class; one `describe(` per method inside
 - Test names complete the sentence: `it('returns null when user not found')`
-- Arrange-Act-Assert — three clear sections per test, blank line between each
+- Use `expect(` for all assertions — Arrange-Act-Assert with blank lines between sections
+
+**Setup / teardown:**
+- `beforeEach(` to reset state before each test; call `jest.clearAllMocks(` in `beforeEach` to prevent cross-test pollution
 
 **Mocking:**
-- `jest.mock()` calls go at the top of the file, before imports take effect
+- `jest.mock(` calls go at the top of the file, before imports take effect
+- Use `mockReturnValue(` or `mockResolvedValue(` to control return values
 - Mock at the system boundary (HTTP, DB, filesystem) — not internal functions
 - `jest.spyOn()` for partial mocks where you want the real implementation for some calls
 - Always restore mocks: use `jest.restoreAllMocks()` in `afterEach` or `restoreMocks: true` in config

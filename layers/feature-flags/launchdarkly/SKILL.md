@@ -18,12 +18,12 @@ Full standards in [launchdarkly.md](launchdarkly.md). Always-on summary:
 - Never use the server SDK in the browser — it exposes your SDK key and all flag configurations
 
 **Flag naming:**
-- Use `kebab-case`: `new-checkout-flow`, `enable-dark-mode`, `max-upload-size-mb`
-- Prefix with the team or feature area for discoverability: `payments-use-stripe-v3`, `search-enable-algolia`
+- Use `UPPER_SNAKE_CASE` constants in a central `flags.ts` file, e.g., `PAYMENTS_USE_STRIPE_V3 = 'payments-use-stripe-v3'` — never scatter raw string keys
+- Prefix with the team or feature area for discoverability
 - Boolean flags for on/off; string/number flags for configuration values; JSON flags for complex config
 
 **Context (user targeting):**
-- Always pass a context object with at least `key` (stable user or device ID) and `kind`
+- Always pass a context object with at least `key:` (stable user or device ID) and `kind:` (e.g., `'user'`) — missing `kind:` disables multi-context targeting rules
 - Include attributes you'll target on: `email`, `plan`, `country`, `role`
 - Never log or store the full context object — it may contain PII
 
@@ -33,7 +33,7 @@ Full standards in [launchdarkly.md](launchdarkly.md). Always-on summary:
 - Add a description and tags to every flag — "who owns this?", "what does it control?"
 
 **Testing:**
-- Use the `testData` data source for unit tests — never call the real LaunchDarkly API in tests
+- Use `TestData(` as the data source for unit tests — it controls flag values without calling the real LaunchDarkly API
 - Expose a `getFlag(key)` helper in your app so tests can override via DI, not global state
 
 **Never:**

@@ -16,7 +16,7 @@ Full standards in [bugsnag.md](bugsnag.md). Always-on summary:
 
 **Initialization:**
 - Initialize Bugsnag once at app entry point — never call `Bugsnag.start()` more than once
-- Set `apiKey` from environment — never commit it
+- Set `apiKey:` from environment — never commit it
 - Set `releaseStage` and `enabledReleaseStages` — only report from staging/production, not dev
 - Set `appVersion` to the deployed git SHA or semantic version
 
@@ -26,7 +26,7 @@ Full standards in [bugsnag.md](bugsnag.md). Always-on summary:
 - Types: `"navigation"`, `"request"`, `"process"`, `"log"`, `"user"`, `"state"`, `"error"`, `"manual"`
 
 **Error Groups and Metadata:**
-- Set `user` context (`id`, `email`, `name`) so errors are grouped per user
+- Set user context with `setUser(id, ...)` so errors are grouped per user — only pass the user ID, not PII like address or personal identifiers
 - Add `addMetadata` for request context, feature flags, or any debugging state
 - Use `groupingHash` to force-merge or force-separate errors that Bugsnag groups incorrectly
 

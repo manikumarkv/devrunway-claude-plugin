@@ -24,9 +24,8 @@ Full standards in [vue.md](vue.md). Always-on summary:
 - Side effects: `watchEffect()` for auto-tracked effects; `watch(source, handler)` when you need the old value or to watch specific sources
 
 **Composables:**
-- Extract reusable stateful logic into `use*` composables in `src/composables/`
+- Extract reusable stateful logic into `use*` composables in `src/composables/`; always export as `export function useXxx(options?)` — named exports, not default
 - Return reactive refs/computed from composables — not plain values
-- Follow the `useXxx(options?)` naming convention
 - Composables can call other composables
 
 **Props and emits:**

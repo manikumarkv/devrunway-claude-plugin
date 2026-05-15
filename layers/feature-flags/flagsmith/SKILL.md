@@ -24,7 +24,7 @@ Full standards in [flagsmith.md](flagsmith.md). Always-on summary:
 - Pass `identity` for per-user flag evaluation; do not share SDK instances across requests
 
 **Traits and Segments:**
-- Set traits on identity to drive segment-based targeting: `setTraits({ plan: "pro", country: "US" })`
+- Set `traits:` on an `identity` to drive segment-based targeting: pass `{ identity: userId, traits: { plan: 'pro' } }` when calling `getFlags()`
 - Segments are defined in the Flagsmith dashboard — do not replicate segment logic in code
 - Traits must not include PII beyond what Flagsmith's data retention policy covers
 
@@ -34,7 +34,8 @@ Full standards in [flagsmith.md](flagsmith.md). Always-on summary:
 - Use `useIsLoading()` to show a loading state before flags are resolved
 
 **Flag Evaluation:**
-- Always provide a default value when calling `getValue()` or `isEnabled()` — never assume a flag exists
+- Check existence before reading: `if (flagsmith.hasFeature('my_flag')) { flagsmith.getValue('my_flag') }`
+- Always provide a default value when calling `flagsmith.getValue(` or `isEnabled()` — never assume a flag exists
 - Cache flag state at component mount — do not re-fetch on every render
 - Treat `isEnabled(flag)` returning `false` as the safe/disabled path
 

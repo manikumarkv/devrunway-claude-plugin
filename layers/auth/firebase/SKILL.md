@@ -14,17 +14,17 @@ Full standards in [firebase.md](firebase.md). Always-on summary:
 
 **Client-side:**
 - Call `initializeApp()` once at app startup — never per-request or in a component
-- `onAuthStateChanged` is the canonical way to track auth state — not `currentUser` directly
+- `onAuthStateChanged(auth, user => { ... })` is the canonical way to track auth state — not `currentUser` directly
 - Always `await signOut()` — never navigate away without completing sign-out
 
 **Server-side verification:**
 - Never trust a UID sent from the client — always verify the Firebase ID token server-side
-- Use `admin.auth().verifyIdToken(token)` — it validates signature, expiry, and project
+- Use `admin.auth().verifyIdToken(token)` — returns `decodedToken` with uid, email, and custom claims
 - Extract the token from `Authorization: Bearer <token>` header
 
 **Custom claims:**
 - Roles and permissions go in custom claims: `admin.auth().setCustomUserClaims(uid, { role: 'admin' })`
-- Claims are included in the verified token — no extra DB lookup needed for auth checks
+- Check `claims.role` in the server middleware after verifying the token — no extra DB lookup needed
 - Custom claims have a 1000 byte limit — keep them small (role names, IDs only)
 
 **Security:**

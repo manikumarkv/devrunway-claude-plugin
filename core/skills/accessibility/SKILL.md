@@ -8,7 +8,7 @@ Full rules in [accessibility.md](accessibility.md). Always-on summary:
 
 **Never:**
 - `<div onClick>` or `<span onClick>` for interactive elements — use `<button>` or `<a>`
-- Images without `alt` (decorative images get `alt=""`)
+- Images without descriptive `alt` text — always set `alt=` on `<img>` elements; decorative images use `role="presentation"`, informative images must describe the content
 - Form inputs without an associated `<label>`
 - `tabIndex` values > 0 (breaks natural tab order)
 - `aria-label` that duplicates visible text
@@ -22,6 +22,7 @@ Full rules in [accessibility.md](accessibility.md). Always-on summary:
 - `aria-live` for content that updates without a page reload
 - Focus trap inside modals/dialogs; restore focus on close
 - Error messages linked to their input with `aria-describedby`
+- Custom interactive elements must handle `onKeyDown` (Enter/Space/Arrow keys) and be focusable with `tabIndex={0}`
 
 
 **Related skills — apply together:**

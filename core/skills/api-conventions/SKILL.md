@@ -17,6 +17,14 @@ Full standards in [api-conventions.md](api-conventions.md). Always-on summary:
 - Success + pagination: add `"pagination": { "nextCursor": "...", "total": N, "limit": 20, "hasMore": true }`
 - Error: `{ "success": false, "error": { "code": "NOT_FOUND", "message": "...", "details": [...] }, "meta": { ... } }`
 
+**JS implementation shape (always use this):**
+```ts
+// Success
+res.json({ success: true, data: result });
+// Error
+res.json({ success: false, error: { code: 'NOT_FOUND', message: '...' } });
+```
+
 **Routes:**
 - Prefix and version from day one: `/api/v1/`
 - Plural nouns: `/orders` not `/order` or `/getOrders`

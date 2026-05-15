@@ -16,7 +16,7 @@ Full standards in [sqlalchemy.md](sqlalchemy.md). Always-on summary:
 **Models:**
 - Use `DeclarativeBase` (SQLAlchemy 2.0 style) — not the legacy `declarative_base()`
 - Define `__tablename__` explicitly; use snake_case matching the SQL table name
-- Use `Mapped[T]` type annotations — they are the source of truth for column types
+- Use `Mapped[T]` type annotations with `mapped_column(...)` — they are the source of truth for column types
 - Primary keys: `Mapped[uuid.UUID]` with `default=uuid.uuid4`
 
 **Async Session:**
@@ -28,7 +28,7 @@ Full standards in [sqlalchemy.md](sqlalchemy.md). Always-on summary:
 **Queries:**
 - Use `select(Model).where(...)` — not `session.query(Model)` (legacy style)
 - Use `scalars().all()` for lists; `scalar_one_or_none()` for single results
-- Use `selectinload` or `joinedload` for eager-loading relationships — avoid N+1 queries
+- Use `selectinload(Model.relation)` for eager-loading relationships — avoid N+1 queries
 - Add `index=True` to columns used in `WHERE` clauses
 
 **Alembic Migrations:**
@@ -41,6 +41,6 @@ Full standards in [sqlalchemy.md](sqlalchemy.md). Always-on summary:
 - Use `session.execute(text(...))` with string concatenation — use bound parameters
 - Call `session.flush()` instead of `commit()` in request handlers
 - Import models from migration files (causes circular imports with autogenerate)
-- Use `lazy="dynamic"` relationships (removed in SQLAlchemy 2.0)
+- Use dynamic lazy loading for relationships — it was removed in SQLAlchemy 2.0; use `select` or `selectin` lazy instead
 
 **Related skills:** `error-handling`, `api-conventions`, `security-principles`

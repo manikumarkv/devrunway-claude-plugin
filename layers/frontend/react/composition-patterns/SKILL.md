@@ -10,9 +10,15 @@ Full patterns in [patterns.md](patterns.md). Always-on summary:
 **Architecture rules:**
 - No boolean prop proliferation — use explicit component variants instead
 - Complex components → compound components sharing context, not prop drilling
-- Children-based composition over `renderX` render props
+- Children-based composition over `renderX` render props — accept `children: React.ReactNode` for flexible slot-based layouts
 
-**State rules:**
+**Forwarding refs (React < 19):**
+- Use `forwardRef(` to expose DOM elements to parent components: `const Input = forwardRef<HTMLInputElement, Props>((props, ref) => ...)` 
+- Required for focus management, form libraries, and animation
+
+**Context and compound components:**
+- `createContext(` for compound component state: `const TabsCtx = createContext<TabsState | null>(null)`
+- Consume with `useContext(TabsCtx)` in sub-components — throw if context is null
 - Lift shared state into dedicated provider components
 - Define context as three-part interface: `state`, `actions`, `meta`
 - UI components consume the interface — never coupled to useState/Zustand/etc.

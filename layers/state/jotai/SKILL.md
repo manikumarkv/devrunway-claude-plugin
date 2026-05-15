@@ -14,9 +14,10 @@ Full standards in [jotai.md](jotai.md). Always-on summary:
 
 **Atom definition:**
 - Define atoms in dedicated `atoms/` directories, co-located with their feature
+- Always use named exports: `export const selectedOrderIdAtom = atom(null)`
 - Name primitive atoms as nouns: `selectedOrderIdAtom`, `darkModeAtom`
 - Name derived atoms as computed descriptions: `filteredOrdersAtom`, `totalPriceAtom`
-- Export atoms — never create atoms inside components (re-created on every render)
+- Never create atoms inside components (re-created on every render)
 
 **Derived atoms:**
 - Use `atom(get => get(otherAtom))` for computed state — never store derived data in a primitive atom
@@ -29,7 +30,7 @@ Full standards in [jotai.md](jotai.md). Always-on summary:
 - Use `atomWithQuery` from `jotai-tanstack-query` for server data — not raw async atoms
 
 **atomFamily:**
-- Use `atomFamily` for per-ID state (e.g., per-item selection, per-row edit mode)
+- Use `atomFamily(` for per-ID state (e.g., per-item selection, per-row edit mode)
 - Pass a serialisable key to `atomFamily` — strings or numbers, not objects
 - Call `atomFamily.remove(param)` to clean up atoms when the item is removed
 

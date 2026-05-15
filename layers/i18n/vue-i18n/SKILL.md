@@ -13,7 +13,7 @@ paths:
 Full standards in [vue-i18n.md](vue-i18n.md). Always-on summary:
 
 **Composition API:**
-- Use `useI18n()` inside `<script setup>` — destructure `{ t, locale, n, d }` as needed
+- Use `const { t } = useI18n(` inside `<script setup>` — destructure `{ t, locale, n, d }` as needed
 - Call `t('key')` for simple strings; `t('key', { name })` for interpolation; `t('key', count)` for plurals
 - For template-only components, use the `$t` global — but prefer `useI18n` for type safety
 
@@ -33,6 +33,7 @@ Full standards in [vue-i18n.md](vue-i18n.md). Always-on summary:
 
 **Message files:**
 - Keep messages in JSON or YAML under `src/locales/<locale>.json`
+- Structure: `messages: { en: { ... }, fr: { ... } }` — one object per locale
 - Nest keys by feature: `{ "orders": { "title": "…", "empty": "…" } }`
 - Never concatenate translated strings to form sentences — use interpolation or `<i18n-t>` component
 

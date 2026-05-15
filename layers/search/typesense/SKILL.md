@@ -12,6 +12,7 @@ paths:
 Full standards in [typesense.md](typesense.md). Always-on summary:
 
 **Collection schema:**
+- Create with `client.collections().create({ name: 'products', fields: [...] })` — always define `fields:` explicitly
 - Define fields with explicit `type` and `facet: true` where you need aggregation filters
 - Use `default_sorting_field` on a numeric field (e.g. `popularity_score`) for rank-free queries
 - Add `optional: true` only to fields that can genuinely be absent — omitting it enforces presence
@@ -31,9 +32,9 @@ Full standards in [typesense.md](typesense.md). Always-on summary:
 - Application code always references the alias name, never the versioned collection name
 
 **Instant-search (React):**
-- Use `typesense-instantsearch-adapter` with `react-instantsearch`; configure the adapter once in a module
+- Initialize adapter: `const adapter = new TypesenseInstantSearchAdapter({ ... })` then pass its `searchClient` to `instantsearch(` from `react-instantsearch`
 - Use `SearchBox`, `Hits`, `RefinementList`, `Pagination` from `react-instantsearch`
-- Expose only a search-scoped API key to the browser — never the admin key
+- Expose only `process.env.TYPESENSE_SEARCH_KEY` to the browser — never the admin key
 
 **Never:**
 - Send the admin API key to the browser — generate scoped search-only keys

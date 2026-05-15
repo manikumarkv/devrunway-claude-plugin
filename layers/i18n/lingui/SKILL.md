@@ -14,13 +14,15 @@ paths:
 Full standards in [lingui.md](lingui.md). Always-on summary:
 
 **Macros:**
+- Import macros: `import { t } from '@lingui/macro'` and `import { Trans } from '@lingui/react'`
 - Use `t` macro for plain strings: `` t`Hello, ${name}` `` — never interpolate into translated strings manually
 - Use `<Trans>` component for JSX with embedded elements: `<Trans>Click <a href="…">here</a></Trans>`
 - Use `plural` macro for pluralisation: `plural(count, { one: '# item', other: '# items' })`
 - `msg` macro marks strings for extraction without immediately translating — use for constants
 
-**Extraction:**
+**Extraction and compilation:**
 - Run `lingui extract` after every new string — commit `.po` files alongside code changes
+- Run `lingui compile` before production build to compile `.po` files to JS message catalogs
 - CI should fail if `lingui extract` produces a diff (use `--clean` flag and check exit code)
 - Translators work directly in `.po` files — do not edit `.po` files in generated `messages.js`
 

@@ -31,7 +31,7 @@ Full standards in [redis.md](redis.md). Always-on summary:
 - Cache only serialisable data — functions and class instances break
 
 **Never:**
-- `KEYS *` in production — it blocks Redis for the duration of the scan; use `SCAN` instead
+- Wildcard key scanning in production — it blocks Redis for the duration of the scan; use `SCAN` instead
 - Store sensitive data (passwords, tokens) in Redis without encryption
 - Use Redis as a primary database — it's a cache/broker; data can be evicted
 

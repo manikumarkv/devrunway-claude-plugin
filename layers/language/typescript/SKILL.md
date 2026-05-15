@@ -18,10 +18,10 @@ Full patterns in [typescript.md](typescript.md). Always-on summary:
 - Parallel boolean flags for state — use discriminated unions
 
 **Always:**
-- Discriminated unions for state that has multiple exclusive modes
+- Discriminated unions for state that has multiple exclusive modes — e.g. `{ status: 'loading' } | { status: 'success'; data: T } | { status: 'error'; message: string }`
 - Type guards (`is`) and `satisfies` over type assertions
 - Exhaustive `never` checks in switch statements
-- Branded types for IDs (never pass a `userId` where `postId` is expected)
+- Branded types for IDs using a `brand` symbol property — e.g. `string & { readonly brand: 'UserId' }` — never pass a `userId` where `postId` is expected
 - Explicit return types on all exported functions
 - `const` assertions for static lookup objects
 

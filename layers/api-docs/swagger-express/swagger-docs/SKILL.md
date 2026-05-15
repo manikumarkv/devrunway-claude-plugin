@@ -9,8 +9,12 @@ Full rules in [swagger-docs.md](swagger-docs.md). Always-on summary:
 
 **Tooling (locked):**
 - `@asteasolutions/zod-to-openapi` — derive OpenAPI schemas from existing Zod validators; no duplication
-- `swagger-ui-express` — serves interactive Swagger UI at `/api-docs` (dev/staging only)
+- `swagger-ui-express` — serves interactive Swagger UI at `/api-docs` (dev/staging only): `app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(spec))`
 - `swagger-jsdoc` — NOT used; schema is code-generated from Zod, not JSDoc comments
+
+**When swagger-jsdoc IS used (legacy projects):**
+- Annotate each route handler with a `@swagger` JSDoc block — keeps docs co-located with the route
+- All reusable types defined once under `components:` and referenced via `$ref:` — never inline `type: object`
 
 **Single source of truth:**
 - Zod schemas define validation AND generate OpenAPI schemas — never write them twice

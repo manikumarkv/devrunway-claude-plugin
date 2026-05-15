@@ -14,7 +14,7 @@ paths:
 Full standards in [docker.md](docker.md). Always-on summary:
 
 **Dockerfile — required patterns:**
-- Multi-stage builds: `deps` → `builder` → `runner` — never ship build tools to production
+- Multi-stage builds use named stages — `FROM node:20-alpine AS builder` for the build stage, `FROM node:20-alpine AS runner` for the final image — never ship build tools to production
 - Pin base image versions: `node:20-alpine` not `node:latest`
 - `COPY --chown=node:node` before `USER node` — non-root user is required
 - `HEALTHCHECK` instruction — tells the orchestrator when the container is ready
@@ -38,7 +38,7 @@ dist
 
 **Never:**
 - `FROM node:latest` or any `:latest` tag in production images
-- Run as root in production containers (`USER root` or no `USER`)
+- Run as root in production containers — always use a non-root `USER` instruction
 - Store secrets in environment variables baked into the image (`ENV SECRET=...`)
 - `RUN apt-get install` without `--no-install-recommends` and cleanup in the same `RUN`
 

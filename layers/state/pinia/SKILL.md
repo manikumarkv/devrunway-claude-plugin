@@ -23,8 +23,8 @@ Full standards in [pinia.md](pinia.md). Always-on summary:
 - Actions: `function increment() { count.value++ }` — plain functions, can be async
 - Return everything from the setup function — Pinia requires explicit exports
 
-**Async actions:**
-- Async actions are plain `async` functions — no special handling needed
+**Async store functions:**
+- Define as `async function fetchUsers() { const data = await api.getUsers(); ... }` — plain async functions, no special handling
 - Always handle errors in actions — the calling component should not need to know about API details
 - Use `$patch` for batch state updates to avoid multiple watchers firing
 

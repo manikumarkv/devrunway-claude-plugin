@@ -24,11 +24,15 @@ Full standards in [pipeline.md](pipeline.md). Always-on summary:
 - `main` merge → auto-deploy to production (after manual approval)
 - Never deploy from a feature branch directly
 
+**Secrets and triggers:**
+- Access secrets in workflows via `secrets.MY_SECRET_NAME` — never hardcode credentials in YAML
+- Use `workflow_dispatch:` to allow manual pipeline triggers for hotfixes and re-runs
+
 **Never:**
 - Push directly to `main` or `develop`
 - Merge a PR with failing checks
 - Deploy without running tests
-- Store secrets in workflow files — use GitHub Secrets
+- Store secrets in workflow files — use GitHub Secrets (`secrets.` references only)
 
 
 **Related skills — apply together:**

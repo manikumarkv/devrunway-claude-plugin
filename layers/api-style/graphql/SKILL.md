@@ -19,10 +19,22 @@ Full standards in [graphql.md](graphql.md). Always-on summary:
 - Nullable by default; use `!` (non-null) only when the server guarantees the field will always be present
 - Pagination: connections pattern (`edges`, `node`, `pageInfo`) for lists; never return plain arrays for paginated data
 
+**Minimal SDL example:**
+```graphql
+type Query {
+  user(id: ID!): User
+  users: UserConnection!
+}
+type User {
+  id: ID!
+  name: String!
+}
+```
+
 **Resolvers:**
 - Keep resolvers thin — delegate to service/repository layer functions
 - Never query the DB directly in a resolver — use service functions that can be tested independently
-- Use DataLoader for all parent-to-child relationships to prevent N+1 queries
+- Use DataLoader for all parent-to-child relationships to prevent N+1 queries — define a `batchLoadFn` that accepts an array of keys and returns a parallel array of values
 
 **Auth:**
 - Authentication: validate the token in the context function — attach `user` to context or throw

@@ -11,14 +11,14 @@ paths:
   - "**/*.route.*"
 
 ## Authentication & Authorization
-- All protected routes use `authMiddleware` (Cognito JWT verified with `aws-jwt-verify` — never decoded-only)
-- Authorization by Cognito group via `requireGroup('Admin')` — never by username or email
+- All protected routes use `authMiddleware` — Cognito JWT cryptographically verified with `CognitoJwtVerifier` from `aws-jwt-verify`: `await verifier.verify(token)` — never decoded-only
+- Authorization by Cognito `groups` claim via `requireGroup('Admin')` — never by username or email
 - Frontend tokens stored in memory or `HttpOnly` cookies — never `localStorage`
 - Token refresh-and-retry on 401: attempt one refresh, redirect to login on failure
 - Full `signOut()` on logout — never just deleting the cookie
 
 ## Input Validation
-- ALL inputs validated with Zod at system boundaries (API controllers, form submissions)
+- ALL inputs validated with Zod at system boundaries: always call `Schema.parse(req.body)` — never access `req.body` fields directly
 - Never use raw `req.body`, `req.params`, or `req.query` without Zod parse
 - Validate type, format, length, and range — not just presence
 - Return 400 with field-level error details on validation failure
@@ -33,7 +33,7 @@ paths:
 - `helmet()` on every Express app (sets secure HTTP headers)
 - `express-rate-limit` on all public and auth endpoints
 - No sensitive data in error responses returned to clients
-- CORS configured explicitly — never `origin: '*'` in production
+- CORS configured with explicit `origin:` allowlist — never wildcard origins in production
 - HTTPS only — no HTTP in staging or production
 
 ## Logging (what NOT to log)

@@ -19,7 +19,7 @@ Full standards in [msw-mocking.md](msw-mocking.md). Always-on summary:
 
 **Handler file layout:**
 - `src/mocks/handlers/<domain>.ts` — one file per domain (auth, users, products)
-- `export const userHandlers = [...]` then compose in `src/mocks/handlers/index.ts`
+- `export const handlers = [http.get('/api/users', ...), ...]` then compose in `src/mocks/handlers/index.ts`
 - Browser: `src/mocks/browser.ts` → `setupWorker(...handlers)`
 - Tests: `src/mocks/server.ts` → `setupServer(...handlers)`
 

@@ -11,10 +11,11 @@ paths:
 
 Full standards in [mui.md](mui.md). Always-on summary:
 
-**Theming:**
+**Setup:**
+- Import components from `@mui/material`: `import { Button, TextField } from '@mui/material'`
 - Wrap the app in `ThemeProvider` + `CssBaseline` — one place, at the root
-- Define all colours, typography, spacing, and component overrides in a single `theme.ts`
-- Never hardcode colour hex codes in components — use `theme.palette.*`
+- Define the theme with `createTheme({ palette: { primary: { main: '#1976d2' }, ... } })` in `theme.ts`
+- Use `<Button variant="contained">`, `<TextField label="..." />` — never raw `<button>` or `<input>` inside MUI layouts
 
 **Styling priority (highest to lowest):**
 1. `sx` prop — one-off responsive overrides on a single component

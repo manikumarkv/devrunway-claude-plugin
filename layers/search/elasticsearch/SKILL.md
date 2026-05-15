@@ -22,9 +22,9 @@ Full standards in [elasticsearch.md](elasticsearch.md). Always-on summary:
 - Add `"dynamic": "strict"` to reject documents with unmapped fields
 
 **Querying:**
-- Use `bool` query as the container: `must` for scoring terms, `filter` for non-scoring (yes/no) conditions
-- Put date ranges and term filters in `filter` context — they're cached and don't affect relevance score
-- Always paginate: set `from`/`size` or use `search_after` for deep pagination (avoid `from > 10000`)
+- Use `query: { bool:` as the outer query shape; put scoring terms in `must:` and non-scoring conditions in `filter:`
+- Put date ranges and term filters in `filter:` context — they're cached and don't affect relevance score
+- Always paginate: use `search_after` for deep pagination — avoid the `from`/`size` offset pattern beyond 10,000 results
 
 **Aggregations:**
 - Use `terms` aggregation for facet counts, `date_histogram` for time-series, `range` for price buckets

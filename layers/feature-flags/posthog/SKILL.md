@@ -16,10 +16,14 @@ Full standards in [posthog.md](posthog.md). Always-on summary:
 - Client-side: use `posthog-js` or the React provider — call `posthog.identify()` after login
 - Always call `posthog.identify()` with your database user ID, not a temporary anonymous ID
 
-**Feature flags:**
-- Use `isFeatureEnabled(flagKey, distinctId)` for boolean flags
-- Use `getFeatureFlag(flagKey, distinctId)` for multivariate flags (returns the variant string)
-- Always provide a fallback — `isFeatureEnabled()` returns `undefined` if the flag is not loaded; treat it as `false`
+**Feature flags (React):**
+- Use `useFeatureFlagEnabled('flag-key')` hook in React components for boolean flags
+- For A/B test variants: call `getFeatureFlagPayload('flag-key', distinctId)` to get the `payload` JSON object with variant-specific config
+- Always provide a fallback — `useFeatureFlagEnabled(` returns `undefined` if flags are not loaded; treat it as `false`
+
+**Feature flags (Node.js):**
+- Use `client.isFeatureEnabled(flagKey, distinctId)` for boolean flags
+- Use `client.getFeatureFlag(flagKey, distinctId)` for multivariate flags (returns the variant string)
 
 **A/B testing:**
 - Call `posthog.capture('experiment_started', { flag: key, variant })` when a user enters an experiment

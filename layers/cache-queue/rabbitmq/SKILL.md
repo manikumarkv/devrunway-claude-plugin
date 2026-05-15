@@ -24,15 +24,16 @@ Full standards in [rabbitmq.md](rabbitmq.md). Always-on summary:
 
 **Queue Durability:**
 - Declare queues with `durable: true` and messages with `persistent: true` (deliveryMode 2) — both required for survival across broker restart
-- Dead-letter queues: bind a DLX exchange to every production queue; never lose failed messages
+- Dead-letter queues: declare a `deadLetterExchange` and set the `x-dead-letter-exchange` argument on every production queue: `ch.assertQueue('orders', { arguments: { 'x-dead-letter-exchange': 'orders.dlx' } })`
 - Set `x-message-ttl` on queues where stale messages are worse than dropped
 
 **Consumer Patterns:**
-- Always `ack` messages explicitly (`noAck: false`) — never use auto-ack in production
+- Use explicit acknowledgement: `channel.ack(msg)` on success, `channel.nack(msg, false, false)` on failure (routes to DLX)
+- Never use auto-acknowledgement in production — messages are lost if the consumer crashes before processing completes
 - Set `prefetch` (channel QoS) to limit in-flight messages per consumer; default 1 for task workers
-- On failure: `nack` with `requeue: false` to send to DLX; `nack` with `requeue: true` only for transient errors (max 1 retry)
 
 **Connection Management:**
+- Connect with `amqplib.connect(process.env.RABBITMQ_URL)` — never hardcode credentials in code
 - Use a single long-lived connection; create one channel per thread/coroutine
 - Reconnect with exponential backoff on connection errors; use `amqplib`'s `error` and `close` events
 - Never share a channel across concurrent operations
@@ -41,6 +42,6 @@ Full standards in [rabbitmq.md](rabbitmq.md). Always-on summary:
 - Declare queues in consumers without also declaring them in publishers (race on startup)
 - Use `autoDelete: true` on shared queues
 - Block the event loop inside a consumer callback — use async handlers
-- Hardcode broker URLs — load from environment variables
+- Hardcode broker URLs — load from `process.env.RABBITMQ_URL`
 
 **Related skills:** `error-handling`, `logging-standards`, `nodejs-standards`

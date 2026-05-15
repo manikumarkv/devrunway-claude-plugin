@@ -38,8 +38,12 @@ Full standards in [gcp.md](gcp.md). Always-on summary:
 
 **IAM Service Accounts:**
 - One service account per Cloud Run service / Function — principle of least privilege
-- Use Workload Identity Federation for CI/CD — no long-lived JSON key files
+- Use Workload Identity Federation for CI/CD: configure a `workloadIdentityPool` and map the CI identity to a `serviceAccountEmail` — no long-lived JSON key files
 - Grant roles at the resource level, not project level where possible
+
+**SDK authentication:**
+- Use `GoogleAuth` for server-side auth: `const auth = new GoogleAuth({ scopes: 'https://www.googleapis.com/auth/cloud-platform' })`
+- Always load project ID from env: `process.env.GCP_PROJECT_ID` — never hardcode project IDs
 
 **Never:**
 - Use the default Compute Engine service account for application workloads

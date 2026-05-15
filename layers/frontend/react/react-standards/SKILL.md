@@ -13,9 +13,9 @@ Full rules in [react.md](react.md). Always-on summary:
 **Stack (no alternatives):**
 - React 18 + TypeScript strict + Vite + Tailwind CSS
 - **UI components: shadcn/ui** — always check `src/components/ui/` before building from scratch
-- Server state: React Query v5 — never `fetch` in `useEffect`
+- Server state: React Query v5 — use `useQuery(` for reads, `useMutation` for writes — never `fetch` in `useEffect`
 - Routing: React Router v6
-- Forms: React Hook Form + Zod + shadcn `<Form>` components
+- Forms: React Hook Form — `const { register } = useForm(` with `zodResolver(schema)` for schema validation
 - i18n: react-i18next — every user-visible string goes through `t()`
 - Testing: Vitest + React Testing Library + MSW + Playwright
 
@@ -51,7 +51,7 @@ Full rules in [react.md](react.md). Always-on summary:
 
 **Never:**
 - `any` type
-- `console.log` in production code
+- Raw stdout logging (`console.*`) in production code — use Pino `logger.*` methods or Sentry
 - `useEffect` for data fetching
 - Components defined inside components
 - Default exports inside feature folders

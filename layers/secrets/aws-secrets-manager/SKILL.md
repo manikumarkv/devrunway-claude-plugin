@@ -14,6 +14,7 @@ paths:
 Full standards in [aws-secrets-manager.md](aws-secrets-manager.md). Always-on summary:
 
 **Retrieval:**
+- Use `SecretsManagerClient` (AWS SDK v3) with `GetSecretValueCommand({ SecretId: secretArn })`
 - Always cache secret values in memory with a TTL (default 5 min) — never call `GetSecretValue` on every request
 - Parse JSON secrets once at startup; surface typed config objects, not raw strings
 - Use `SecretString` for credentials; `SecretBinary` only for binary key material
@@ -26,6 +27,7 @@ Full standards in [aws-secrets-manager.md](aws-secrets-manager.md). Always-on su
 **Rotation:**
 - Enable automatic rotation via `RotationSchedule` — set `RotationLambdaARN`
 - Implement the four lifecycle steps: `createSecret`, `setSecret`, `testSecret`, `finishSecret`
+- Handle both `AWSPENDING` (new candidate) and `AWSCURRENT` (active) version stages in the rotation lambda
 - Keep old version (`AWSPREVIOUS`) alive until rotation completes
 
 **SSM vs Secrets Manager:**

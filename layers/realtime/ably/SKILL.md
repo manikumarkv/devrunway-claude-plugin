@@ -19,11 +19,12 @@ Full standards in [ably.md](ably.md). Always-on summary:
 
 **Channels:**
 - Use structured channel names: `<resource>:<id>` e.g. `order:abc123`, `chat:room42`
-- Subscribe with explicit event names — avoid subscribing to all events on a busy channel
-- Unsubscribe and detach channels on component unmount to avoid listener leaks
+- Subscribe: `channel.subscribe('event-name', handler)` — use explicit event names, not all-events catch-alls
+- On cleanup: `channel.unsubscribe(` to remove handlers and prevent ghost listener leaks
 
 **Presence:**
 - Enter presence with `channel.presence.enter({ userId, displayName })`
+- Retrieve current members with `channel.presence.get(` — returns an array of present members
 - Listen with `channel.presence.subscribe('enter' | 'leave' | 'update', handler)`
 - Always call `channel.presence.leave()` on disconnect or unmount
 

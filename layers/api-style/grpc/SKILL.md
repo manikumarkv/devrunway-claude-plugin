@@ -17,10 +17,10 @@ Full standards in [grpc.md](grpc.md). Always-on summary:
 - One service per `.proto` file; file name matches service name in snake_case
 - Always set `syntax = "proto3"`, `package`, and `option go_package` / `option java_package`
 - Use `google.protobuf.Timestamp` for dates, `google.protobuf.Empty` for no-payload methods
-- Fields must have explicit field numbers; never reuse a deleted field number — use `reserved`
+- Fields must have explicit field numbers starting at `= 1;`; never reuse a deleted field number — use `reserved` blocks to prevent reuse
 
 **Code Generation:**
-- Generate code in CI, never commit generated `*_pb2.py` or `*.grpc.js` files
+- Generate code in CI, never commit generated `*_pb2.py` or `*.grpc.js` files — add them to `.gitignore`
 - Pin the `protoc` version and plugin versions in a `buf.gen.yaml` or Makefile
 - Use `buf` for linting and breaking change detection: `buf lint && buf breaking`
 

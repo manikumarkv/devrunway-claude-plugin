@@ -16,7 +16,7 @@ Full standards in [vault.md](vault.md). Always-on summary:
 
 **Authentication:**
 - Use AppRole for machine-to-machine auth (CI, services) — never use root token or dev tokens in production
-- Use Kubernetes auth method for pods running in Kubernetes
+- Use Kubernetes auth method for pods in Kubernetes — call `kubernetes/login` with the pod's service account token to obtain a short-lived Vault token
 - Store `role_id` in config; fetch `secret_id` from a secure bootstrap mechanism — never commit either
 
 **KV v2 (Static Secrets):**
@@ -25,13 +25,13 @@ Full standards in [vault.md](vault.md). Always-on summary:
 - Access via `vault kv get secret/myapp/database` or SDK `client.secrets.kv.v2.read()`
 
 **Dynamic Secrets:**
-- Use dynamic secrets for databases — Vault generates short-lived credentials per request
-- Mount the database secrets engine: `vault secrets enable database`
+- Use dynamic secrets for databases — fetch from `database/creds/<role>` to get short-lived credentials
+- The response includes `lease_id`, `lease_duration`, and `renewable` fields — store `lease_id` for renewal
 - Dynamic credentials expire automatically — configure `default_ttl` and `max_ttl` appropriately
 
 **Lease Renewal:**
-- Renew leases before they expire — use Vault Agent or the SDK's `auth.token.renewSelf()`
-- Set up a renewal loop with a threshold (renew when 75% of TTL has elapsed)
+- Check the `renewable` field; if true, renew the `lease_id` before TTL expires (at 75% elapsed)
+- Renew with Vault Agent or the SDK's `auth.token.renewSelf()`
 - On failure to renew, re-authenticate and get fresh credentials — never cache expired leases
 
 **Policies:**
@@ -43,6 +43,6 @@ Full standards in [vault.md](vault.md). Always-on summary:
 - Use the root token outside of initial Vault setup
 - Log the `secret_id` or any Vault token — it is a secret
 - Store tokens in environment variables that are visible in `ps aux` output
-- Use `VAULT_TOKEN` environment variable in production — use the SDK auth flow
+- Set a static token via environment variable in production — use the SDK AppRole or Kubernetes auth flow instead
 
 **Related skills:** `security-principles`, `cdk`, `nodejs-standards`

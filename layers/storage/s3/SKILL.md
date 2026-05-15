@@ -14,9 +14,11 @@ Full standards in [s3-storage.md](s3-storage.md). Always-on summary:
 
 **Never expose AWS credentials to the client** — always generate presigned URLs server-side
 
-**Upload flow:** client requests URL → server generates `PutObjectCommand` presigned URL (15 min TTL) → client uploads directly to S3 — server is never in the data path
+**Upload flow:** client requests URL → server generates `PutObjectCommand` presigned URL with `getSignedUrl(` (15 min TTL) → client uploads directly to S3 — server is never in the data path
 
-**Bucket policy:** block all public access by default; use CloudFront for public assets — never `s3:GetObject *` ACL
+**File validation:** validate `ContentType` against an `allowedTypes` list server-side before generating the presigned URL — clients can send any content type
+
+**Bucket policy:** set `BlockPublicAccess.BLOCK_ALL` on all buckets; use CloudFront for public assets — never `s3:GetObject *` ACL
 
 **Naming:** `<company>-<service>-<env>` (e.g. `acme-uploads-prod`) — lowercase, no dots
 

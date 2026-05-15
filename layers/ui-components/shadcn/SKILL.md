@@ -16,7 +16,7 @@ Full standards in [shadcn-ui.md](shadcn-ui.md). Always-on summary:
 - Always import from `@/components/ui/<name>`, never from `radix-ui` directly
 
 **Styling:**
-- `cn()` from `src/lib/utils.ts` for ALL conditional class merging — never string concatenation or template literals
+- `import { cn } from '@/lib/utils'` then use `cn(` for ALL conditional class merging — never string concatenation or template literals
 - Always forward `className` prop so callers can override
 - Variants: use `cva()` for multi-variant components; export `VariantProps<typeof variants>` as the props type
 

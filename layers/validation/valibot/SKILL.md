@@ -17,8 +17,8 @@ Full standards in [valibot.md](valibot.md). Always-on summary:
 - Define schemas at module level — never inside functions or components
 
 **Parsing:**
-- Use `v.parse(schema, data)` when you want to throw on invalid data (safe inside try/catch)
-- Use `v.safeParse(schema, data)` when you want to check `.success` without try/catch
+- Use `v.safeParse(schema, data)` when you want to check `.success` without try/catch — preferred for user-facing validation
+- The throwing variant (`valibot.parse`) is available inside try/catch but prefer safeParse for explicit error handling
 - `v.safeParse` returns `{ success: true, output }` or `{ success: false, issues }`
 - Always use `v.flatten(issues)` to get a flat `{ nested: { field: ['error'] } }` map
 
@@ -34,7 +34,7 @@ Full standards in [valibot.md](valibot.md). Always-on summary:
 - `v.optional` and `v.required` at the object level control which keys are required
 
 **Never:**
-- Use `v.any()` — be explicit about the shape
+- Use the catch-all `any` validator — be explicit about the shape with specific validators
 - Skip error flattening — raw `issues` array is hard to map to UI field errors
 - Define schemas inside React/Vue components — unnecessary recreation on render
 

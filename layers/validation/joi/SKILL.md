@@ -32,7 +32,7 @@ Full standards in [joi.md](joi.md). Always-on summary:
 - Use `Joi.defaults()` at startup for global message overrides
 
 **Never:**
-- Use `any()` as a shortcut — be explicit about the shape
+- Use the catch-all `any` validator as a shortcut — always use specific type validators (`Joi.string()`, `Joi.number()`, etc.) instead
 - Skip `stripUnknown` when validating request bodies — unknown fields may indicate injection
 - Call `.required()` on nested object schemas without also calling it on the object itself
 

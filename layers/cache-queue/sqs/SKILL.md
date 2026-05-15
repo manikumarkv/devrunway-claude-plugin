@@ -22,14 +22,14 @@ Full standards in [sqs.md](sqs.md). Always-on summary:
 - If a job is never deleted, SQS makes it visible again after the timeout — design consumers to be idempotent
 
 **Dead Letter Queue (DLQ):**
-- Always configure a DLQ with `maxReceiveCount: 3` — failed messages are rerouted after 3 attempts
+- Always configure a DLQ with `deadLetterTargetArn` and `maxReceiveCount: 3` — failed messages are rerouted after 3 attempts
 - Monitor the DLQ — alert when it receives messages
 - Never consume the DLQ automatically — investigate failures first
 
 **Polling:**
 - Use Long Polling (`WaitTimeSeconds: 20`) — reduces empty responses and costs
 - Batch: receive up to 10 messages per call (`MaxNumberOfMessages: 10`)
-- Delete messages only after successful processing — not before
+- After successful processing, delete the message using `DeleteMessageCommand` with the message's `ReceiptHandle` — SQS does not auto-delete processed messages
 
 **Message design:**
 - Keep message size under 64 KB (hard limit: 256 KB) — store large payloads in S3, pass the S3 key

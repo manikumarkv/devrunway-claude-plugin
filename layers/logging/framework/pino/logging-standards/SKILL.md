@@ -32,7 +32,7 @@ Full standards in [logging.md](logging.md). Always-on summary:
 - Full name + address combined (PII aggregation)
 - Health, biometric, or children's data
 - Full request/response bodies on `/auth`, `/payments`, `/users`
-- `console.log/error/warn` in production — use the logger
+- `console.*` methods in production — use the logger
 - Template-string messages — values go in the context object, not the string
 - Full objects: `logger.info({ user })` → `logger.info({ userId: user.id })`
 - Log inside a tight loop — log once before/after with a count
@@ -64,7 +64,7 @@ logger.info({ action: 'order.created', orderId, userId, total }, 'Order created'
 logger.error({ action: 'stripe.charge', orderId, durationMs, err }, 'Stripe charge failed')
 
 // Auth failure (warn — not error; user may have mistyped)
-logger.warn({ action: 'auth.signIn', maskedEmail, reason: 'invalid_password', attempt }, 'Sign-in failed')
+logger.warn({ action: 'auth.signIn', maskedEmail, reason: 'bad_credentials', attempt }, 'Sign-in failed')
 ```
 
 **Key setup:**

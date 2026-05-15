@@ -16,13 +16,13 @@ paths:
 Full standards in [angular.md](angular.md). Always-on summary:
 
 **Standalone Components:**
-- Use standalone components (`standalone: true`) for all new components — no NgModules
-- Import only what a component needs in its own `imports` array
+- Use standalone components (`standalone: true`) for all new components — avoid the legacy module system
+- Declare only what the component needs directly: `imports: [CommonModule, ReactiveFormsModule]`
 - Bootstrap with `bootstrapApplication(AppComponent, appConfig)` — not `platformBrowserDynamic`
 
 **Signals:**
 - Use `signal()` for local mutable state, `computed()` for derived values, `effect()` for side effects
-- Prefer signals over `BehaviorSubject` for component state — cleaner, no subscription management
+- Prefer signals over RxJS streams (e.g. reactive value holders) for component state — cleaner, no subscription management
 - Use `toSignal()` to convert Observables to signals in templates
 
 **Dependency Injection:**

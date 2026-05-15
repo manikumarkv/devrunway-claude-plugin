@@ -20,7 +20,7 @@ Full standards in [pytest.md](pytest.md). Always-on summary:
 - Classes: `class TestUserService:` — group related tests; no `__init__` method
 
 **Fixtures:**
-- Define shared fixtures in `conftest.py` — pytest injects them automatically
+- Declare with `@pytest.fixture` decorator in `conftest.py` — pytest injects them automatically by parameter name
 - Use the narrowest scope needed: `function` (default) → `class` → `module` → `session`
 - Yield fixtures for setup/teardown: `yield` provides the value; cleanup runs after
 
@@ -29,13 +29,16 @@ Full standards in [pytest.md](pytest.md). Always-on summary:
 - Use `ids=` for readable test names in the output
 
 **Assertions:**
-- Plain `assert` statements — pytest rewrites them for detailed output
+- Plain `assert` statements — pytest rewrites them for detailed output; e.g., `assert response.status_code == 200`
 - `pytest.raises(ExcType)` for exception testing — use as context manager
 - `pytest.approx()` for floating-point comparisons
 
+**Output capture:**
+- Use the `capsys` fixture to capture and assert on stdout/stderr — never write raw stdout in tests
+
 **Never:**
 - `unittest.TestCase` style in new pytest code — use plain functions and fixtures
-- `print()` for debugging — use `pytest -s` flag or proper logging
+- Raw stdout debugging — use `pytest -s` flag or proper logging
 - Skip tests without a reason: `@pytest.mark.skip(reason='...')` required
 
 **Related skills:** `backend/python-fastapi` (pytest-asyncio, TestClient), `database/sqlalchemy` (session fixture patterns)

@@ -12,8 +12,9 @@ paths:
 Full standards in [winston.md](winston.md). Always-on summary:
 
 **Logger setup:**
-- Create one `winston.createLogger()` instance — export it as a singleton
-- Always use JSON format in production (`winston.format.json()`)
+- Create one `winston.createLogger(` instance — export it as a singleton
+- Use `format.combine(` to compose multiple formatters; always include `format.json(` for production
+- Add `transports: [` array with a `new winston.transports.Console(` entry at minimum
 - Human-readable format in development only (`winston.format.prettyPrint()`)
 
 **Log levels — use the right one:**
@@ -32,7 +33,7 @@ Full standards in [winston.md](winston.md). Always-on summary:
 - Use Winston's `format.printf` or a custom format to redact fields before they hit transports
 
 **Never:**
-- `console.log()` in production code — it bypasses log level filtering, format, and transports
+- `console.*` methods in production code — they bypass log level filtering, format, and transports
 - Log full request/response bodies — they contain PII and credentials
 - Use `error` level for expected errors (404, 400) — use `warn`
 

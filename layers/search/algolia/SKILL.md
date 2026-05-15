@@ -15,7 +15,7 @@ Full standards in [algolia.md](algolia.md). Always-on summary:
 - Never expose the Admin API Key in the browser — server-side only
 - Use the Search API Key for client-side queries (read-only by default)
 - Generate Secured API Keys server-side to restrict scope (filters, index, user) per session
-- Store Admin Key in environment variable `ALGOLIA_ADMIN_KEY`; expose only `ALGOLIA_SEARCH_KEY`
+- Store Admin Key in `process.env.ALGOLIA_ADMIN_KEY`; expose only the search key
 
 **Indexing:**
 - Shape records at index time: denormalise related data into each record so search is a single hit
@@ -29,7 +29,8 @@ Full standards in [algolia.md](algolia.md). Always-on summary:
 - Use `customRanking` for business metrics (popularity, recency) — never hard-code sort logic in the client
 
 **Querying:**
-- Keep client-side queries in InstantSearch widgets — they handle debounce, cache, and loading states
+- Initialize with `algoliasearch(appId, searchKey)` then use InstantSearch hooks (`useSearchBox(`, `useHits(`) — they handle debounce, cache, and loading states
+- Use `facetFilters` in search params to filter by facet values: `index.search('query', { facetFilters: ['category:shoes'] })`
 - For server-side search (SSR, API routes), use `algoliasearch` SDK, not `lite` client
 - Always set `hitsPerPage` — default is 20, which may be too many for some UIs
 

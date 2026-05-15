@@ -44,7 +44,7 @@ Full standards in [nextjs.md](nextjs.md). Always-on summary:
 
 **Never:**
 - Fetch data in a `layout.tsx` that is needed by a specific `page.tsx` — fetch in the page
-- Use `getServerSideProps` or `getStaticProps` in the App Router — these are Pages Router patterns
+- Use legacy Pages Router data fetching functions in the App Router — App Router uses `async` Server Components for data fetching instead
 - Put secrets in Client Components or pass them as props from Server to Client Components
 
 **Related skills:** `state/redux-toolkit` (client state), `ui-components/mui` or `css/tailwind` (styling), `validation/zod`

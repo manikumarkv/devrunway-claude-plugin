@@ -12,18 +12,17 @@ paths:
 Full standards in [paypal.md](paypal.md). Always-on summary:
 
 **Orders flow:**
-- Server creates an order via `POST /v2/checkout/orders` — returns `orderId`
+- Server calls `orders.create(` with order details — returns `orderId`
 - Client renders Smart Buttons using the `orderId`; buyer approves on PayPal
-- On buyer approval, server captures via `POST /v2/checkout/orders/{id}/capture`
-- Check `capture.status === 'COMPLETED'` before fulfilling — never fulfil on `APPROVED`
+- On buyer approval, server calls `orders.capture(` — check `capture.status === 'COMPLETED'` before fulfilling
 
 **Authentication:**
 - Exchange client ID + secret for an access token via `POST /v1/oauth2/token`
 - Cache the token until `expires_in` — do not fetch a new token per request
-- Store `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` in environment variables only
+- Store `process.env.PAYPAL_CLIENT_ID` and `process.env.PAYPAL_CLIENT_SECRET` — never hardcode
 
 **Webhooks:**
-- Verify with `POST /v1/notifications/verify-webhook-signature`
+- Verify each event using `verifyWebhookSignature(` with the `webhookId` from your PayPal app config
 - Handle `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.DENIED`, `CHECKOUT.ORDER.APPROVED`
 - Respond 200 immediately; process events asynchronously
 

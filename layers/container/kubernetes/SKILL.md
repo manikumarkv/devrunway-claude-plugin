@@ -14,13 +14,13 @@ paths:
 Full standards in [kubernetes.md](kubernetes.md). Always-on summary:
 
 **Resource definitions:**
-- Every Deployment must have `requests` and `limits` for CPU and memory — no unbounded containers
+- Every Deployment must set `resources:` with both `requests:` and `limits:` for CPU and memory — no unbounded containers
 - Always set `replicas: 2` minimum for production workloads — a single replica has no availability guarantee
 - Use `RollingUpdate` strategy with `maxSurge: 1` and `maxUnavailable: 0` for zero-downtime deploys
 
 **Probes:**
-- `readinessProbe` — gates traffic; must be set on every container serving traffic
-- `livenessProbe` — restarts unhealthy containers; use a lightweight health endpoint
+- `readinessProbe:` — gates traffic; must be set on every container serving traffic
+- `livenessProbe:` — restarts unhealthy containers; use a lightweight health endpoint
 - `startupProbe` — for slow-starting containers; prevents liveness killing them during init
 - Never set `livenessProbe` without `readinessProbe` — a buggy liveness check will restart healthy pods
 
@@ -33,7 +33,7 @@ Full standards in [kubernetes.md](kubernetes.md). Always-on summary:
 **Configuration:**
 - Env vars from ConfigMap for non-sensitive config; from Secret for sensitive values
 - Never hardcode secrets in YAML — use Kubernetes Secrets or external secret managers (Vault, AWS Secrets Manager)
-- Use `secretKeyRef` to inject from Secrets; don't mount the whole Secret as a volume unless all keys are needed
+- Use `secretKeyRef` with `secretName:` to inject individual keys from a Secret into container env vars
 
 **Scaling:**
 - Use HorizontalPodAutoscaler (HPA) with CPU or custom metrics — never scale manually in production

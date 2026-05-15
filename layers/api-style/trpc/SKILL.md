@@ -20,7 +20,7 @@ Full standards in [trpc.md](trpc.md). Always-on summary:
 **Procedures:**
 - `publicProcedure` — no auth required (e.g., list public products)
 - `protectedProcedure` — validates session in middleware; throw `TRPCError` if not authed
-- All input must go through `.input(zodSchema)` — never read raw arguments without validation
+- All input must go through `.input(z.object({ ... }))` — never read raw arguments without validation: `.input(z.object({ name: z.string(), price: z.number() }))`
 - Use `.query()` for reads and `.mutation()` for writes — matches REST conventions
 
 **Middleware:**
@@ -28,7 +28,7 @@ Full standards in [trpc.md](trpc.md). Always-on summary:
 - Never put business logic in middleware — keep it thin (auth, logging, rate-limiting only)
 
 **Errors:**
-- Throw `TRPCError` with the appropriate `code`: `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `BAD_REQUEST`
+- Throw `TRPCError` with the appropriate `code:` `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `BAD_REQUEST` — e.g. `new TRPCError({ code: 'NOT_FOUND', message: 'User not found' })`
 - tRPC automatically maps codes to HTTP status codes when used over HTTP
 - The client receives typed errors — use `err.data?.code` to handle specific cases
 

@@ -17,7 +17,7 @@ Full standards in [sql.md](sql.md). Always-on summary:
 
 **Query rules:**
 - Never raw SQL unless Prisma cannot express it — use `$queryRaw` with tagged templates only
-- Always select only needed fields — never `findMany` without `select` on large tables
+- Always select only needed fields — `findMany({ select: { id: true, name: true } })` — never `findMany(` without `select:` on large tables
 - N+1 is never acceptable — use `include` or `select` with nested relations
 - Wrap multi-step operations in `prisma.$transaction()`
 

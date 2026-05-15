@@ -37,6 +37,6 @@ Full standards in [openapi-fastapi.md](openapi-fastapi.md). Always-on summary:
 - Mount routes without `tags` — the spec becomes one unnavigable blob
 - Return `dict` from a route that has a `response_model` — bypass causes schema drift
 - Expose internal fields (passwords, secrets) in response models
-- Skip `status_code=` on `POST` (should be 201) or `DELETE` (should be 204)
+- Skip `status_code=201` on `POST` routes or `status_code=204` on `DELETE` routes — always declare explicitly
 
 **Related skills:** `api-conventions`, `error-handling`, `database-sql`

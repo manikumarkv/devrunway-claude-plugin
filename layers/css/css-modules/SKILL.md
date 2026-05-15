@@ -26,7 +26,10 @@ Full standards in [css-modules.md](css-modules.md). Always-on summary:
 
 **TypeScript:**
 - Enable `declaration` + `modules: true` in your CSS Modules type generation tool (`css-modules-typescript-loader` or `typed-css-modules`)
-- Import as `import styles from './Component.module.css'` — you get full autocomplete on class names
+- Import as `import styles from './Component.module.css'` then apply with `className={styles.cardHeader}` — you get full autocomplete on class names
+
+**Composing:**
+- Use `composes: baseCard from './shared.module.css';` to reuse base styles — keeps rules DRY
 
 **Dynamic classes:**
 - Use `clsx` or `classnames` for conditional class composition: `clsx(styles.btn, isActive && styles.active)`

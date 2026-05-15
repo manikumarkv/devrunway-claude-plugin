@@ -26,19 +26,19 @@ control the browser directly (navigate, click, screenshot) for interactive debug
 - `@slow` — excluded from smoke; nightly only
 
 **Selectors — priority order:**
-1. `getByRole` — semantic, accessible
+1. `getByRole(` — semantic, accessible; first choice
 2. `getByLabel` / `getByPlaceholder`
 3. `getByTestId` — only when no semantic selector works
 4. Never: CSS classes, XPath, implementation-specific attributes
 
 **Structure:**
-- Tests in `e2e/<feature>.spec.ts`
-- Page objects in `e2e/pages/<Page>.ts` — locators + actions, no assertions
+- Tests in `e2e/<feature>.spec.ts`; use `expect(` from `@playwright/test` for all assertions
+- Page objects are `class ` definitions in `e2e/pages/<Page>.ts` — locators + actions only; assertions belong in the test file, not the page object
 - Fixtures in `e2e/fixtures/` — shared setup (auth, seeded data)
 - `test.use({ storageState: 'e2e/.auth/user.json' })` for authenticated tests
 
 **Never:**
-- `page.waitForTimeout()` — use `waitFor` or auto-waiting
+- Hard-coded sleep delays — use `waitFor` or Playwright auto-waiting instead
 - Shared mutable state between tests
 - Assert in page objects
 - Hard-code URLs — use `baseURL` from config

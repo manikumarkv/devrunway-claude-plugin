@@ -11,6 +11,9 @@ paths:
 
 Full standards in [sendgrid.md](sendgrid.md). Always-on summary:
 
+**Setup:**
+- Load the API key before use: `sgMail.setApiKey(process.env.SENDGRID_API_KEY)`
+
 **Sending:**
 - Always use Dynamic Templates — never build HTML in code; templates live in the SendGrid dashboard
 - `from` address must be a verified sender or verified domain
@@ -18,7 +21,7 @@ Full standards in [sendgrid.md](sendgrid.md). Always-on summary:
 - Set `mailSettings.sandboxMode = { enable: true }` in test/staging — delivers nothing but validates the payload
 
 **Required fields:**
-- Unsubscribe group (`asm.groupId`) — required for marketing email; CAN-SPAM law
+- Unsubscribe group (`asm:` object with `groupId`) — required for marketing email; CAN-SPAM law
 - Reply-to address when `from` is a no-reply
 - `subject` — even when using a template (overrides template subject)
 

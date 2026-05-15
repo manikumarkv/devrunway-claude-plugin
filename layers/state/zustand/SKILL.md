@@ -17,13 +17,12 @@ Full standards in [zustand-state.md](zustand-state.md). Always-on summary:
 - Actions live inside the store definition alongside state
 
 **Selectors:**
-- Always select only what you need: `const user = useAuthStore(s => s.user)`
-- Never `const store = useAuthStore()` — it re-renders on any state change
+- Always select only what you need: `useStore(s => s.user)` — never subscribe to the whole store (re-renders on every change)
 
 **Mutations:**
-- Never mutate state directly — use `set(state => ({ ...state, field: newVal }))`
+- Never mutate state directly — use `set(prev => ({ ...prev, field: newVal }))` or Immer
 - `immer` middleware for deeply nested state updates
-- Always implement a `reset()` action returning to `initialState`
+- Always implement a `reset:` action that restores `initialState`
 
 **Middleware stack (dev only):** `devtools(persist(immer(store), { partialize }))`
 

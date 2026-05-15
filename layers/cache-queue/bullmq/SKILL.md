@@ -18,12 +18,12 @@ Full standards in [bullmq.md](bullmq.md). Always-on summary:
 - Always define `defaultJobOptions` with `removeOnComplete` and `removeOnFail` — otherwise Redis fills up
 
 **Job definition:**
-- Define job payload types with TypeScript interfaces — never `any`
+- Define job payload with a TypeScript `interface JobData { ... }` — never `any`
 - Use `jobId` for idempotent jobs (same ID = won't add duplicates) — prevents double-processing
 - Add job data that is sufficient to process the job independently — don't assume in-memory state
 
 **Workers:**
-- Set `concurrency` explicitly — default is 1; tune based on job type (CPU vs I/O)
+- Create workers with `new Worker(queueName, processor, { concurrency: 5 })` — set `concurrency:` explicitly based on job type (CPU vs I/O)
 - Always handle errors in the processor function — unhandled rejections become failed jobs
 - Use `Worker.on('failed')` to log or alert on job failures — don't rely on queue inspection only
 

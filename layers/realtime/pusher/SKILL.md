@@ -18,8 +18,12 @@ Full standards in [pusher.md](pusher.md). Always-on summary:
 
 **Auth endpoint:**
 - Required for all `private-` and `presence-` channels
-- Server calls `pusher.authorizeChannel(socketId, channel, presenceData?)` and returns the result
+- Server calls `pusher.authenticate(socketId, channelName)` and returns the result containing `auth_key`
 - Protect the auth endpoint with your own session/JWT check — Pusher does not authenticate users
+
+**Webhooks:**
+- Verify every incoming webhook: `const webhook = pusher.webhook(request); if (!webhook.isValid()) reject()`
+- Handle `channel_occupied`, `channel_vacated`, `member_added`, `member_removed` events
 
 **Server publish:**
 - Use `pusher.trigger(channel, event, data)` to push events from server
@@ -31,7 +35,8 @@ Full standards in [pusher.md](pusher.md). Always-on summary:
 - Call `pusher.disconnect()` and `channel.unbind_all()` on component unmount
 
 **Presence channels:**
-- `presenceChannel.members.each(member => ...)` to iterate current members
+- Subscribe to a `presence-<name>` channel for real-time member tracking
+- Access `channel.members` to inspect who is in the channel
 - Listen to `pusher:member_added` and `pusher:member_removed` for join/leave events
 
 **Never:**

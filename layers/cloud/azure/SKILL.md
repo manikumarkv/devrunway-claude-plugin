@@ -44,6 +44,8 @@ Full standards in [azure.md](azure.md). Always-on summary:
 - Use system-assigned identity for single-resource, user-assigned for shared access patterns
 - Grant least-privilege RBAC roles at resource scope — never at subscription scope
 - Use `DefaultAzureCredential` in SDKs — works in local dev (CLI), CI (env vars), and Azure (managed identity)
+- For SDK auth: `new ManagedIdentityCredential()` when running in Azure; pair with `SecretClient` using `keyVaultName` URI to fetch secrets: `new SecretClient(\`https://${keyVaultName}.vault.azure.net\`, credential)`
+- Resource group operations: `resourceGroup` must be specified on every resource deploy call
 
 **Never:**
 - Store account keys or connection strings with credentials in app settings or code

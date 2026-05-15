@@ -13,7 +13,7 @@ paths:
 Full standards in [python-fastapi.md](python-fastapi.md). Always-on summary:
 
 **Routing and structure:**
-- Use `APIRouter` with `prefix` and `tags`; mount routers in `main.py` with `app.include_router()`
+- Use `APIRouter` with `prefix="/users"` (explicit `prefix=`) and `tags`; mount routers in `main.py` with `app.include_router()`
 - Return typed response models via `response_model=` — never return raw dicts from endpoints
 - Use `status_code=status.HTTP_201_CREATED` (or appropriate) on every route decorator
 
@@ -38,6 +38,6 @@ Full standards in [python-fastapi.md](python-fastapi.md). Always-on summary:
 **Never:**
 - Never import `app` directly in sub-modules — use `APIRouter` and mount
 - Never use `Optional[X]` without a default; prefer `X | None = None` (Python 3.10+)
-- Never block the event loop with `time.sleep()` — use `await asyncio.sleep()`
+- Never block the event loop with synchronous sleeps — use `await asyncio.sleep()`
 
 **Related skills:** error-handling, logging-standards, database-sql, api-conventions

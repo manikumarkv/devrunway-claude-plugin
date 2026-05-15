@@ -16,7 +16,8 @@ Full standards in [serverless.md](serverless.md). Always-on summary:
 
 **serverless.yml Structure:**
 - Define `provider.stage` using `${opt:stage, 'dev'}` — never hardcode environment names
-- Set `provider.region`, `provider.runtime`, `provider.memorySize`, and `provider.timeout` globally
+- Set `provider.region`, `provider.runtime`, `memorySize:`, and `timeout:` globally under `provider:`
+- Use `iamRoleStatements:` under `provider.iam` to grant least-privilege Lambda permissions
 - Use `params:` block (SFW v3+) for environment-specific values
 
 **Lambda Functions:**

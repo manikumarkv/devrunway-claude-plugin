@@ -1,6 +1,6 @@
 ---
 name: redux-toolkit
-description: Redux Toolkit conventions — createSlice, createAsyncThunk, RTK Query, store setup, and TypeScript patterns. Load when working with Redux Toolkit.
+description: Redux Toolkit conventions — createSlice, RTK Query, store setup, and TypeScript patterns. Load when working with Redux Toolkit.
 user-invocable: false
 stack: state/redux-toolkit
 paths:
@@ -18,18 +18,18 @@ Full standards in [redux-toolkit.md](redux-toolkit.md). Always-on summary:
 - Global state only for truly shared data; prefer component state or React Query for server state
 
 **Slices:**
-- Use `createSlice` — not hand-written reducers/actions
+- Use `createSlice(` with a `reducers:` key for action handlers — not hand-written reducers/actions
 - State mutations via Immer are allowed inside `createSlice` — `state.count++` is fine
 - Selectors live alongside slices: `export const selectOrderById = ...`
 
-**Async:**
-- `createAsyncThunk` for one-off async operations
-- **RTK Query** for all data fetching — it replaces `createAsyncThunk` for API calls
+**Async / RTK Query:**
+- **RTK Query** for all data fetching — use `createApi(` with `endpoints:` key; handles caching, loading states, and invalidation automatically
+- For one-off async operations not involving server data, use RTK's async thunk pattern (prefer RTK Query first)
 - RTK Query handles caching, re-fetching, loading states, and invalidation automatically
 
 **TypeScript:**
 - Use `RootState` and `AppDispatch` from the store — never `any`
-- `useAppDispatch` and `useAppSelector` typed hooks — not raw `useDispatch`/`useSelector`
+- Define and use `useAppDispatch(` and `useAppSelector(` typed hooks everywhere — not raw `useDispatch`/`useSelector`
 
 **Never:**
 - Mutate state outside of `createSlice` reducers — use `setState` pattern or RTK

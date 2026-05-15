@@ -12,8 +12,8 @@ paths:
 Full standards in [uploadthing.md](uploadthing.md). Always-on summary:
 
 **Router setup:**
-- Define upload routes in `src/app/api/uploadthing/core.ts` with `createUploadthing()`
-- Each route specifies: `maxFileSize`, `maxFileCount`, `acceptedFileTypes`, and a `middleware` function
+- Define upload routes with `createUploadthing(` in `core.ts`
+- Each route is defined with `f({` file type config (e.g., `f({ image: { maxFileSize: '4MB' } })`) followed by `.middleware()` and `.onUploadComplete(`
 - The `middleware` function runs on the server — validate auth and return metadata here
 
 **Auth:**
@@ -36,7 +36,7 @@ Full standards in [uploadthing.md](uploadthing.md). Always-on summary:
 - Verify the webhook signature — use `UTApi.webhookSignature` helpers
 
 **Never:**
-- Store the file URL from the client — get it from `onUploadComplete` callback (server-verified)
+- Store the file URL from the client — get it from the `onUploadComplete(` callback which provides the `fileUrl`
 - Skip the `middleware` auth check — anyone could upload without it
 - Use the UploadThing `fileKey` as a public identifier — it's internal; use your DB record ID
 

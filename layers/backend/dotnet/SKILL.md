@@ -16,15 +16,15 @@ Full standards in [dotnet.md](dotnet.md). Always-on summary:
 **Project Structure:**
 - Use minimal APIs in `Program.cs` for new services; Controllers for complex CRUD with filters
 - Separate concerns: `Endpoints/`, `Services/`, `Repositories/`, `Models/`, `DTOs/`
-- Use `record` types for DTOs — immutable, value equality, concise syntax
+- Use `record ` types for DTOs — e.g. `public record CreateProductRequest(string Name, decimal Price)` — immutable, value equality, concise syntax
 
 **Dependency Injection:**
-- Register services in `Program.cs` with appropriate lifetime: `AddScoped` (per-request), `AddSingleton`, `AddTransient`
+- Register services in `Program.cs` with appropriate lifetime: `AddScoped<IUserService, UserService>()` (per-request), `AddSingleton`, `AddTransient`
 - Inject via constructor — never use `ServiceLocator` or static access
 - Use `IOptions<T>` to inject configuration sections — never `IConfiguration` directly in services
 
 **EF Core:**
-- Use async methods (`ToListAsync`, `FirstOrDefaultAsync`, `SaveChangesAsync`) exclusively
+- Use async methods — always `async Task<T>` with `await` on every DB call: `await context.Users.FirstOrDefaultAsync(u => u.Id == id)`
 - Define migrations with `dotnet ef migrations add <Name>` — apply with `dotnet ef database update`
 - Never call `SaveChanges()` in a loop — batch operations, then save once
 
@@ -38,7 +38,7 @@ Full standards in [dotnet.md](dotnet.md). Always-on summary:
 - Use Azure Key Vault or AWS Secrets Manager in production
 
 **Never:**
-- Use `async void` except for event handlers
+- Avoid fire-and-forget methods — use `async Task<T>` return types; only event handlers may use void return
 - Catch `Exception` and swallow — always log and rethrow or return a typed error
 - Return `IActionResult` when `Results<T, U>` or typed minimal API return is possible
 

@@ -12,7 +12,7 @@ paths:
 Full standards in [braintree.md](braintree.md). Always-on summary:
 
 **Flow:**
-- Server generates a `clientToken` and sends it to the client
+- Server generates a `clientToken` using `gateway.clientToken.generate(` and sends it to the client
 - Client uses Drop-in UI or Hosted Fields to tokenize card — produces a `paymentMethodNonce`
 - Server receives nonce and calls `gateway.transaction.sale()` — never pass raw card data server-side
 - Always call `transaction.submitForSettlement: true` unless you intentionally want to authorize-only

@@ -12,6 +12,8 @@ paths:
 
 Full standards in [tailwind-css.md](tailwind-css.md). Always-on summary:
 
+**Usage:** apply utility classes via `className="..."` — never use inline style props for values that Tailwind covers (e.g., `px-4` for padding, `bg-blue-500` for background)
+
 **Class ordering:** layout → box model → typography → visual → interactive
 (enforce via `prettier-plugin-tailwindcss`)
 
@@ -20,7 +22,7 @@ Full standards in [tailwind-css.md](tailwind-css.md). Always-on summary:
 **Dark mode:** `class` strategy (not `media`) — ThemeProvider toggles `dark` class on `<html>`
 
 **Config:**
-- Custom tokens go in `tailwind.config.ts` `theme.extend` — never override core tokens
+- Custom tokens go in `tailwind.config.ts` under `theme: { extend: { ... } }` — never override core tokens
 - `container`: set `center: true` + `padding` in config — don't override per-use
 
 **`@apply`:** only in component stylesheets for multi-element patterns; never as a substitute for extracting a React component

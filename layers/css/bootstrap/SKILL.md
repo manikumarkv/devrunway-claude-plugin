@@ -25,7 +25,12 @@ Full standards in [bootstrap.md](bootstrap.md). Always-on summary:
 - Use `gap-*` on flex/grid containers instead of margin hacks on children
 - Responsive prefix: `col-12 col-md-6 col-lg-4` — mobile-first, always define xs first
 
-**Components:**
+**React-Bootstrap (when using React):**
+- Use typed React-Bootstrap components — `Container`, `Row`, `Col`, `Button` — never raw divs with class strings
+- Responsive columns: `<Row><Col xs={12} md={6}> ... </Col></Row>` — mobile-first using `xs=` prop
+- Button variants: `<Button variant="primary">` — use the `variant` prop, not raw Bootstrap class strings
+
+**Components (vanilla Bootstrap):**
 - Initialise JS components via data attributes (`data-bs-toggle`, `data-bs-target`) — avoid manual `new bootstrap.Modal()` unless you need programmatic control
 - When you do need JS, import individual components: `import { Modal } from 'bootstrap'` — not the whole bundle
 - Override component CSS via SCSS maps (`$btn-padding-y`, `$modal-content-border-radius`) not by overriding compiled classes

@@ -13,7 +13,7 @@ paths:
 Full standards in [ant-design.md](ant-design.md). Always-on summary:
 
 **Setup:**
-- Wrap the app with `<ConfigProvider theme={...}>` — never rely on the default Ant Design theme
+- Wrap the app with `<ConfigProvider theme={{ token: { colorPrimary: '#1677ff' } }}>` — never rely on the default Ant Design theme
 - Use the `theme.useToken()` hook to access design tokens inside components
 - Configure locale via `ConfigProvider locale={enUS}` — never mix locales
 
@@ -23,12 +23,12 @@ Full standards in [ant-design.md](ant-design.md). Always-on summary:
 - Use `components: { Button: { ... } }` for component-level overrides
 
 **Form:**
-- Always use `Form.Item name=` — never read values outside `Form` via uncontrolled refs
-- Use `Form.useForm()` and pass `form` to `<Form>`; call `form.validateFields()` before submit
+- Always use `Form.useForm(` and add validation with `<Form.Item` and `rules={[{ required: true, message: '...' }]}` — never read values via uncontrolled refs
+- Pass `form` to `<Form>`; call `form.validateFields()` before submit
 - Set `validateTrigger="onBlur"` for long forms to avoid validation noise while typing
 
 **Table:**
-- Type `columns` with `ColumnType<RecordType>[]` — always provide `key` and `dataIndex`
+- Use `<Table dataSource={records} columns={columnConfig} rowKey="id" />` — typed `ColumnType<RecordType>[]` for columns
 - Use server-side pagination: handle `onChange` and track `current`, `pageSize`, `sorter` in state
 - Use `rowKey` prop — never rely on array index as key
 

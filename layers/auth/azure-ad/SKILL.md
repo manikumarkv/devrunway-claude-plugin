@@ -35,7 +35,7 @@ Full standards in [azure-ad.md](azure-ad.md). Always-on summary:
 - Never trust claims from the frontend — always re-validate server-side
 
 **Token Handling:**
-- Acquire tokens silently first (`acquireTokenSilent`) — fall back to interactive only on `InteractionRequiredAuthError`
+- Acquire tokens silently first with `acquireTokenSilent(request)` — fall back to `acquireTokenPopup(request)` only on `InteractionRequiredAuthError`
 - Pass the Bearer token in `Authorization` header — never in query params
 - Tokens expire; always handle `401` by refreshing, not by logging out
 

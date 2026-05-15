@@ -11,9 +11,9 @@ paths:
 Full standards in [auth0.md](auth0.md). Always-on summary:
 
 **Server-side verification:**
-- Always verify JWTs server-side using `jwks-rsa` + `jsonwebtoken` or the Auth0 SDK
-- Check `aud` (audience) claim — must match your API identifier, not just any Auth0 token
-- Check `iss` (issuer) — must match `https://<your-domain>.auth0.com/`
+- Always verify JWTs server-side using `jwks-rsa` + `jsonwebtoken`: call `client.getSigningKey(kid, callback)` to fetch the public key, then verify
+- Check `audience` claim — must match your API identifier, not just any Auth0 token
+- Check `issuer` — must match `https://<your-domain>.auth0.com/`
 
 **Roles and permissions:**
 - Roles are managed in Auth0 dashboard or Management API
@@ -21,7 +21,7 @@ Full standards in [auth0.md](auth0.md). Always-on summary:
 - Add permissions to the token via an Auth0 Action — they don't appear automatically
 
 **Tokens:**
-- Access tokens are for API calls — short-lived (24h default), scope-based
+- `accessToken` is for API calls — pass it as `Authorization: Bearer <accessToken>`; short-lived (24h default), scope-based
 - ID tokens are for user profile info — never send to your API
 - Refresh tokens enable silent renewal — require `offline_access` scope
 

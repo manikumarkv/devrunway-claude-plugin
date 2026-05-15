@@ -8,11 +8,11 @@ stack: testing/unit/vitest
 Full standards in [testing.md](testing.md). Always-on summary:
 
 **Query priority (in order):**
-`getByRole` → `getByLabelText` → `getByPlaceholderText` → `getByText` → `getByTestId` (last resort only)
+`getByRole(` → `getByLabelText` → `getByPlaceholderText` → `getByText` → `getByTestId` (last resort only)
 
 **Never:**
 - Snapshot tests
-- `fireEvent` — use `userEvent` instead
+- Low-level DOM event dispatching — use `userEvent` instead for realistic browser simulation
 - Test internal state or implementation details
 - `vi.mock('axios')` or mock native `fetch` — use MSW
 - `getByTestId` as a first choice

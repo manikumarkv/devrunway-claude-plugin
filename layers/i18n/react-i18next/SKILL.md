@@ -16,7 +16,9 @@ Full standards in [react-i18next.md](react-i18next.md). Always-on summary:
 
 **Key convention:** `<component>.<element>` — e.g. `auth.loginButton`, `errors.networkError`
 
-**Hook usage:** `const { t } = useTranslation('namespace')` — always specify namespace
+**Hook usage:** `useTranslation('payments')` — always specify the feature namespace; never use the default `'translation'` namespace in feature code
+
+**Trans component:** use `<Trans` with `components={{ link: <a /> }}` for JSX interpolation: `<Trans i18nKey="welcome" components={{ name: <strong /> }} />`
 
 **Never concatenate strings:** use interpolation `t('greeting', { name })` — not `t('hello') + ' ' + name`
 

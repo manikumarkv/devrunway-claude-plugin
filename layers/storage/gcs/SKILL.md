@@ -21,9 +21,10 @@ Full standards in [gcs.md](gcs.md). Always-on summary:
 - Grant the least-privileged role: `roles/storage.objectViewer` for read, `roles/storage.objectCreator` for write, `roles/storage.admin` only for bucket management
 
 **Signed URLs:**
-- Generate signed URLs server-side for temporary access; set short expiration (15 min for uploads, 1 hr for downloads)
+- Generate server-side with `file.getSignedUrl({ action: 'write', expires: Date.now() + 15 * 60 * 1000 })` for uploads
 - Use `v4` signing — `v2` is deprecated
-- Pass `method="PUT"` for upload signed URLs; set `content_type` to restrict MIME type
+- Pass `action: 'write'` for upload signed URLs; set `contentType` to restrict MIME type
+- Validate `mimetype` against an `allowedMimeTypes` list before generating the URL — clients can lie about content type
 
 **Uploads and downloads:**
 - Use `upload_from_filename` for file paths, `upload_from_string` / `upload_from_file` for in-memory data
@@ -31,7 +32,7 @@ Full standards in [gcs.md](gcs.md). Always-on summary:
 - Use resumable uploads for files > 5 MB
 
 **Bucket config:**
-- Enable uniform bucket-level access — never use per-object ACLs (they conflict with IAM)
+- Enable `uniformBucketLevelAccess` on every bucket — never use per-object ACLs (they conflict with IAM)
 - Set lifecycle rules to delete temporary/processed objects older than N days
 - Enable versioning on buckets that store user-critical data
 

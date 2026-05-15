@@ -19,11 +19,11 @@ Full standards in [python-django.md](python-django.md). Always-on summary:
 
 **Models and ORM:**
 - Always define `__str__`, `class Meta` with `ordering`, and explicit `related_name` on FK/M2M
-- Use `select_related` for FK traversal, `prefetch_related` for reverse/M2M — never N+1
+- Use `select_related('user', 'product')` for FK traversal, `prefetch_related` for reverse/M2M — never N+1
 - Wrap multi-step writes in `transaction.atomic()`; use `select_for_update()` for locking
 
 **DRF serializers:**
-- Use `ModelSerializer` with explicit `fields = [...]` — never use `fields = "__all__"`
+- Use `ModelSerializer` with explicit `fields = [...]` — never use the magic all-fields shorthand
 - Validate in `validate_<field>` or `validate()`; raise `serializers.ValidationError`
 - Use `SerializerMethodField` for computed read-only fields
 
@@ -40,6 +40,6 @@ Full standards in [python-django.md](python-django.md). Always-on summary:
 **Never:**
 - Never use `print()` — use `logging.getLogger(__name__)`
 - Never put secrets in `settings/base.py` — use `environ` or `django-environ`
-- Never use bare `except Exception` — catch specific exceptions or re-raise
+- Never use broad exception catches — always catch the specific exception type or re-raise
 
 **Related skills:** error-handling, logging-standards, database-sql, api-conventions

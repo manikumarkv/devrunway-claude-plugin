@@ -12,12 +12,12 @@ Full standards in [nosql.md](nosql.md). Always-on summary:
 **Design rules:**
 - Design access patterns FIRST, schema second
 - Single-table design for related entities — one table per service/bounded context
-- PK + SK always strings, use prefixes: `USER#<id>`, `POST#<id>`
+- PK + SK always strings, use prefixes: `USER#<id>`, `ORDER#<id>`, `POST#<id>`
 - GSIs for every access pattern the primary key cannot serve
 - TTL for session data, tokens, temp records — never manually delete them
 
 **Query rules:**
-- Always `Query` over `Scan` — Scan reads every item in the table
+- Always use `Query(` — never use table scans; they read every item and have O(n) cost
 - Always project only needed attributes — `ProjectionExpression`
 - Use `BatchGetItem` for multi-key reads, not N individual `GetItem` calls
 - Condition expressions on writes to prevent race conditions

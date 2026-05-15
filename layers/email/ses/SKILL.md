@@ -14,8 +14,12 @@ paths:
 
 Full standards in [ses.md](ses.md). Always-on summary:
 
+**Setup:**
+- Instantiate with `new SESClient({ credentials: fromEnv() })` — credentials come from IAM role env vars, never hardcoded access keys
+
 **Sending:**
-- Always send from a verified identity (domain or email); never send from unverified addresses
+- Send with `new SendEmailCommand({ Source: 'noreply@yourdomain.com', Destination: ..., Message: { Body: { Text: { Data: ... }, Html: { Data: ... } }, Subject: ... } })`
+- Always send from a verified identity in `Source:`; never send from unverified addresses
 - Use `SendEmail` for simple messages, `SendTemplatedEmail` for parametrized content, `SendBulkTemplatedEmail` for campaigns
 - Set `ReplyToAddresses` to a monitored mailbox — never set it to a no-reply-only address
 

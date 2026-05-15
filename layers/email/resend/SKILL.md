@@ -12,8 +12,8 @@ paths:
 Full standards in [resend.md](resend.md). Always-on summary:
 
 **Setup:**
-- One `Resend` client instance — import and reuse, never instantiate per-request
-- `from` must be a verified domain: `Team <hello@verified-domain.com>` format
+- Instantiate once server-side: `new Resend(process.env.RESEND_API_KEY)` — never in frontend code, never per-request
+- `from` address must be a verified domain: `from: 'noreply@yourdomain.com'` format
 - Use `react-email` for templates — JSX components are versioned, testable, and reusable
 
 **Sending:**
@@ -21,7 +21,8 @@ Full standards in [resend.md](resend.md). Always-on summary:
 - Pass `tags` for filtering in the Resend dashboard
 - Set `replyTo` when `from` is a no-reply address
 
-**Templates:**
+**Templates (react-email):**
+- Build with `<Html>`, `<Body>`, and other react-email primitives — call `render(<MyTemplate />)` to produce HTML
 - One file per email type: `welcome.email.tsx`, `password-reset.email.tsx`
 - Keep templates in `src/emails/` — preview with `email dev` from react-email CLI
 - Props-typed — TypeScript catches missing template variables at build time

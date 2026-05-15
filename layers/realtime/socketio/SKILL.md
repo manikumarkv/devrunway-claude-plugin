@@ -18,18 +18,18 @@ Full standards in [socketio.md](socketio.md). Always-on summary:
 - Always configure CORS explicitly — never use `origin: '*'` in production
 
 **Authentication:**
-- Validate the auth token in `io.use()` middleware (runs before `connection`) — reject unauthenticated sockets before they connect
+- Validate the auth token in `io.use(` middleware — inspect `socket.handshake` and call `next(` to accept or `next(new Error(...))` to reject before the socket connects
 - Never trust `socket.handshake.auth` data after connection without re-validating on sensitive events
 - Attach user identity to `socket.data` in middleware so handlers don't need to re-fetch it
 
 **Event naming:**
 - Use `noun:verb` format: `order:created`, `chat:message`, `user:typing`
-- Keep a shared `events.ts` file with typed event constants — never use raw strings in multiple files
+- Keep a shared `events.ts` file with `const EVENTS = { ORDER_CREATED: 'order:created', ... } as const` — never scatter raw string event names across files
 - Server-to-client events and client-to-server events use the same naming convention
 
 **Rooms:**
-- Join rooms in `connection` handler after auth is verified
-- Room name convention: `resource:id` — e.g., `order:abc123`, `chat:room-xyz`
+- After auth, call `socket.join(` to put the socket in a room (`socket.join(\`order:${orderId}\`)`)
+- Target a room with `io.to(roomName).emit(...)` — never use `io.emit` when you mean a specific room
 - Leave rooms explicitly on disconnect or when the user's permission changes
 
 **Error handling:**

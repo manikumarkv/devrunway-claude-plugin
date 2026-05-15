@@ -12,9 +12,9 @@ paths:
 Full standards in [datadog-apm.md](datadog-apm.md). Always-on summary:
 
 **Tracer setup:**
-- Import `dd-trace` and call `tracer.init()` as the **very first line** of your entry file — before any other imports
+- `const tracer = require('dd-trace'); tracer.init({ logInjection: true })` as the **very first lines** of your entry file — before any other imports
 - Configure via environment variables (`DD_SERVICE`, `DD_ENV`, `DD_VERSION`) — not code
-- Set `logInjection: true` to auto-inject `trace_id` and `span_id` into log lines
+- `logInjection: true` auto-injects `trace_id` and `span_id` into log lines for correlation
 
 **Custom spans:**
 - Use `tracer.startSpan()` for operations not auto-instrumented (business logic, DB calls to non-supported clients)

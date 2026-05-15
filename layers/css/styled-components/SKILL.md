@@ -16,7 +16,7 @@ Full standards in [styled-components.md](styled-components.md). Always-on summar
 
 **Theme:**
 - Wrap the app once with `ThemeProvider`; type the theme with module augmentation so `props.theme` is fully typed
-- Define all design tokens (colors, spacing, font sizes, breakpoints) in the theme object — never hardcode hex/px values
+- Define all design tokens in the theme object (e.g., `theme.colors.primary`) — never hardcode hex/px values in styled components
 - Use `useTheme()` hook to access theme in non-styled components
 
 **Styling:**

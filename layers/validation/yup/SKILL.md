@@ -13,9 +13,8 @@ paths:
 Full standards in [yup.md](yup.md). Always-on summary:
 
 **Schema structure:**
-- Define schemas in dedicated `*.schema.ts` files, co-located with the feature
+- Define at module level: `const schema = yup.object(shape)` — never inside a React component (recreated on every render)
 - Use `yup.InferType<typeof schema>` for TypeScript types — never hand-write the type separately
-- Always define the schema as `const` outside of the component so it isn't recreated on each render
 
 **Validation settings:**
 - Always use `abortEarly: false` so all errors surface at once (not just the first)
