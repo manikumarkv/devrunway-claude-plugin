@@ -209,3 +209,15 @@ vi.mocked(useFlags).mockReturnValue({
 - [ ] Server-side SDK uses `enableLocalEvaluation: true` — no per-request API call
 - [ ] Traits set after authentication — no PII in trait values
 - [ ] Flagsmith unavailability handled gracefully with safe defaults
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Not defining `defaultFlags` | If the Flagsmith API is unreachable on first load, all flags evaluate to `undefined`; always declare defaults for every known flag |
+| Checking a flag before `useIsLoading()` resolves | While flags are loading, `isFeatureEnabled` returns the default; render a skeleton/spinner until `isLoading` is `false` |
+| Hardcoding flag name strings at call sites | Centralize all flag names in `src/flags/registry.ts`; typos in string literals silently evaluate to disabled |
+| Using the client-side SDK key on the server | The browser SDK key is public; the server SDK requires a separate server-side key (`FLAGSMITH_SERVER_KEY`) |
+| Not enabling `enableLocalEvaluation` on the server SDK | Without it, every request makes a network call to Flagsmith, adding latency and creating a hard dependency on availability |
+| Including PII in trait values | Traits are stored in Flagsmith; never pass email, SSN, or payment details — use opaque IDs and plan tiers instead |
+| Calling `flagsmith.init()` multiple times | Guard with an `initialized` flag; reinitializing resets the cache and may cause race conditions |

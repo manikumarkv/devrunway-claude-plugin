@@ -214,3 +214,16 @@ client.getUser({ user_id: "abc-123" }, { deadline }, (err: Error, response: any)
 - [ ] All client calls have explicit timeouts
 - [ ] Domain errors mapped to specific gRPC status codes (not UNKNOWN)
 - [ ] Deleted proto fields marked with `reserved`
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Reusing a deleted field number | Mark removed fields with `reserved 5; reserved "phone";` — never reassign numbers |
+| Returning `UNKNOWN` for domain errors | Map domain conditions to specific codes: `NOT_FOUND`, `INVALID_ARGUMENT`, `ALREADY_EXISTS`, etc. |
+| Not setting a client deadline | Always pass `timeout=` (Python) or `{ deadline }` (Node.js) on every stub call |
+| Sharing one channel across goroutines/threads unsafely | Create one channel per logical consumer/publisher; channels are not concurrency-safe in amqplib |
+| Committing generated protobuf files | Add `gen/` to `.gitignore`; regenerate in CI with `buf generate` |
+| Skipping `buf lint` and `buf breaking` in CI | Run both checks on every PR to catch style violations and breaking schema changes early |
+| Using insecure channels in production | Use `grpc.ssl_channel_credentials()` / `grpc.credentials.createSsl()` — never `insecure_channel` outside local dev |
+| Missing `reserved` when removing an enum value | Enum values also need `reserved` entries to prevent value reuse |

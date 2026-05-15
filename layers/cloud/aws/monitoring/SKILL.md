@@ -2,7 +2,8 @@
 name: monitoring
 description: Frontend monitoring standards — error boundaries, Sentry setup, web vitals, CloudWatch for backend. Load when adding error handling, observability, or performance tracking.
 user-invocable: false
-stack: cloud/aws---
+stack: cloud/aws
+---
 
 Full standards in [monitoring.md](monitoring.md). Always-on summary:
 

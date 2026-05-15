@@ -233,3 +233,15 @@ export const handler = async (event: {
 - [ ] Non-Lambda services cache config with 30s TTL
 - [ ] Validator Lambda attached to production configuration profile
 - [ ] Rollout percentage used for gradual flag enablement
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Calling the AppConfig API on every Lambda invocation | Use the Lambda extension (localhost:2772) or an in-process cache; direct API calls add latency and incur charges |
+| Not attaching a validator Lambda to the configuration profile | Without a validator, malformed JSON deploys to production and breaks the app; attach a validator that checks schema on every deployment |
+| Using `AppConfig.AllAtOnce` strategy for high-risk config changes | Use `AppConfig.Canary10Percent20Minutes` or a linear strategy with a rollback alarm for anything touching database or auth config |
+| Storing the full config in environment variables | Env vars are static at Lambda startup; use AppConfig so config updates take effect without a redeploy |
+| Not defining safe defaults when the AppConfig fetch fails | Network errors happen; always return a disabled-flag default object from `catch` blocks so the app stays functional |
+| Using the deprecated `GetConfiguration` API | Use the newer `StartConfigurationSession` + `GetLatestConfiguration` (`@aws-sdk/client-appconfigdata`) — the old API is throttled per invocation |
+| Missing `RequiredMinimumPollIntervalInSeconds` on sessions | Setting this below 15 seconds triggers throttling; 30 seconds is the recommended minimum for non-Lambda workloads |

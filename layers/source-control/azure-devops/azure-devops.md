@@ -224,3 +224,15 @@ Azure DevOps does not natively support GitHub's CODEOWNERS, but you can approxim
 - [ ] Workload Identity Federation used for Azure service connections — no client secrets
 - [ ] Work items linked via `AB#{id}` in all commit messages and PRs
 - [ ] Boards area and iteration paths match team structure
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Storing secrets as plain pipeline variables | Use variable groups linked to Azure Key Vault; secrets are masked in logs automatically |
+| Not enforcing "reset approvals on new commits" | Without this, an old approval remains valid after new code is pushed; enable `reset-on-source-push` in the min-reviewers policy |
+| Missing `AB#` work item references in commits and PRs | Without `AB#{id}` links, work items don't auto-transition and traceability breaks; enforce via the work-item-linking policy |
+| Using personal access tokens (PATs) for service connections | Use Workload Identity Federation for Azure subscriptions — no client secrets to rotate or accidentally expose |
+| Giving service connections "Grant access to all pipelines" | Scope each service connection to only the pipelines that need it to follow least-privilege |
+| Using personal passwords instead of App Passwords for Git operations | Create App Passwords with minimal scopes; personal passwords grant full account access |
+| Not configuring comment resolution policy on `main` | Without it, reviewers can merge PRs with unresolved comments, allowing disputed changes to ship |

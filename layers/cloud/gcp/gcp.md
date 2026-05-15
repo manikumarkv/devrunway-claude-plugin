@@ -201,3 +201,16 @@ resource "google_iam_workload_identity_pool_provider" "github" {
 - [ ] IAM roles granted at resource scope, not project scope
 - [ ] Workload Identity Federation used in CI — no JSON key files
 - [ ] Artifact Registry used for images — not Docker Hub
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Using the default Compute Engine service account | Create a dedicated, minimally scoped service account per Cloud Run service; the default SA has broad project-level permissions |
+| Deploying Cloud Run with `--allow-unauthenticated` for internal services | Use `--no-allow-unauthenticated` and invoke via service-to-service authentication (OIDC tokens) |
+| Storing JSON key files in CI for authentication | Use Workload Identity Federation (`google-github-actions/auth`) — no key files to rotate or accidentally expose |
+| Granting IAM roles at project scope instead of resource scope | Assign roles directly on the resource (e.g., bucket, secret, topic) to limit blast radius |
+| Using Cloud SQL public IP without the Auth Proxy | Always connect via the Auth Proxy sidecar or the Cloud SQL connector library; never expose Cloud SQL on a public IP |
+| Pinning to `:latest` for Cloud Run images | Tag images with the git SHA (`${GIT_SHA}`) to enable rollback and reproducible deployments |
+| Accessing Secret Manager secrets on every request | Cache secrets at startup or use Cloud Run's built-in `--set-secrets` flag to mount them as environment variables |
+| Using `gcloud` CLI commands to access secrets in production code | Use the Secret Manager SDK (`google-cloud-secret-manager`) — `gcloud` is a CLI tool, not a library |

@@ -300,3 +300,16 @@ export class MyComponent {
 - [ ] Typed FormGroup with `nonNullable` group
 - [ ] Subscriptions managed with `takeUntilDestroyed` — no `ngOnDestroy` for cleanup
 - [ ] Functional interceptors added via `withInterceptors([...])`
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Using constructor parameter injection instead of `inject()` | Use `inject(Service)` in standalone components and functional guards; constructor injection still works but `inject()` is the modern Angular 14+ pattern |
+| Forgetting `standalone: true` on new components | Every new component, directive, and pipe must declare `standalone: true`; module-based components require `NgModule` boilerplate that is now unnecessary |
+| Subscribing to an Observable in the template without `async` pipe or `toSignal()` | Use `toSignal(observable$)` to convert to a signal, or use the `async` pipe; raw subscriptions in `ngOnInit` without `takeUntilDestroyed` leak |
+| Not using `takeUntilDestroyed` for subscriptions | Without it, subscriptions outlive the component; use `takeUntilDestroyed(this.destroyRef)` instead of manual `ngOnDestroy` |
+| Mutating a signal directly instead of using `.set()` or `.update()` | Signals are updated via `signal.set(value)` or `signal.update(fn)` — direct assignment bypasses change detection |
+| Using `*ngIf` and `*ngFor` in Angular 17+ templates | Replace with the new control flow syntax: `@if`, `@for (item of items; track item.id)` — it is faster and required for signal-based templates |
+| Lazy-loading a route but importing its component eagerly in another module | Eager imports defeat lazy loading; only reference lazy-loaded components inside their own route chunk |
+| Class-based guards instead of functional guards | Replace `implements CanActivate` classes with `CanActivateFn` arrow functions — class guards are deprecated |

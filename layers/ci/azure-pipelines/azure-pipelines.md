@@ -230,3 +230,16 @@ variables:
 - [ ] `condition: succeeded()` on deploy stages — failed builds never deploy
 - [ ] Cache tasks use lockfile-based keys with `restoreKeys` fallback
 - [ ] Reusable steps extracted to `.azure/templates/`
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Storing secrets as plain pipeline variables | Use variable groups linked to Azure Key Vault; secrets are masked automatically in logs |
+| Using `job` type for deployments instead of `deployment` | Use `deployment` job type for all environment deploys — it unlocks approval gates and deployment history |
+| Missing `condition: succeeded()` on deploy stages | Without the condition, a failing build can trigger the next stage; always gate on `succeeded()` |
+| Cache keys without a lockfile component | Include `package-lock.json` or equivalent in the cache key to invalidate when dependencies change |
+| Hardcoding branch names in conditions | Use `variables['Build.SourceBranch']` comparisons instead of literal strings to keep conditions portable |
+| Not using `restoreKeys` in Cache tasks | A `restoreKeys` fallback allows partial cache hits when the exact key misses, speeding up cold runs |
+| Granting service connections access to all pipelines unnecessarily | Restrict service connections to specific pipelines via the "Security" tab in Azure DevOps |
+| Missing approval gate on the `production` environment | Configure approvals and checks in Pipelines → Environments → production before first prod deploy |

@@ -2,7 +2,8 @@
 name: nodejs-standards
 description: Node.js and backend coding standards, patterns, approved libraries, and anti-patterns. Load when writing, reviewing, or discussing any Node.js/Express backend code, APIs, services, or controllers.
 user-invocable: false
-stack: backend/node-express---
+stack: backend/node-express
+---
 
 For the full reference see [nodejs.md](nodejs.md). Summary of rules that always apply:
 

@@ -2,7 +2,8 @@
 name: testing-standards
 description: React testing standards — accessible queries, MSW for API mocking, behavior over implementation, what to test and what not to. Load when writing or reviewing Vitest + Testing Library tests.
 user-invocable: false
-stack: testing/unit/vitest---
+stack: testing/unit/vitest
+---
 
 Full standards in [testing.md](testing.md). Always-on summary:
 

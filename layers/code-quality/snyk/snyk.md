@@ -164,3 +164,15 @@ In Snyk UI (Organization Settings → Integrations → GitHub):
 - [ ] Container scan uses `--file=Dockerfile` to get base image analysis
 - [ ] `snyk iac test` runs on infrastructure changes
 - [ ] Automated fix PRs enabled in Snyk UI
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Running `snyk test` without `--severity-threshold` | Without a threshold, Snyk blocks on low-severity issues; use `--severity-threshold=high` to focus on actionable findings |
+| Ignoring vulnerabilities with no documented reason | Every `.snyk` ignore entry must include a `reason` and `expires` date — indefinite ignores accumulate silently |
+| Running `snyk test` but not `snyk monitor` on the main branch | `snyk test` checks a point in time; `snyk monitor` continuously tracks new vulnerabilities in already-merged dependencies |
+| Scanning containers without `--file=Dockerfile` | Without the Dockerfile, Snyk cannot suggest a better base image; always pass `--file=Dockerfile` in container scans |
+| Using `SNYK_TOKEN` as a plain CI variable | Store `SNYK_TOKEN` in CI secrets (GitHub Secrets, Azure Key Vault variable group) — never expose it in plain text |
+| Not running `snyk iac test` on infrastructure changes | IaC misconfigurations (public S3, open security groups) go undetected if only dependency scans run |
+| Accepting all Snyk auto-fix PRs without review | Snyk fix PRs can introduce breaking changes in patch upgrades; review the diff before merging |

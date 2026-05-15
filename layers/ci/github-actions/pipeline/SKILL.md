@@ -2,7 +2,8 @@
 name: pipeline
 description: CI/CD pipeline standards — GitHub Actions workflows, branch protection, required checks, deployment gates. Load when creating or reviewing pipeline configuration.
 user-invocable: false
-stack: ci/github-actions---
+stack: ci/github-actions
+---
 
 Full standards in [pipeline.md](pipeline.md). Always-on summary:
 

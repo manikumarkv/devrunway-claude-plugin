@@ -1,8 +1,14 @@
 ---
 name: security-standards
-description: Security rules and checklist for frontend and backend code. Load when writing auth logic, API endpoints, input handling, secrets management, AWS IAM, or any security-sensitive code.
+description: Security rules for AWS/Cognito/Express stacks — JWT auth middleware, Cognito group-based authorisation, Zod input validation, helmet, rate-limit, CORS, IAM least-privilege, and no-PII logging. Load when writing auth logic, API endpoints, or security-sensitive code in the Cognito stack.
 user-invocable: false
-stack: auth/cognito---
+stack: auth/cognito
+paths:
+  - "**/auth/**"
+  - "**/middleware/**"
+  - "**/cognito*"
+  - "**/*.controller.*"
+  - "**/*.route.*"
 
 ## Authentication & Authorization
 - All protected routes use `authMiddleware` (Cognito JWT verified with `aws-jwt-verify` — never decoded-only)

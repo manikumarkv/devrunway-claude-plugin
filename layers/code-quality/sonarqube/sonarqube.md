@@ -186,3 +186,15 @@ dotnet sonarscanner end /d:sonar.login="$SONAR_TOKEN"
 - [ ] Quality gate check step added — pipeline fails on gate failure
 - [ ] PR analysis enabled with `pullrequest.*` properties
 - [ ] No NOSONAR suppressions without explanatory comments
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Using `fetch-depth: 1` (default) on git checkout | SonarQube needs full git history for blame and new-code detection; always set `fetch-depth: 0` |
+| Not generating coverage before the scanner runs | Coverage must be produced in the same CI job as the scan; a missing `lcov.info` or `coverage.xml` results in 0% coverage reported |
+| Missing `sonar.exclusions` for generated and test files | Without exclusions, Sonar counts generated migrations and test mocks against coverage and duplications metrics |
+| Using `NOSONAR` without an explanatory comment | Bare `// NOSONAR` suppresses without accountability; add reason and review date: `// NOSONAR — false positive, reviewed 2025-01-15` |
+| Not adding the quality gate check step in the pipeline | The scan task always succeeds; you must add `sonarcloud-buildbreaker` or `sonar qualitygate wait` to fail the pipeline on gate failure |
+| Running analysis on feature branches without PR decoration | Without `sonar.pullrequest.*` properties, Sonar cannot post inline comments on PRs |
+| Committing `SONAR_TOKEN` to source code | Store the token in CI secrets and reference via `${{ secrets.SONAR_TOKEN }}`; a leaked token allows anyone to post analysis to your project |

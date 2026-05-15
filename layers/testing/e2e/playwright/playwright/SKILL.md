@@ -2,7 +2,8 @@
 name: playwright
 description: Playwright E2E testing standards — test structure, selectors, fixtures, page objects, CI integration, and MCP runner so tests can be triggered from prompts. Load when writing, reviewing, or running Playwright specs.
 user-invocable: false
-stack: testing/e2e/playwright---
+stack: testing/e2e/playwright
+---
 
 Full standards in [playwright.md](playwright.md).
 MCP + prompt runner guide in [playwright-mcp.md](playwright-mcp.md).

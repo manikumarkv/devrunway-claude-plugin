@@ -2,7 +2,8 @@
 name: security
 description: Security standards for the full stack — OWASP top 10 applied to React, Express, Cognito, Prisma, DynamoDB, S3, and CDK. Load when writing auth, API endpoints, file uploads, or reviewing any code before PR.
 user-invocable: false
-stack: auth/cognito---
+stack: auth/cognito
+---
 
 Full standards in [security.md](security.md). Always-on summary:
 

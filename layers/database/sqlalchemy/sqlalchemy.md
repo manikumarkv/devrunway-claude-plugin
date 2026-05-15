@@ -260,3 +260,16 @@ async def create_safe(session: AsyncSession, user: User) -> User | None:
 - [ ] Raw SQL uses bound parameters — no string interpolation
 - [ ] Alembic `env.py` imports all models for autogenerate
 - [ ] Database URL loaded from environment — not in `alembic.ini`
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Using SQLAlchemy 1.x `Column` style in a 2.0 project | Use `Mapped[T]` with `mapped_column()` — the 2.0 declarative style is type-safe and works with mypy |
+| `expire_on_commit=True` (the default) with async sessions | After `commit()`, accessing attributes triggers a lazy load that fails in async context; set `expire_on_commit=False` |
+| Calling `session.commit()` inside a loop | Commit once at the end of the unit of work; committing per-row is slow and breaks atomicity |
+| Loading relationships without `selectinload` / `joinedload` | Accessing a relationship attribute after the session is closed causes `MissingGreenlet` or `DetachedInstanceError`; eager-load explicitly |
+| Using string interpolation in raw SQL | Always use `text("... WHERE id = :id")` with bound parameters — string formatting risks SQL injection |
+| Forgetting to import models in `alembic/env.py` | Alembic's `--autogenerate` only detects models that are imported; add `from app.models import *` (or explicit imports) |
+| Using `engine.execute()` (removed in 2.0) | Use `with engine.connect() as conn: conn.execute(...)` or the async equivalent |
+| Not calling `await session.flush()` before accessing DB-generated values | `flush()` sends the INSERT and populates server-generated columns (e.g., `created_at`, auto-increment ID) without committing |

@@ -227,3 +227,16 @@ async def require_auth(credentials = Depends(bearer)):
 - [ ] API validates `issuer`, `audience`, `algorithms`, and expiry
 - [ ] B2C configs include `knownAuthorities`
 - [ ] `Authorization: Bearer` header used — no tokens in query params
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Using `localStorage` for token cache | Use `sessionStorage` (`cacheLocation: "sessionStorage"`) — localStorage is accessible to XSS scripts across tabs |
+| Calling interactive login flows before trying silent token acquisition | Always call `acquireTokenSilent` first; only fall back to `loginPopup` / `loginRedirect` on `InteractionRequiredAuthError` |
+| Not initializing `PublicClientApplication` with `await msalInstance.initialize()` | MSAL v3+ requires async initialization; skipping it causes race conditions and auth failures |
+| Hardcoding `clientId` or `tenantId` in source code | Load from environment variables (`VITE_AZURE_CLIENT_ID`, etc.) — committed IDs expose your app registration |
+| Omitting `knownAuthorities` for B2C configs | Without `knownAuthorities`, MSAL rejects tokens from custom B2C domains as untrusted issuers |
+| Validating JWTs without checking `issuer` and `audience` | Verify both `iss` and `aud` claims; accepting tokens from any issuer allows cross-tenant token reuse attacks |
+| Passing the access token in a query parameter | Always use `Authorization: Bearer <token>` header — query params are logged in server access logs and browser history |
+| Using the v1 JWKS endpoint for v2 tokens | Entra ID v2 tokens must be validated against the v2 JWKS URI: `…/v2.0/keys` |

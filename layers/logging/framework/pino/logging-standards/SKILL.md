@@ -2,7 +2,8 @@
 name: logging-standards
 description: Comprehensive logging standards — what to log, when to log, log format/schema, what never to log (PII/secrets), Pino setup, request correlation, frontend error logging, CloudWatch config, Sentry integration. Load whenever writing any code that logs, instruments, or debugs.
 user-invocable: false
-stack: logging/framework/pino---
+stack: logging/framework/pino
+---
 
 Full standards in [logging.md](logging.md). Always-on summary:
 
@@ -70,37 +71,6 @@ logger.warn({ action: 'auth.signIn', maskedEmail, reason: 'invalid_password', at
 - `src/lib/logger.ts` — Pino singleton with `redact` for all sensitive paths
 - `pino-http` middleware — auto request/response logs; mount before all other middleware
 - Child logger — `req.log.child({ userId, action })` in controller; pass into services
-
----
-
-## Frontend (React) — see [logging.md § Frontend](logging.md)
-
-**What to use:**
-- `Sentry.captureException(err)` — for caught errors in critical paths (`checkout`, `payment`)
-- `Sentry.withErrorBoundary` — wrap every async page/feature
-- `logger.error(message, context)` — goes to Sentry; dev console in non-prod
-- `logger.warn/debug` — dev console only; stripped from production build
-
-**After sign-in:** `Sentry.setUser({ id: user.sub })` — ID only, never email or name  
-**After sign-out:** `Sentry.setUser(null)`
-
-**Quick patterns:**
-```ts
-// Caught error in critical path
-try {
-  await processCheckout()
-} catch (err) {
-  Sentry.captureException(err, { extra: { orderId, step: 'checkout' } })
-  toast.error(t('errors.checkoutFailed'))
-}
-
-// Non-fatal warning
-logger.warn('Feature flag evaluation failed', { flagKey: 'new-checkout', userId })
-
-// Never
-logger.debug('Form submitted', { email, name, address })  // ❌ PII
-logger.debug('API response', { data: apiResponse })        // ❌ may contain PII
-```
 
 ---
 

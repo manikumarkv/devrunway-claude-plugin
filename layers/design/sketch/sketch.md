@@ -177,3 +177,16 @@ Export steps:
 - [ ] All layers are named semantically
 - [ ] Prototype flow linked (if applicable)
 - [ ] Abstract merge review completed before dev start
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Detaching a symbol to change a color or padding | Never detach; add a new variant or use a Symbol Override instead |
+| Using one-off fills instead of Library Layer Styles | All colors must come from a Library Layer Style; local fills break token sync |
+| Naming symbols without the `/` hierarchy separator | Use `Buttons/Primary/Default` — the slash creates Sketch's symbol organizer groups |
+| Editing `main` directly in Abstract | Always branch from `main`, work in the branch, and open a Review before merging |
+| Committing to Abstract without a descriptive message | Write meaningful commit messages like "Add payment error state" so design history is readable |
+| Pushing tokens to GitHub without running Style Dictionary | Token changes must be built with Style Dictionary before they appear as CSS/TS constants in code |
+| Exporting raster icons instead of SVG | Icons must be SVG; mark them as 1x SVG export in the Layers panel before exporting |
+| Sharing the `.sketch` file with developers | Share the Zeplin project link — developers should never open the `.sketch` file directly |

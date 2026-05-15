@@ -227,3 +227,16 @@ npx @bugsnag/source-maps upload \
 - [ ] Source maps uploaded in CI before deploy
 - [ ] `onError` callback sets user context after login
 - [ ] No PII in `addMetadata` calls
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Not setting `enabledReleaseStages` | Without it, every `development` reload floods Bugsnag with noise; restrict to `["staging", "production"]` |
+| Catching an error and calling `Bugsnag.notify()` without rethrowing | Always rethrow after notifying — swallowing errors hides failures from callers and monitoring |
+| Missing `appVersion` on initialization | Without a version, Bugsnag cannot correlate errors to releases or track regressions across deploys |
+| Source maps not uploaded before deploy | Without source maps, stack traces show minified code; upload in CI immediately after `npm run build` and before deploy |
+| Using a single root `ErrorBoundary` for the whole app | Add feature-level `ErrorBoundary` wrappers so one broken section doesn't white-screen the entire app |
+| Storing the API key in source code | Load `BUGSNAG_API_KEY` from environment variables — a leaked key lets anyone send noise to your project |
+| Not setting user context in `onError` | Without `event.setUser(id, email, name)`, errors are anonymous and impossible to correlate with support tickets |
+| Including PII (email, card number, SSN) in `addMetadata` | Never pass raw PII to metadata; scrub or omit sensitive fields before calling `addMetadata` |

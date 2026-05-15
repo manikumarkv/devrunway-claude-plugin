@@ -279,3 +279,16 @@ template {
 - [ ] Explicit HCL policies — no wildcard capabilities
 - [ ] Dynamic secrets used for database credentials where possible
 - [ ] No Vault tokens or secret_ids in logs or environment variable dumps
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Using KV v1 instead of KV v2 | Enable `kv-v2` (`vault secrets enable -path=secret kv-v2`); v2 supports versioning and soft delete |
+| Storing the `secret_id` long-term in an environment variable | `secret_id` is a bootstrap credential — inject it at startup, then clear the env var; rotate `secret_id` regularly |
+| Not scheduling token renewal | Vault tokens expire; renew at 75% of `lease_duration` with a `setTimeout`/thread loop — let expiry happen and the app silently fails |
+| Using wildcard capabilities in policies (`capabilities = ["*"]`) | List only the capabilities needed (`["read"]`); wildcard grants update, delete, and create to any path matching the pattern |
+| Reading secrets on every request instead of caching | Cache secrets in memory for the duration of the lease; re-fetch only on renewal or startup |
+| Committing Vault tokens or `role_id` / `secret_id` to source control | `role_id` is non-secret (store in config); `secret_id` is secret — inject via CI/CD secret store only |
+| Using the root token in production | The root token is for bootstrapping only; revoke it after setup and use AppRole or Kubernetes auth for all services |
+| Not using dynamic database secrets | Static database credentials are long-lived; use the Vault database secrets engine to issue short-lived, per-service credentials |

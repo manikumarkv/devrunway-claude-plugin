@@ -188,3 +188,15 @@ If an issue is blocked for more than 2 days:
 - [ ] Sprint capacity set at 80% of average velocity
 - [ ] Sprint review and retrospective meeting notes created
 - [ ] Blocked issues reviewed weekly in team standup
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Not configuring the project identifier prefix | Without a prefix (e.g., `PLT-`), commit messages and PR titles can't auto-link to Huly issues |
+| Skipping triage — no Priority or Component set before sprint | Issues without Priority and Component cannot be meaningfully scheduled; complete triage in the backlog before sprint planning |
+| Committing directly to `main` without a branch linked to an issue | Create a branch named `{prefix}/{id}-description` so Huly can auto-track progress and move the issue to "In Review" on PR open |
+| Over-committing in sprint planning (100% of velocity) | Book only 80% of average velocity to leave room for unplanned bugs and interruptions |
+| Leaving blocked issues unescalated for more than 2 days | Tag the blocker, post in the team Slack channel, and escalate to the lead if not resolved within 4 days total |
+| Not holding a retrospective after each sprint | Retrospectives drive continuous improvement; schedule it immediately after the sprint review while context is fresh |
+| Using ad-hoc status names instead of the defined lifecycle | Stick to the configured statuses (Backlog → To Do → In Progress → In Review → Done → Cancelled) for reliable automation |

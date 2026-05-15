@@ -226,3 +226,15 @@ If using Atlassian Access:
 - [ ] Jira integration enabled — `PROJ-XXX` in all commit messages
 - [ ] App Passwords used for CI — not personal passwords
 - [ ] Merge strategy configured per branch type
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Using personal Bitbucket passwords in CI pipelines | Create App Passwords with minimum required scopes (Repositories Read, Pipelines Write) and store them as secured repository variables |
+| Storing secrets as unsecured pipeline variables | Mark every secret variable as "Secured" in Repository Settings → Repository Variables — unsecured values appear in plain text in the UI |
+| Not setting "Reset approvals on new commits" | Without this, a stale approval from an earlier version remains valid after new code is pushed; enable it in branch restriction settings |
+| Triggering a production deployment step without a `trigger: manual` gate | Set `trigger: manual` on the production step so a human must explicitly approve before artifacts go live |
+| Jira smart commit transitions using wrong workflow names | Transition names must match your Jira workflow exactly (case-insensitive); test with `#done` vs the actual transition name configured in Jira |
+| Committing secrets to the repository and relying on later deletion | Git history retains deleted secrets; rotate the credential immediately and use Bitbucket's push rules to block secret patterns |
+| Skipping the squash merge strategy for feature branches | Without squash, dozens of WIP commits pollute the main branch history; configure squash in Repository Settings → Branching model |

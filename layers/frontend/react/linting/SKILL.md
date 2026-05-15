@@ -2,7 +2,8 @@
 name: linting
 description: ESLint and Prettier configuration for React/TypeScript frontend and Node.js/TypeScript backend. Load when setting up a new project, adding lint rules, fixing lint errors, or reviewing lint config.
 user-invocable: false
-stack: frontend/react---
+stack: frontend/react
+---
 
 Full rules in [linting.md](linting.md). Always-on summary:
 

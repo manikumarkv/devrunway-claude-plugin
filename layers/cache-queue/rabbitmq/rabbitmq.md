@@ -225,3 +225,16 @@ channel.start_consuming()
 - [ ] `prefetch` set to a reasonable number (1–20)
 - [ ] Broker URL loaded from environment variable
 - [ ] Reconnect logic with exponential backoff in place
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Using `noAck: true` (auto-ack) on consumers | Set `noAck: false` and call `ch.ack(msg)` / `ch.nack(msg)` explicitly so messages aren't lost on crash |
+| Not setting `prefetch` on consumer channels | Without `ch.prefetch(N)`, RabbitMQ delivers all queued messages at once, overwhelming the worker |
+| Publishing messages without `persistent: true` | Non-persistent messages are lost on broker restart; always publish with `{ persistent: true }` |
+| Declaring queues without `durable: true` | Non-durable queues disappear on broker restart; set `durable: true` on all production queues |
+| Sharing one channel across concurrent async operations | Create a separate channel per consumer/publisher; channels are not thread-safe or concurrency-safe |
+| No dead-letter exchange on production queues | Without a DLX, poison messages cycle forever or are silently dropped; configure `x-dead-letter-exchange` |
+| Not handling the `drain` event when the channel is full | `ch.publish()` returns `false` when the write buffer is full; await the `drain` event before publishing more |
+| Ignoring connection `error` and `close` events | Without listeners, a dropped connection goes undetected; add reconnect-with-backoff logic on both events |

@@ -285,3 +285,15 @@ gh issue list --milestone "v1.3.0" --state open
 - [ ] `CODEOWNERS` covers all critical paths
 - [ ] Stale bot configured for issues (60 days) and PRs (30 days)
 - [ ] All PRs require at least 1 review (configured in branch protection rules)
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Creating labels ad-hoc instead of from `labels.yml` | Define all labels in `.github/labels.yml` and sync with `github-label-sync`; ad-hoc labels drift across repos |
+| Not linking PRs to issues with `Closes #` | Without `Closes #NNN`, issues stay open after the PR merges; add the keyword in the PR description or commit message |
+| Misconfiguring `labeler.yml` glob patterns | Test globs with `minimatch`; a wrong pattern silently skips labeling — verify with a test PR that touches the expected files |
+| Not enabling "Dismiss stale reviews" in branch protection | Without this, an approval from before a force-push remains valid; stale reviews should be dismissed automatically |
+| Using CODEOWNERS without enforcing it in branch protection | CODEOWNERS only enforces code-owner review if "Require review from Code Owners" is enabled in the branch protection rule |
+| Exempting too many labels from the stale bot | If `priority/medium` and `priority/low` are exempt, stale issues never close; only exempt `priority/critical`, `priority/high`, and `status/blocked` |
+| Using the default GitHub token for workflows that need write access to another repo | The default `GITHUB_TOKEN` is scoped to the current repo; create a PAT or GitHub App token for cross-repo operations |

@@ -231,3 +231,16 @@ dotnet ef database update --project src/Infrastructure --startup-project src/Api
 - [ ] Middleware registered in correct order (auth before authorization)
 - [ ] Typed results used on minimal API handlers (`Results<Ok<T>, NotFound>`)
 - [ ] No `SaveChanges()` inside loops
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Calling `SaveChanges()` inside a loop | Batch all changes, then call `SaveChangesAsync()` once outside the loop to avoid excessive round-trips |
+| Using mutable classes for DTOs | Use `record` types (`public record UserDto(...)`) — they are immutable, value-equal, and ideal for API contracts |
+| Registering `DbContext` as `Singleton` | EF Core `DbContext` is not thread-safe; register with `AddDbContext` (default `Scoped`) — one context per request |
+| Missing `CancellationToken` on async database calls | Pass `CancellationToken` to all `async` EF methods so long-running queries can be cancelled on client disconnect |
+| Returning `IQueryable<T>` from repository methods | Returning `IQueryable` leaks EF Core concerns out of the repository; return `IEnumerable<T>` or `List<T>` instead |
+| Storing secrets in `appsettings.json` | Load secrets from environment variables or Azure Key Vault via `AddEnvironmentVariables()` / `AddAzureKeyVault()` |
+| Registering middleware in the wrong order | Authentication must come before Authorization; Exception handler must be first; see the documented middleware pipeline order |
+| Not using `AsNoTracking()` for read-only queries | EF Core tracks all returned entities by default; use `.AsNoTracking()` for read-only lists to skip change tracking overhead |

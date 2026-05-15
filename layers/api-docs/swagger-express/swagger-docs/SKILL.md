@@ -2,7 +2,8 @@
 name: swagger-docs
 description: OpenAPI 3.1 / Swagger documentation standards. Load when writing, reviewing, or generating API documentation for any Express/Node.js route.
 user-invocable: false
-stack: api-docs/swagger-express---
+stack: api-docs/swagger-express
+---
 
 Full rules in [swagger-docs.md](swagger-docs.md). Always-on summary:
 

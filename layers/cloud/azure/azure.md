@@ -206,3 +206,16 @@ az policy assignment create \
 - [ ] `DefaultAzureCredential` used in SDK code — no account keys in config
 - [ ] Storage `allowBlobPublicAccess: false` and soft delete enabled
 - [ ] Key Vault secrets referenced via `@Microsoft.KeyVault(...)` in app settings
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Using access policies instead of RBAC on Key Vault | Enable `enableRbacAuthorization: true`; access policies are legacy and harder to audit at scale |
+| Storing connection strings in `appSettings` Bicep parameters | Reference Key Vault secrets via `@Microsoft.KeyVault(SecretUri=...)` in app settings instead of embedding values in templates |
+| Using the default Compute service account for VMs or App Services | Assign a dedicated system-assigned or user-assigned managed identity with the minimum required roles |
+| Granting roles at subscription scope instead of resource scope | Scope role assignments to the specific resource (Key Vault, Storage Account) to follow least-privilege |
+| Not enabling soft delete and purge protection on Key Vault | Without these, accidentally deleted secrets or vaults are permanently gone; both should be enabled in production |
+| Allowing public network access on Storage Accounts | Set `publicNetworkAccess: 'Disabled'` and use private endpoints; `allowBlobPublicAccess: false` must also be set |
+| Not locking the production resource group | Add a `CanNotDelete` lock to prevent accidental `az group delete` from destroying production resources |
+| Deploying Bicep without reviewing the `what-if` diff | Run `az deployment group what-if` before every production deployment to catch unexpected resource replacements |

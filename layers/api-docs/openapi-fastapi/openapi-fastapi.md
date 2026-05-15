@@ -158,3 +158,16 @@ npx @stoplight/spectral-cli lint openapi.json --ruleset .spectral.yaml
 - [ ] Passwords and internal fields excluded from `Read` schemas
 - [ ] Security dependency applied at router level, not scattered across endpoints
 - [ ] `openapi.json` exported and linted in CI
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Using a single Pydantic model for create, update, and read | Define separate `UserCreate`, `UserUpdate`, and `UserRead` schemas; they differ in required fields and which fields are exposed |
+| Leaving `password` or internal fields in the `Read` schema | Explicitly exclude sensitive fields from response schemas by omitting them — FastAPI serializes only what the model declares |
+| Not setting `response_model` on route handlers | Without `response_model`, FastAPI returns the raw ORM object and may expose internal fields; always declare the expected response schema |
+| Applying security dependencies per-endpoint instead of per-router | Add `dependencies=[Depends(get_current_user)]` at the `APIRouter` level so no endpoint in that group is accidentally left open |
+| Mixing validation errors with HTTP exceptions | Use `HTTPException` for HTTP-level errors (404, 401) and Pydantic `ValidationError` / `raise RequestValidationError` for input errors — keep them separate |
+| Not exporting `openapi.json` and linting it in CI | Without CI validation, breaking schema changes (renamed fields, removed endpoints) ship silently; export and run Spectral on every PR |
+| Using `str` instead of `uuid.UUID` for IDs in path parameters | Declaring `user_id: uuid.UUID` lets FastAPI validate format automatically and documents the type in the OpenAPI spec |
+| Missing `status_code` on POST endpoints | FastAPI defaults to `200`; POST endpoints that create resources should return `201` — set `status_code=status.HTTP_201_CREATED` |

@@ -256,3 +256,16 @@ npx sls diff --stage prod
 - [ ] DLQ configured on all SQS queues
 - [ ] `serverless-offline` in devDependencies, not dependencies
 - [ ] Production deployments run from CI — not local machines
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Hardcoding the stage name in `serverless.yml` | Always derive stage from the CLI flag: `stage: ${opt:stage, 'dev'}` — never hardcode `prod` or `staging` |
+| Storing secrets directly in `serverless.yml` environment block | Reference SSM parameters or Secrets Manager: `${ssm:/myapp/${self:provider.stage}/db-password}` |
+| Granting `*` actions in IAM statements | List only the specific actions the Lambda needs (e.g., `dynamodb:GetItem`, `dynamodb:PutItem`) on specific resource ARNs |
+| Not setting `functionResponseType: ReportBatchItemFailures` on SQS triggers | Without it, any record failure causes the entire batch to retry; partial failure reporting prevents duplicate processing |
+| Missing DLQ on SQS queues | Without a `RedrivePolicy`, poison messages cycle indefinitely, consuming Lambda concurrency and costs |
+| Using `serverless-offline` in production dependencies | Keep it in `devDependencies` only — it should never be deployed to AWS |
+| Running `sls deploy` from a developer laptop to production | All production deployments must go through CI with role-based credentials; local deploys bypass audit trails |
+| Not reviewing CloudFormation diffs before prod deploys | Run `npx sls diff --stage prod` before every production deploy to catch unexpected resource replacements |

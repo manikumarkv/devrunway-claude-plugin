@@ -147,3 +147,15 @@ Before publishing a spec link:
 | App icons | PNG | 1x, 2x, 3x |
 
 Mark assets for export in the Layers panel (make them exportable), then export from Design → Export Selected.
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Unnamed layers like `Rectangle 47` or `Group 12` | Rename every layer semantically before handoff; unnamed layers break dev specs and asset exports |
+| Hardcoding hex colors instead of using tokens | All colors must reference a token (`{color.primary.500}`); update the Design Tokens plugin, not the hex value |
+| Duplicating artboards for each state | Use Component States panel (Default, Hover, Pressed, Disabled, Focus, Error) on a single component |
+| Sharing the `.xd` file directly with developers | Publish a spec link via File → Publish → Publish for Development and share that URL instead |
+| Using different spacing values for similar elements | Enforce a 4px grid; use the spacing token scale and never set arbitrary values like 13px or 22px |
+| Exporting icons as PNG instead of SVG | Icons must be exported as SVG to stay crisp at any size and to remain editable in code |
+| Prototype links pointing to outdated artboards | After renaming or restructuring artboards, rebuild prototype wires; dead links confuse stakeholders |

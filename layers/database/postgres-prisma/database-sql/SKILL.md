@@ -2,7 +2,8 @@
 name: database-sql
 description: SQL database standards using Prisma + PostgreSQL — schema design, migrations, query patterns, transactions, indexing, what to avoid. Load when writing or reviewing any database schema, Prisma queries, or migration files.
 user-invocable: false
-stack: database/postgres-prisma---
+stack: database/postgres-prisma
+---
 
 Full standards in [sql.md](sql.md). Always-on summary:
 

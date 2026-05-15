@@ -2,7 +2,8 @@
 name: composition-patterns
 description: React component architecture patterns — compound components, provider-based state, context interfaces, explicit variants. Load when designing, building, or reviewing React component structure, component APIs, or shared state patterns.
 user-invocable: false
-stack: frontend/react---
+stack: frontend/react
+---
 
 Full patterns in [patterns.md](patterns.md). Always-on summary:
 
