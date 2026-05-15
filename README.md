@@ -35,7 +35,8 @@ Inside Claude Code:
 |---|---|
 | `stack.json` | Declares which tech layers you use |
 | `.mcp.json` | Pre-configures MCP servers (Figma, GitHub, Jira…) |
-| Install commands | Exact `/install layers/...` commands to activate your layers |
+
+All 135 layer skills are bundled with the plugin. There is no per-layer install step. The `stack-dispatcher` agent reads `stack.json` and the files you edit, then loads only the relevant layer detail files into a sub-agent so your main thread stays light.
 
 ---
 
@@ -48,29 +49,28 @@ Your stack: React + Node/Express + AWS + PostgreSQL/Prisma + Cognito
             Vitest + Playwright + Bruno + MSW
             Figma + GitHub + GitHub Actions
 
-Install these layers:
-  /install core
-  /install layers/source-control/github
-  /install layers/ci/github-actions
-  /install layers/frontend/react
-  /install layers/css/tailwind
-  /install layers/ui-components/shadcn
-  /install layers/state/zustand
-  /install layers/backend/node-express
-  /install layers/validation/zod
-  /install layers/cloud/aws
-  /install layers/database/postgres-prisma
-  /install layers/auth/cognito
-  /install layers/logging/framework/pino
-  /install layers/logging/provider/cloudwatch
-  /install layers/error-monitoring/sentry
-  /install layers/testing/unit/vitest
-  /install layers/testing/e2e/playwright
-  /install layers/testing/api/bruno
-  /install layers/mocking/msw
-  /install layers/design/figma
+Layers activated for your stack (auto-load on matching files):
+  layers/source-control/github
+  layers/ci/github-actions
+  layers/frontend/react
+  layers/css/tailwind
+  layers/ui-components/shadcn
+  layers/state/zustand
+  layers/backend/node-express
+  layers/validation/zod
+  layers/cloud/aws
+  layers/database/postgres-prisma
+  layers/auth/cognito
+  layers/logging/framework/pino
+  layers/logging/provider/cloudwatch
+  layers/error-monitoring/sentry
+  layers/testing/unit/vitest
+  layers/testing/e2e/playwright
+  layers/testing/api/bruno
+  layers/mocking/msw
+  layers/design/figma
 
-MCP servers configured in .mcp.json:
+MCP servers configured in .mcp.json (auto-registered on plugin install):
   figma  → @figma/mcp-server (FIGMA_ACCESS_TOKEN)
   github → @modelcontextprotocol/server-github (GITHUB_PERSONAL_ACCESS_TOKEN)
 ```

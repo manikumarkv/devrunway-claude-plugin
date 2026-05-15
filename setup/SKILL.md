@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Interactive stack configuration wizard. Asks 35 questions across 6 screens to configure your full tech stack, then generates stack.json, .mcp.json, and /install commands for every selected layer.
+description: Interactive stack configuration wizard. Asks 35 questions across 6 screens to configure your full tech stack, then generates stack.json and .mcp.json so the right layer skills auto-load when you edit matching files.
 user-invocable: true
 effort: medium
 allowed-tools:
@@ -13,7 +13,7 @@ allowed-tools:
 
 # Setup Wizard
 
-Configure the devrunway plugin for this project by running a 6-screen interactive wizard. Each screen covers a different layer of the stack. After all screens, three outputs are generated: `stack.json`, `.mcp.json` (if applicable), and a list of `/install` commands.
+Configure the devrunway plugin for this project by running a 6-screen interactive wizard. Each screen covers a different layer of the stack. After all screens, two outputs are generated: `stack.json` (declares your tech choices) and `.mcp.json` (pre-wired MCP servers for the tools you picked, if any). All 135 layer skills come bundled with the plugin — the dispatcher auto-loads only the relevant ones based on `stack.json` and the files you edit.
 
 ---
 
@@ -406,14 +406,14 @@ Your stack summary:
 
 stack.json written to ./stack.json
 
-Install commands — run these in order:
-
-  /install core
+Layers activated for your stack — these auto-load when you edit matching files:
 ```
 
-Then for each non-`none` answer, print the corresponding `/install` command using these path mappings:
+All layer skills are bundled with the plugin. There is no per-layer install step. The `stack-dispatcher` agent reads `stack.json` plus the files you edit and loads only the relevant layer detail files into a sub-agent — your main thread stays light.
 
-| Question | Value | Install path |
+Print the table of layers that will be active for the user's choices, using these mappings:
+
+| Question | Value | Active layer |
 |---|---|---|
 | Q1 | `github` | `layers/source-control/github` |
 | Q1 | `gitlab` | `layers/source-control/gitlab` |
@@ -546,25 +546,30 @@ Then for each non-`none` answer, print the corresponding `/install` command usin
 | Q37 | `confluence` | `layers/documents/confluence` |
 | Q37 | `notion` | `layers/documents/notion` |
 
-After the install commands, if `.mcp.json` was written, append:
+After the layer table, if `.mcp.json` was written, append:
 
 ```
-MCP servers configured in .mcp.json — register them with Claude Code:
+MCP servers configured: <comma-separated list of server names>
+
+These were auto-registered when you installed the plugin. Set the
+required tokens in Claude Code's plugin settings if you haven't already
+(e.g. GITHUB_TOKEN, FIGMA_TOKEN, JIRA_API_TOKEN, etc. — see the install
+prompt or run /plugin to manage).
 ```
-
-Then for each MCP server written, print the corresponding `claude mcp add` command:
-
-- figma: `  claude mcp add figma npx -y @figma/mcp-server`
-- github: `  claude mcp add github npx -y @modelcontextprotocol/server-github`
-- jira: `  claude mcp add jira npx -y @modelcontextprotocol/server-jira`
-- linear: `  claude mcp add linear npx -y @modelcontextprotocol/server-linear`
 
 End with:
 
 ```
 ─────────────────────────────────────────────────
-Run /install core first, then each layer command above.
-Your stack is now configured. Happy building.
+Your stack is configured. Layers auto-load when you edit matching files.
+
+Next steps:
+  • Set any required tokens via /plugin (GitHub PAT is required)
+  • Try /product-brainstorm to start a new feature
+  • Or /dev-design <issue-number> if you already have a ticket
+  • Or just start writing code — hooks and layers activate automatically
+
+Happy building.
 ─────────────────────────────────────────────────
 ```
 
