@@ -37,7 +37,7 @@ layers/
   validation/      zod | yup | valibot | joi
   realtime/        socketio | pusher | ably | none
   cloud/           aws | gcp | azure
-  database/        postgres-prisma | mongodb | dynamodb | sqlalchemy
+  database/        postgres-prisma | neon | mongodb | dynamodb | sqlalchemy
   auth/            cognito | firebase | azure-ad | auth0
   storage/         s3 | cloudinary | uploadthing | gcs
   cache-queue/     redis | bullmq | sqs | rabbitmq
@@ -53,7 +53,7 @@ layers/
   search/          algolia | elasticsearch | typesense | none
   design/          figma | sketch | adobe-xd
   project-management/ github | jira | linear | huly
-  ci/              github-actions | gitlab-ci | circleci | azure-pipelines
+  ci/              github-actions | gitlab-ci | circleci | azure-pipelines | neon-branching
   testing/
     unit/          vitest | jest | pytest | dotnet-xunit
     e2e/           playwright | cypress | selenium | webdriverio
@@ -116,7 +116,7 @@ Asking 32 questions at once is overwhelming. `/setup` asks them in 6 grouped scr
 > **Setting up infrastructure (4/6)**
 >
 > 16. **Cloud provider?** `aws` / `gcp` / `azure` / `none`
-> 17. **Database?** `postgres-prisma` / `mongodb` / `dynamodb` / `sqlalchemy` / `none`
+> 17. **Database?** `postgres-prisma` / `neon` / `mongodb` / `dynamodb` / `sqlalchemy` / `none`
 > 18. **Auth provider?** `cognito` / `firebase` / `azure-ad` / `auth0` / `none`
 > 19. **File storage?** `s3` / `cloudinary` / `uploadthing` / `gcs` / `none`
 > 20. **Cache / queue?** `redis` / `bullmq` / `sqs` / `rabbitmq` / `none`
@@ -286,6 +286,7 @@ Each layer declares its MCP in `SKILL.md` frontmatter. `/setup` reads these to b
 | `playwright` | testing/e2e | `@playwright/mcp` | none | ✅ Official |
 | `postgres-prisma` | database | `@modelcontextprotocol/server-postgres` | `DATABASE_URL` | ✅ Official |
 | `mongodb` | database | `mongodb-mcp-server` | `MONGODB_URI` | ✅ Official |
+| `neon` | database | remote HTTP — `https://mcp.neon.tech/mcp` | OAuth (no env var) | ✅ Official |
 | `aws` | cloud | `@aws/mcp-server-core` | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` | ✅ Official |
 | `sentry` | error-monitoring | `@sentry/mcp-server` | `SENTRY_AUTH_TOKEN` | ✅ Official |
 | `stripe` | payment | `@stripe/mcp-server` | `STRIPE_SECRET_KEY` | ✅ Official |
@@ -408,6 +409,7 @@ Layers without an MCP omit the `mcp:` field entirely.
 | `layers/cloud/azure` | 🫥 Stub | — | — | Community |
 | **Database** | | | | |
 | `layers/database/postgres-prisma` | ✅ Done | database-sql | `server-postgres` | Move from skills/ |
+| `layers/database/neon` | ✅ Done | neon | `mcp.neon.tech` (HTTP) | — |
 | `layers/database/dynamodb` | ✅ Done | database-nosql | — | Move from skills/ |
 | `layers/database/mongodb` | 🫥 Stub | — | `mongodb-mcp-server` | Community |
 | `layers/database/sqlalchemy` | 🫥 Stub | — | — | Community |
@@ -479,6 +481,7 @@ Layers without an MCP omit the `mcp:` field entirely.
 | `layers/project-management/huly` | 🫥 Stub | — | — | Community |
 | **CI/CD** | | | | |
 | `layers/ci/github-actions` | ✅ Done | pipeline skill, workflow templates | — | Move from skills/ |
+| `layers/ci/neon-branching` | ✅ Done | neon-branching | — | Not a CI platform — routes on workflow-file globs |
 | `layers/ci/gitlab-ci` | 🫥 Stub | — | — | Community |
 | `layers/ci/circleci` | 🫥 Stub | — | — | Community |
 | `layers/ci/azure-pipelines` | 🫥 Stub | — | — | Community |

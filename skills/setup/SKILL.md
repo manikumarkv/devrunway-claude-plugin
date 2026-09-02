@@ -185,7 +185,7 @@ For reference, here are the questions to ask:
     serverless | docker | kubernetes | vercel | railway | none
 
 18. Database
-    postgres-prisma | mongodb | dynamodb | sqlalchemy | none
+    postgres-prisma | neon | mongodb | dynamodb | sqlalchemy | none
 
 19. Authentication
     cognito | firebase | auth0 | azure-ad | none
@@ -425,6 +425,17 @@ Only generate `.mcp.json` if the user selected one or more tools that have MCP s
 }
 ```
 
+### neon (selected when Q18 = `neon`)
+
+Neon's MCP server is **remote HTTP with OAuth**, not a local stdio process — it takes no `command`, `args`, or `env`. Authentication happens in the browser on first use.
+
+```json
+"neon": {
+  "type": "http",
+  "url": "https://mcp.neon.tech/mcp"
+}
+```
+
 If none of the above tools are selected, do **not** write `.mcp.json`.
 
 If `.mcp.json` already exists in the project root, read its current contents first and **merge** the new entries into the existing `mcpServers` object rather than overwriting unrelated servers.
@@ -532,6 +543,7 @@ Print the table of layers that will be active for the user's choices, using thes
 | Q17 | `vercel` | `layers/container/vercel` |
 | Q17 | `railway` | `layers/container/railway` |
 | Q18 | `postgres-prisma` | `layers/database/postgres-prisma` |
+| Q18 | `neon` | `layers/database/neon` |
 | Q18 | `mongodb` | `layers/database/mongodb` |
 | Q18 | `dynamodb` | `layers/database/dynamodb` |
 | Q18 | `sqlalchemy` | `layers/database/sqlalchemy` |

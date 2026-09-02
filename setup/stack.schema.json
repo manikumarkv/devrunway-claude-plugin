@@ -138,7 +138,7 @@
     "database": {
       "description": "Primary database and ORM (Q18).",
       "type": "string",
-      "enum": ["postgres-prisma", "mongodb", "dynamodb", "sqlalchemy", "none"]
+      "enum": ["postgres-prisma", "neon", "mongodb", "dynamodb", "sqlalchemy", "none"]
     },
     "auth": {
       "description": "Authentication provider (Q19).",

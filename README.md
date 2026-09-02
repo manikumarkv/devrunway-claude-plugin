@@ -88,7 +88,7 @@ layers/        ← 135 technology layers, auto-loaded by file pattern
   frontend/      react | vue | angular | nextjs
   backend/       node-express | python-fastapi | python-django | dotnet
   cloud/         aws | gcp | azure
-  database/      postgres-prisma | dynamodb | mongodb | sqlalchemy
+  database/      postgres-prisma | neon | dynamodb | mongodb | sqlalchemy
   auth/          cognito | firebase | auth0 | azure-ad
   css/           tailwind | styled-components | css-modules | bootstrap
   ui-components/ shadcn | mui | ant-design | chakra

@@ -25,4 +25,5 @@ Apply the checklist **before marking work as done**. Every unchecked item is a g
 - React components → `layers/frontend/react/react-standards`
 - Express API endpoints → `layers/backend/node-express/nodejs-standards`
 - Prisma schema changes → `layers/database/postgres-prisma/database-sql`
+- Neon migrations and connection setup → `layers/database/neon/neon`
 - Cognito auth → `layers/auth/cognito/cognito-auth`

@@ -1,0 +1,74 @@
+skill: neon
+skill_files:
+  - layers/database/neon/SKILL.md
+version: 1
+
+cases:
+  - id: neon-01
+    name: "Migrations run against the unpooled connection string"
+    scenario: |
+      Write the CI step that applies pending schema migrations to a Neon
+      database before deploy. Use the neon skill rules.
+    must_contain:
+      - "DATABASE_URL_UNPOOLED"
+    rationale: |
+      The pooled connection routes through PgBouncer in transaction mode, which
+      drops session state. Migrations run through it fail intermittently rather
+      than cleanly, producing a green CI run against a broken schema.
+
+  - id: neon-02
+    name: "Explicit column projection — no SELECT *"
+    scenario: |
+      Write a Neon query that returns a paginated list of users for an API
+      list endpoint. The users table has a wide JSONB settings column.
+      Use the neon skill rules.
+    must_contain:
+      - "limit"
+    must_not_contain:
+      - "SELECT *"
+      - "select *"
+    rationale: |
+      Neon bills egress. Unprojected queries transfer every column of every
+      row, and wide JSONB columns dominate that cost. Every list query also
+      needs a LIMIT or the bill scales with the table.
+
+  - id: neon-03
+    name: "Transaction uses the WebSocket Pool, not the HTTP driver"
+    scenario: |
+      Write a Neon function running on a serverless runtime that transfers an
+      amount between two account rows atomically. Use the neon skill rules.
+    must_contain:
+      - "Pool"
+      - "BEGIN"
+    must_not_contain:
+      - "neon("
+    rationale: |
+      Each HTTP call via neon() is its own implicit transaction, so two
+      sequential calls permit a partial transfer. Atomicity in serverless
+      requires the WebSocket Pool.
+
+  - id: neon-04
+    name: "No pooled client cached in a serverless module global"
+    scenario: |
+      Write the database client setup for a Neon-backed edge function that
+      serves a single read query. Use the neon skill rules.
+    must_not_contain:
+      - "rejectUnauthorized: false"
+      - "sslmode=disable"
+    rationale: |
+      The client is created per invocation, not cached across them — a frozen
+      sandbox resumes holding a connection the server already closed. TLS
+      verification is never disabled.
+
+  - id: neon-05
+    name: "Timeouts account for scale-to-zero cold start"
+    scenario: |
+      Configure connection and statement timeouts for an application talking
+      to a Neon branch that has scale-to-zero enabled. Use the neon skill rules.
+    must_not_contain:
+      - "timeout: 500"
+      - "connectTimeoutMS: 500"
+    rationale: |
+      Idle compute suspends after ~5 minutes and the first query afterwards
+      pays a cold start of several hundred milliseconds. Timeouts below ~1s
+      turn a normal resume into a false outage.

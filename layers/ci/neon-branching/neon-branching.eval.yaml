@@ -1,0 +1,72 @@
+skill: neon-branching
+skill_files:
+  - layers/ci/neon-branching/SKILL.md
+version: 1
+
+cases:
+  - id: neon-branch-01
+    name: "Created branch carries an expiry as a cleanup backstop"
+    scenario: |
+      Write the CI step that creates a Neon database branch when a pull
+      request is opened. Use the neon-branching skill rules.
+    must_contain:
+      - "expires"
+    rationale: |
+      A delete step does not run when a job is cancelled or a runner dies.
+      Expiry is the only backstop that survives those cases, and orphaned CI
+      branches are the most common source of unexpected Neon cost.
+
+  - id: neon-branch-02
+    name: "Cleanup runs on the failure path"
+    scenario: |
+      Write the CI job that deletes a pull request's Neon branch when the pull
+      request is closed. Use the neon-branching skill rules.
+    must_contain:
+      - "always()"
+    must_not_contain:
+      - "merged == true"
+    rationale: |
+      Cleanup keyed on merge misses abandoned PRs, which never merge. Cleanup
+      without if:always() leaks a branch whenever a test job fails — exactly
+      when the most branches exist.
+
+  - id: neon-branch-03
+    name: "Migrations run on the unpooled string against the PR branch"
+    scenario: |
+      Write the CI step that applies pending migrations to the Neon branch
+      created for a pull request. Use the neon-branching skill rules.
+    must_contain:
+      - "DATABASE_URL_UNPOOLED"
+    rationale: |
+      The pooled connection routes through PgBouncer in transaction mode and
+      drops session state, so migrations run through it fail intermittently
+      rather than cleanly.
+
+  - id: neon-branch-04
+    name: "Branch connection string is masked, key comes from secrets"
+    scenario: |
+      Write the CI step that fetches the connection string for a Neon preview
+      branch and makes it available to later steps. Use the neon-branching
+      skill rules.
+    must_contain:
+      - "add-mask"
+      - "secrets."
+    rationale: |
+      A branch connection string contains a password. Unmasked, it lands in
+      job logs that are readable by anyone with repository access. The API key
+      must come from CI secrets, never from workflow YAML.
+
+  - id: neon-branch-05
+    name: "Schema-only branch chosen when the parent holds PII"
+    scenario: |
+      A team's production database contains customer PII. Write the CI step
+      that creates an isolated database branch for a developer environment.
+      Use the neon-branching skill rules.
+    must_contain:
+      - "schema-only"
+    must_not_contain:
+      - "reset --parent"
+    rationale: |
+      Schema-only branches clone structure without rows. They are independent
+      root branches with no parent, so reset-from-parent does not apply and a
+      pipeline built around it breaks when the branch type changes.
