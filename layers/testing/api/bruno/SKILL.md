@@ -3,6 +3,10 @@ name: bruno
 description: Bruno API testing standards — collection structure, environment variables, auth setup, test scripts, CI integration. Load when writing or reviewing Bruno API tests.
 user-invocable: false
 stack: testing/api/bruno
+paths:
+  - "**/*.bru"
+  - "**/bruno/**"
+  - "**/bruno.json"
 ---
 
 Full standards in [bruno.md](bruno.md). Always-on summary:

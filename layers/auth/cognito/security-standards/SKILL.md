@@ -9,6 +9,7 @@ paths:
   - "**/cognito*"
   - "**/*.controller.*"
   - "**/*.route.*"
+---
 
 ## Authentication & Authorization
 - All protected routes use `authMiddleware` — Cognito JWT cryptographically verified with `CognitoJwtVerifier` from `aws-jwt-verify`: `await verifier.verify(token)` — never decoded-only

@@ -10,7 +10,8 @@ arguments:
   - name: extra
     description: "Keyword for search, or time window like '1h' or '30m'"
 user-invocable: true
-stack: cloud/awsallowed-tools:
+stack: cloud/aws
+allowed-tools:
   - Bash(aws logs *)
   - Bash(aws cloudwatch *)
   - Bash(aws sts *)

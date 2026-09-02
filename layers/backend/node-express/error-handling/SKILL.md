@@ -3,6 +3,11 @@ name: error-handling
 description: Error handling standards for frontend and backend — custom error classes, Express centralized handler, React Query errors, error boundaries, form errors, toast patterns. Load when writing error handling, try/catch blocks, or error UI.
 user-invocable: false
 stack: backend/node-express
+paths:
+  - "**/errors/**"
+  - "**/error*"
+  - "**/*.middleware.*"
+  - "**/ErrorBoundary*"
 ---
 
 Full standards in [error-handling.md](error-handling.md). Always-on summary:

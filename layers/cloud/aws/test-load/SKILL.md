@@ -8,7 +8,8 @@ arguments:
   - name: target
     description: "API endpoint path (e.g. /api/v1/orders) or path to an existing k6 script"
 user-invocable: true
-stack: cloud/awsallowed-tools:
+stack: cloud/aws
+allowed-tools:
   - Read
   - Write
   - Bash(k6 *)

@@ -3,7 +3,8 @@ name: cognito-auth
 description: Scaffold a complete AWS Cognito authentication flow — frontend (Amplify, useAuth hook, LoginForm, API client with token refresh) and/or backend (JWT middleware, requireGroup).
 argument-hint: [frontend|backend|fullstack]
 user-invocable: true
-stack: auth/cognitoallowed-tools:
+stack: auth/cognito
+allowed-tools:
   - Read
   - Write
   - Edit

@@ -8,7 +8,8 @@ arguments:
   - name: env
     description: "For status/rollback: staging or prod"
 user-invocable: true
-stack: cloud/awseffort: high
+stack: cloud/aws
+effort: high
 allowed-tools:
   - Bash(git *)
   - Bash(npm *)

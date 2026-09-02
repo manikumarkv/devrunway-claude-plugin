@@ -22,10 +22,18 @@ The caller passes you:
 The installed layer set is whatever exists on disk under `layers/`:
 
 ```bash
-find layers -name SKILL.md -mindepth 3 -maxdepth 3
+find layers -name SKILL.md -mindepth 3
 ```
 
-Each match is one installed layer (e.g. `layers/frontend/react/SKILL.md`).
+Each match is one installed layer. **Layer directories are not at a fixed depth.** All of these are valid layers:
+
+```
+layers/database/neon/SKILL.md                              (3)
+layers/frontend/react/react-standards/SKILL.md             (4)
+layers/logging/framework/pino/logging-standards/SKILL.md   (5)
+```
+
+Never add `-maxdepth` to this search. Roughly a quarter of installed layers are nested deeper than three levels, and a depth-capped scan drops them silently — they simply never load, with no error.
 
 ## Step 2 — Match paths globs to target files
 
@@ -34,7 +42,7 @@ For each installed layer's `SKILL.md`:
 2. For each `target_file`, check if any pattern matches
 3. If any match → mark the layer as **relevant**
 
-If a layer has no `paths:` frontmatter, treat it as universal (always relevant) only when explicitly tagged as such; otherwise skip it for file-pattern routing.
+If a layer has no `paths:` frontmatter it cannot be routed by file pattern. Skip it, but record it — do **not** guess globs on its behalf, and do not treat it as universal. Report every skipped layer on the `Unroutable` line of your result (Step 5) so the gap is visible to the caller instead of failing silently.
 
 ## Step 3 — Cap and prioritize
 
@@ -59,6 +67,7 @@ DISPATCH RESULT
 Task: <task>
 Files: <target_files>
 Layers consulted: <comma-separated list>
+Unroutable: <layers found on disk with no `paths:` frontmatter, or "none">
 
 === <layer 1 name> ===
 <consultant output, verbatim>

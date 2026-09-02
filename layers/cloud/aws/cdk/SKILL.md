@@ -2,7 +2,8 @@
 name: cdk
 description: AWS CDK standards — stack structure, construct patterns, environment config, security defaults, deployment. Load when writing or reviewing CDK infrastructure code.
 user-invocable: false
-stack: cloud/awspaths:
+stack: cloud/aws
+paths:
   - "infra/**"
   - "cdk/**"
   - "**/*stack*.ts"

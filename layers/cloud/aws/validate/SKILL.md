@@ -8,7 +8,8 @@ arguments:
   - name: env
     description: "Environment to validate (default: prod)"
 user-invocable: true
-stack: cloud/awscontext: fork
+stack: cloud/aws
+context: fork
 effort: medium
 allowed-tools:
   - Read

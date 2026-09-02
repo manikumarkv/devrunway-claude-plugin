@@ -3,6 +3,9 @@ name: packages
 description: Approved packages for frontend and backend — use these, not alternatives. Load when adding a dependency, reviewing a package.json, or choosing between libraries.
 user-invocable: false
 stack: frontend/react
+paths:
+  - "package.json"
+  - "**/package.json"
 ---
 
 Full list in [packages.md](packages.md). Always-on summary:

@@ -10,7 +10,8 @@ arguments:
   - name: env
     description: "Target environment: staging or prod (default: staging)"
 user-invocable: true
-stack: cloud/awsallowed-tools:
+stack: cloud/aws
+allowed-tools:
   - Read
   - Write
   - Edit
