@@ -21,7 +21,7 @@ Full standards in [flutter-session.md](flutter-session.md). Always-on summary:
 
 **Refresh — single-flight, replay exactly once:**
 - `AuthInterceptor extends QueuedInterceptor`, so N concurrent 401s await one refresh instead of firing N and getting the token family revoked. A non-queued interceptor causes that stampede.
-- In `onError`: bail unless the status is 401; bail if `options.extra['auth_retried']` is already set; refresh through a bare `refreshDio` that has no interceptors (the main Dio re-enters this queue and deadlocks); then set the flag, re-send, and `handler.resolve(...)` the response.
+- In `onError`: bail unless the status is 401; bail if `options.extra['auth_retried']` is already set; refresh through a bare `refreshDio` that has no interceptors; then set the flag and re-send the original request through that **same `refreshDio`**, and `handler.resolve(...)` the response. Both the refresh and the replay must avoid the main Dio — either one re-enters the queue that is still blocked on this refresh, and deadlocks.
 - A failed refresh signs the user out with `SignedOutReason.refreshRejected`. Never a retry loop.
 
 **Sign-out clears everything user-scoped, then sets state last:** `tokenStore.clear()` → `biometricSecretStore.clear()` → `database.clearUserScoped()` → `responseCache.clear()` → `PaintingBinding.instance.imageCache.clear()` plus `.clearLiveImages()` → `analytics.reset()` → and only then `state = SessionNone(...)`. Provider teardown is automatic because every user-scoped provider does `ref.watch(sessionProvider)`; do not hand-maintain a list of providers to reset, because the one you forget leaks the previous user's data into the next session.

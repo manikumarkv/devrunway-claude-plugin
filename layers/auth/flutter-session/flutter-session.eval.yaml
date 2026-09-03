@@ -42,7 +42,7 @@ cases:
       - "QueuedInterceptor"
       - "extra["
       - "handler.resolve("
-      - "refreshDio"
+      - "refreshDio.fetch"
     must_not_contain:
       - "(InterceptorsWrapper"
     rationale: |
@@ -94,6 +94,7 @@ cases:
       - "localizedReason"
       - "biometricOnly: false"
       - "biometryCurrentSet"
+      - "setInvalidatedByBiometricEnrollment"
     must_not_contain:
       - "biometricOnly: true"
       - "biometryAny"
