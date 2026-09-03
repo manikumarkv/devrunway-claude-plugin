@@ -181,6 +181,19 @@ The eval tables in `briefs/` are **sketches of intent, not literal assertions**.
 were written before this section existed and contain prose. Treat a brief's assertion as
 "prove this rule was followed" and choose the discriminating token yourself.
 
+**Recall is not reasoning.** If an assertion's token appears near-verbatim in a summary
+line, a passing case proves only that `SKILL.md` contains the sentence — not that the rule
+is actionable. Those cases are cheap and worth having as regression guards, but a layer
+whose *whole* eval is verbatim recall has not been tested. Aim for at least two cases where
+the correct token has to be derived: the scenario describes a situation, and the model must
+work out what the rule implies for it.
+
+**Absence has no token.** "No `dispose` call", "an `IconButton` with no tooltip", "one
+request per keystroke" describe something missing, and `must_not_contain` cannot express
+that. Either assert the presence of the right thing (`dispose()`, `tooltip:`) or find the
+token of the wrong thing that would be there instead (`Future.delayed(` for a naive
+debounce). If neither exists, the rule belongs in the detail file without a case.
+
 **Verify before committing.** Run the eval — either `/eval <tech>` or the `eval-runner`
 agent — and confirm every case passes against code generated from `SKILL.md` alone. A
 failing case means one of two things, in this order: the standards are unclear (fix the

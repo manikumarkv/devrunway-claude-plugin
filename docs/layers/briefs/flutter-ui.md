@@ -2,8 +2,19 @@
 
 **Kind:** layer · **Issue:** #6 (parent #2) · **Cookbook:** `#page`, `#component`, `#designsystem`, `#motion`, `#form`, `#wizard`, `#search`, `#webview`
 
-The largest layer. Consider splitting into `flutter-ui` (pages, components, design system,
-motion) and `flutter-forms` (forms, wizards, search) if the detail file exceeds ~400 lines.
+The largest layer. **Decided during the build: do NOT split.** The original suggestion here
+was to break out `flutter-forms` if the detail file passed ~400 lines. Both halves of that
+were wrong:
+
+- **A split has no honest glob.** Forms, wizards and search live in exactly the directories
+  the split would leave behind — a contact form is `presentation/pages/contact_page.dart`.
+  Any split glob would either overlap (burning two of five dispatcher slots on one file) or
+  be a filename shape like `**/*_form.dart` that misses the most common real location.
+  AUTHORING section 3 settles it: two layers claiming the same role are one layer.
+- **The ~400-line threshold was miscalibrated.** Sibling layers built against the same guide
+  run 659 (`riverpod.md`) and 923 (`dio.md`) lines. A detail file is a retrieval index for a
+  consultant returning ≤60 lines, not a read-through document — length is fine if it is
+  skimmable. Judge by structure, not line count.
 
 ## Globs
 ```yaml
