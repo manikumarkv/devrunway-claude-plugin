@@ -1,6 +1,6 @@
 # Brief — `language/dart-models`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#model`
+**Kind:** layer · **Issue:** #3 (parent #2) · **Cookbook:** `#model`
 
 ## Globs
 ```yaml

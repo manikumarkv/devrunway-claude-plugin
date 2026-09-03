@@ -1,6 +1,6 @@
 # Brief — `state/riverpod`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#provider`, `#pagination`, `#realtime`
+**Kind:** layer · **Issue:** #5 (parent #2) · **Cookbook:** `#provider`, `#pagination`, `#realtime`
 
 ## Globs
 ```yaml

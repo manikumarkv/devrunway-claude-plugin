@@ -1,6 +1,6 @@
 # Brief — `logging/flutter-observability`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#logging`, `#analytics`, `#flags`
+**Kind:** layer · **Issue:** #10 (parent #2) · **Cookbook:** `#logging`, `#analytics`, `#flags`
 
 ## Globs
 ```yaml

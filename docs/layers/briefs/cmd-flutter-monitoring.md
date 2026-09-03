@@ -1,6 +1,6 @@
 # Brief — `/flutter-monitoring`
 
-**Kind:** slash command (`skills/flutter-monitoring/`) · **Issue:** #2 · **Cookbook:** `#monitoring`, `#feedback`
+**Kind:** slash command (`skills/flutter-monitoring/`) · **Issue:** #20 (parent #2) · **Cookbook:** `#monitoring`, `#feedback`
 
 `user-invocable: true`. Sub-commands: `setup`, `triage`, `feedback`.
 

@@ -1,6 +1,6 @@
 # Brief — `/flutter-submit`
 
-**Kind:** slash command (`skills/flutter-submit/`) · **Issue:** #2 · **Cookbook:** `#submit`
+**Kind:** slash command (`skills/flutter-submit/`) · **Issue:** #19 (parent #2) · **Cookbook:** `#submit`
 
 `user-invocable: true`. Sub-commands: `check` (pre-submission audit against the repo),
 `triage <rejection text>`.

@@ -149,9 +149,35 @@ cases:
   `"class"` proves nothing.
 - `must_not_contain` is where the value is: it catches the default wrong answer. Prefer a
   pair — assert the right token appears *and* the wrong one does not.
-- The `rationale` is read by humans triaging a failure. Write it for them.
-- Run `/eval <tech>` before committing. A failing eval means the standards are unclear, not
-  that the eval is wrong — fix the layer first.
+
+**Choosing an assertion — the discrimination test.** Before writing an assertion, picture
+both the ideal answer and the default wrong answer. The assertion must separate them. An
+assertion that appears in *correct* code for unrelated reasons fails every run and is worse
+than no assertion, because it makes the eval untrustworthy rather than merely incomplete.
+
+```yaml
+# ❌ `dynamic` appears in EVERY correct freezed factory —
+#    `factory X.fromJson(Map<String, dynamic> json)` — so this never passes
+must_not_contain: ["dynamic"]
+
+# ✅ these appear only in the hand-written parser the rule forbids
+must_not_contain: ["json['_id']", "as String"]
+```
+
+Two further traps:
+
+- **Substrings match inside longer identifiers.** `"String status"` also matches a field
+  named `statusLabel`. Prefer a token with a boundary — a full declaration, an annotation,
+  or a call with its parenthesis.
+- **`must_not_contain` also matches comments.** A generated answer that *mentions* the wrong
+  approach in a comment while doing the right thing will fail. Assert on tokens that only
+  appear in executable code.
+
+**Verify before committing.** Run the eval — either `/eval <tech>` or the `eval-runner`
+agent — and confirm every case passes against code generated from `SKILL.md` alone. A
+failing case means one of two things, in this order: the standards are unclear (fix the
+layer), or the assertion does not discriminate (fix the eval). Never commit an unrun eval.
+The `rationale` is read by whoever triages a future failure — write it for them.
 
 ## 7. Checklist before committing
 

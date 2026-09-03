@@ -1,6 +1,6 @@
 # Brief — `/flutter-build-doctor`
 
-**Kind:** slash command (`skills/flutter-build-doctor/`) · **Issue:** #2 · **Cookbook:** `#build`, `#debug`
+**Kind:** slash command (`skills/flutter-build-doctor/`) · **Issue:** #21 (parent #2) · **Cookbook:** `#build`, `#debug`
 
 `user-invocable: true`. Takes pasted build output, or runs the build and reads it.
 

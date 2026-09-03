@@ -1,6 +1,6 @@
 # Brief — `frontend/go-router`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#route`, `#deeplinksetup`
+**Kind:** layer · **Issue:** #7 (parent #2) · **Cookbook:** `#route`, `#deeplinksetup`
 
 ## Globs
 ```yaml

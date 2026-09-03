@@ -1,6 +1,6 @@
 # Brief — `notifications/fcm`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#push`, `#background`
+**Kind:** layer · **Issue:** #11 (parent #2) · **Cookbook:** `#push`, `#background`
 
 Currently the only layer in the plan with no existing content in the repo at all.
 

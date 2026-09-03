@@ -1,6 +1,6 @@
 # Brief — `/flutter-verify`
 
-**Kind:** slash command (`skills/flutter-verify/`) · **Issue:** #2 · **Cookbook:** `#emulators`
+**Kind:** slash command (`skills/flutter-verify/`) · **Issue:** #16 (parent #2) · **Cookbook:** `#emulators`
 
 `user-invocable: true`. No `paths:` — there is no file that triggers "what should I test".
 Takes an optional argument describing what changed.

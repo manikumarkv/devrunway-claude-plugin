@@ -1,6 +1,6 @@
 # Brief — `mobile/flutter`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#skeleton`, `#bootstrap`, `#theme`, `#platform`, `#appsize`, `#monorepo`
+**Kind:** layer · **Issue:** #15 (parent #2) · **Cookbook:** `#skeleton`, `#bootstrap`, `#theme`, `#platform`, `#appsize`, `#monorepo`
 
 The **only** layer permitted a broad fallback glob, because something must answer for a Dart
 file in no recognised directory. Keep the specific globs first so more precise layers win

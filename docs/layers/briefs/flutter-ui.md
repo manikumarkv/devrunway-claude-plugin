@@ -1,6 +1,6 @@
 # Brief — `frontend/flutter-ui`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#page`, `#component`, `#designsystem`, `#motion`, `#form`, `#wizard`, `#search`, `#webview`
+**Kind:** layer · **Issue:** #6 (parent #2) · **Cookbook:** `#page`, `#component`, `#designsystem`, `#motion`, `#form`, `#wizard`, `#search`, `#webview`
 
 The largest layer. Consider splitting into `flutter-ui` (pages, components, design system,
 motion) and `flutter-forms` (forms, wizards, search) if the detail file exceeds ~400 lines.

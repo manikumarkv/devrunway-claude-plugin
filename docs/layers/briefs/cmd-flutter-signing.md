@@ -1,6 +1,6 @@
 # Brief — `/flutter-signing`
 
-**Kind:** slash command (`skills/flutter-signing/`) · **Issue:** #2 · **Cookbook:** `#accounts`
+**Kind:** slash command (`skills/flutter-signing/`) · **Issue:** #17 (parent #2) · **Cookbook:** `#accounts`
 
 `user-invocable: true`. Sub-commands: `audit` (what exists, what is missing, what expires),
 `setup ios|android`, `rotate <credential>`.

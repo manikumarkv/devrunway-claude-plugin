@@ -1,6 +1,6 @@
 # Brief — `auth/flutter-session`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#session`, `#biometrics`, `#payments`
+**Kind:** layer · **Issue:** #8 (parent #2) · **Cookbook:** `#session`, `#biometrics`, `#payments`
 
 ## Globs
 ```yaml

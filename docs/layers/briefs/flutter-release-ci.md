@@ -1,6 +1,6 @@
 # Brief — `ci/flutter-release`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#env`, `#cicd`
+**Kind:** layer · **Issue:** #14 (parent #2) · **Cookbook:** `#env`, `#cicd`
 
 Layer (file-routed) for the config files. The *procedures* around it — release management,
 store submission, certificates, build triage — are separate commands.

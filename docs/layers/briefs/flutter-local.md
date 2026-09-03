@@ -1,6 +1,6 @@
 # Brief — `storage/flutter-local`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#storage`
+**Kind:** layer · **Issue:** #9 (parent #2) · **Cookbook:** `#storage`
 
 ## Globs
 ```yaml

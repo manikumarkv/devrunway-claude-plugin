@@ -1,6 +1,6 @@
 # Brief — `/flutter-release`
 
-**Kind:** slash command (`skills/flutter-release/`) · **Issue:** #2 · **Cookbook:** `#release`
+**Kind:** slash command (`skills/flutter-release/`) · **Issue:** #18 (parent #2) · **Cookbook:** `#release`
 
 `user-invocable: true`. Sub-commands: `plan`, `cut`, `watch`, `hotfix`.
 

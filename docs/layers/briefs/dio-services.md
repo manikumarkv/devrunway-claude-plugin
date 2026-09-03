@@ -1,6 +1,6 @@
 # Brief — `api-style/dio`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#service`, `#errors`, `#offline`, `#media`, `#contract`
+**Kind:** layer · **Issue:** #4 (parent #2) · **Cookbook:** `#service`, `#errors`, `#offline`, `#media`, `#contract`
 
 ## Globs
 ```yaml

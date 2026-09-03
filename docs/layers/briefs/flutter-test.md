@@ -1,6 +1,6 @@
 # Brief — `testing/flutter-test`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#tests`, `#goldens`, `#e2e`, `#contract`, `#perfbudget`
+**Kind:** layer · **Issue:** #13 (parent #2) · **Cookbook:** `#tests`, `#goldens`, `#e2e`, `#contract`, `#perfbudget`
 
 ## Globs
 ```yaml

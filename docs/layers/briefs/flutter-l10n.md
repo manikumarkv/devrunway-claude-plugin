@@ -1,6 +1,6 @@
 # Brief — `i18n/flutter-l10n`
 
-**Kind:** layer · **Issue:** #2 · **Cookbook:** `#strings`
+**Kind:** layer · **Issue:** #12 (parent #2) · **Cookbook:** `#strings`
 
 ## Globs
 ```yaml
