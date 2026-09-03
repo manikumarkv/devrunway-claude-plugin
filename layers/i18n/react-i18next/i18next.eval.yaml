@@ -1,6 +1,7 @@
 skill: react-i18next
 skill_files:
   - layers/i18n/react-i18next/SKILL.md
+  - layers/i18n/react-i18next/react-i18next.md
 version: 1
 
 cases:

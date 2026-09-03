@@ -3,6 +3,11 @@ name: api-docs
 description: API documentation standards — OpenAPI 3.1 spec, JSDoc annotations, Zod-to-schema generation, Swagger UI setup. Load when documenting API endpoints or reviewing API contracts.
 user-invocable: false
 stack: api-docs/swagger-express
+paths:
+  - "**/openapi.*"
+  - "**/swagger*"
+  - "src/**/*.route.*"
+  - "docs/api/**"
 ---
 
 Full standards in [api-docs.md](api-docs.md). Always-on summary:

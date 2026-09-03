@@ -1,6 +1,7 @@
 skill: redis-cache
 skill_files:
   - layers/cache-queue/redis/SKILL.md
+  - layers/cache-queue/redis/redis.md
 version: 1
 
 cases:

@@ -1,6 +1,7 @@
 skill: mongodb-nosql
 skill_files:
   - layers/database/mongodb/SKILL.md
+  - layers/database/mongodb/mongodb.md
 version: 1
 
 cases:

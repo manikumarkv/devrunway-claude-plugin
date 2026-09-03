@@ -1,6 +1,7 @@
 skill: stripe-payment
 skill_files:
   - layers/payment/stripe/SKILL.md
+  - layers/payment/stripe/stripe-payment.md
 version: 1
 
 cases:

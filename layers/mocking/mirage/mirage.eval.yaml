@@ -1,6 +1,7 @@
 skill: mirage-mocking
 skill_files:
   - layers/mocking/mirage/SKILL.md
+  - layers/mocking/mirage/mirage.md
 version: 1
 
 cases:

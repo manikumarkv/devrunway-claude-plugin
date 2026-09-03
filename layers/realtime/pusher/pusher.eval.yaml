@@ -1,6 +1,7 @@
 skill: pusher-realtime
 skill_files:
   - layers/realtime/pusher/SKILL.md
+  - layers/realtime/pusher/pusher.md
 version: 1
 
 cases:

@@ -3,6 +3,11 @@ name: local-dev
 description: Local development environment standards — Docker Compose for Postgres and DynamoDB Local, seed scripts, .env setup, running the full stack locally. Load when setting up or troubleshooting local dev.
 user-invocable: false
 stack: ci/github-actions
+paths:
+  - "docker-compose*.yml"
+  - "Dockerfile*"
+  - "**/seed*"
+  - ".env.example"
 ---
 
 Full standards in [local-dev.md](local-dev.md). Always-on summary:

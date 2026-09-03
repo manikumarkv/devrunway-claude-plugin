@@ -4,7 +4,7 @@ description: Thorough code review of a branch against all standards. Generates R
 tools: Read, Write, Glob, Grep, Bash(git *), Bash(npm *), Bash(npx tsc *), Bash(npx eslint *)
 model: inherit
 color: blue
-skills: [react-standards, typescript-patterns, error-handling, security-standards, testing-standards, accessibility, logging-standards, api-conventions, conventional-commit]
+skills: [react-standards, typescript-patterns, error-handling, security-standards, testing-standards, accessibility, logging-standards, api-conventions, naming-conventions, conventional-commit]
 ---
 
 # Code Reviewer Agent
@@ -87,8 +87,30 @@ Read each file returned by Step 1 in full. Review against these checklists:
 - No `console.log` in production code
 - No PII (email, name, password) in log messages
 
+### Naming conventions (naming-conventions skill)
+- New tables and columns are `snake_case`; foreign keys are `<singular_table>_id` matching the referenced table
+- Booleans use `is_` / `has_` / `can_`; timestamps end `_at`
+- Money and duration columns carry their unit — `amount_cents`, `timeout_ms` (never bare `amount` / `timeout`)
+- Every new index and constraint is explicitly named — `idx_`, `uq_`, `fk_`, `ck_`
+- Migration filenames are `<timestamp>_<verb>_<subject>` and contain one logical change
+- API responses map fields explicitly — no `...row` spread of a database record into a response
+- New env vars are service-prefixed and suffixed by kind (`_URL`, `_SECRET`, `_TIMEOUT_MS`)
+- Custom headers avoid the `X-` prefix (RFC 6648)
+
 ### Conventional commits (conventional-commit skill)
 - Commit messages follow `type(scope): description (#issue)`
+
+---
+
+## Severity — grading naming findings
+
+Naming findings are not uniformly cosmetic. Grade by what it costs to change the name after merge:
+
+- **BLOCKER** — a name in a new migration, table, column, enum value, public JSON payload key, or custom header. These become contracts the moment they merge; changing one later costs a migration plus a coordinated client release.
+- **WARNING** — a name in application code (variable, function, local type). Renames are cheap and contained.
+- **SUGGESTION** — a name that is correct but could be clearer.
+
+Apply the same test to any naming rule returned by a layer consultant.
 
 ---
 

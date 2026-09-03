@@ -1,6 +1,7 @@
 skill: nextjs-standards
 skill_files:
   - layers/frontend/nextjs/SKILL.md
+  - layers/frontend/nextjs/nextjs.md
 version: 1
 
 cases:

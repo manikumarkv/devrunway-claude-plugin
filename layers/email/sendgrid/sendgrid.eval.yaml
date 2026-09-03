@@ -1,6 +1,7 @@
 skill: sendgrid-email
 skill_files:
   - layers/email/sendgrid/SKILL.md
+  - layers/email/sendgrid/sendgrid.md
 version: 1
 
 cases:

@@ -1,6 +1,7 @@
 skill: error-handling
 skill_files:
   - layers/backend/node-express/error-handling/SKILL.md
+  - layers/backend/node-express/error-handling/error-handling.md
 version: 1
 
 cases:
@@ -38,14 +39,16 @@ cases:
       Write the centralized Express error handler middleware that formats
       error responses. Use the error-handling skill rules.
     must_contain:
-      - "statusCode"
-      - "code:"
+      - "success: false"
+      - "code"
     must_not_contain:
       - "err.stack"
       - "stack:"
     rationale: |
       Stack traces and internal error details are never sent to clients.
-      Only statusCode and error code are included in the response.
+      Asserts the envelope's success flag rather than "statusCode", which the
+      body no longer carries — the HTTP status lives on the status line. The old
+      assertion passed incidentally off `err.statusCode` used for branching.
 
   - id: err-04
     name: "ZodError mapped to 400 with field-level details"
@@ -56,7 +59,14 @@ cases:
     must_contain:
       - "ZodError"
       - "400"
+      - "field"
+      - "details"
+    must_not_contain:
       - "flatten()"
     rationale: |
-      ZodError must be caught and mapped to 400 with field-level messages
-      via error.flatten() so clients know exactly which fields failed.
+      ZodError maps to 400 with error.details as an array of { field, message },
+      one entry per invalid field, matching the envelope in api-conventions.
+      flatten() is asserted absent: its fieldErrors shape is a Record of arrays
+      and does not match the documented contract. The SKILL.md summary used to
+      say flatten() while the detail file used a reduce — the eval listed only
+      SKILL.md, so it passed against guidance the runtime never reads.

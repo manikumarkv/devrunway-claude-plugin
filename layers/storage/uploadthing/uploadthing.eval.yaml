@@ -1,6 +1,7 @@
 skill: uploadthing-storage
 skill_files:
   - layers/storage/uploadthing/SKILL.md
+  - layers/storage/uploadthing/uploadthing.md
 version: 1
 
 cases:

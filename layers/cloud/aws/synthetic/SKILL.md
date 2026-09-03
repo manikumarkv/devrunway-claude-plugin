@@ -6,7 +6,8 @@ arguments:
   - name: subcommand
     description: "'setup' to create canary CDK construct, 'status' to check last runs, 'pause' to stop, 'resume' to restart"
 user-invocable: true
-stack: cloud/awsallowed-tools:
+stack: cloud/aws
+allowed-tools:
   - Read
   - Write
   - Edit

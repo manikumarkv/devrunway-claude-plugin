@@ -1,6 +1,7 @@
 skill: elasticsearch-search
 skill_files:
   - layers/search/elasticsearch/SKILL.md
+  - layers/search/elasticsearch/elasticsearch.md
 version: 1
 
 cases:

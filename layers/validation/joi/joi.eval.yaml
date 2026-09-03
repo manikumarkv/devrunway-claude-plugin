@@ -1,6 +1,7 @@
 skill: joi-validation
 skill_files:
   - layers/validation/joi/SKILL.md
+  - layers/validation/joi/joi.md
 version: 1
 
 cases:

@@ -1,6 +1,7 @@
 skill: chakra-ui
 skill_files:
   - layers/ui-components/chakra/SKILL.md
+  - layers/ui-components/chakra/chakra.md
 version: 1
 
 cases:

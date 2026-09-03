@@ -3,6 +3,10 @@ name: database-nosql
 description: NoSQL database standards using DynamoDB + AWS SDK v3 — single-table design, access patterns, GSIs, keys, TTL, what to avoid. Load when writing or reviewing any DynamoDB schema, queries, or repository code.
 user-invocable: false
 stack: database/dynamodb
+paths:
+  - "**/dynamo*"
+  - "**/repositories/**"
+  - "**/*.repository.*"
 ---
 
 Full standards in [nosql.md](nosql.md). Always-on summary:

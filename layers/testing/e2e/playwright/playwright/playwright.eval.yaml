@@ -1,6 +1,8 @@
 skill: playwright
 skill_files:
   - layers/testing/e2e/playwright/playwright/SKILL.md
+  - layers/testing/e2e/playwright/playwright/playwright.md
+  - layers/testing/e2e/playwright/playwright/playwright-mcp.md
 version: 1
 
 cases:

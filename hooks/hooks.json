@@ -1,10 +1,15 @@
 {
-  "description": "SDLC automation hooks — type check, console.log guard, destructive git/rm blockers, secrets-leak guard, ESLint, Prettier, focused tests, conventional commits, branch protection, session summary",
+  "description": "SDLC automation hooks \u2014 type check, console.log guard, destructive git/rm blockers, secrets-leak guard, ESLint, Prettier, focused tests, conventional commits, branch protection, session summary",
   "hooks": {
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
         "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/skill-frontmatter-validate.sh",
+            "async": false
+          },
           {
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/tsc-check.sh",

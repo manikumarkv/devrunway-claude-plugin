@@ -1,6 +1,7 @@
 skill: zod-validation
 skill_files:
   - layers/validation/zod/SKILL.md
+  - layers/validation/zod/zod-validation.md
 version: 1
 
 cases:

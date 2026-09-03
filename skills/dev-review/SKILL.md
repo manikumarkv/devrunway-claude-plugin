@@ -100,10 +100,29 @@ Read every changed file. Review against each standard below. Collect all finding
 - No debug logging left in production code
 - No PII (email, name, password, tokens) in log messages
 
+**Naming conventions** (naming-conventions skill)
+- New tables and columns are `snake_case`; foreign keys are `<singular_table>_id`
+- Booleans use `is_` / `has_` / `can_`; timestamps end `_at`
+- Money and duration columns carry their unit — `amount_cents`, `timeout_ms`
+- Every new index and constraint is explicitly named — `idx_`, `uq_`, `fk_`, `ck_`
+- Migration filenames are `<timestamp>_<verb>_<subject>` and contain one logical change
+- API responses map fields explicitly — no `...row` spread of a database record
+- New env vars are service-prefixed and suffixed by kind (`_URL`, `_SECRET`, `_TIMEOUT_MS`)
+
 **Conventional commits** (conventional-commit skill)
 - Commit message follows `type(scope): description (#issue)`
 
 **Stack-specific standards:** consult your installed layer skills for framework-specific items (e.g. React patterns, Express middleware, Prisma migration safety).
+
+---
+
+### Grading naming findings
+
+Naming is not uniformly cosmetic — grade by the cost of changing the name after merge:
+
+- **High** — a name in a new migration, table, column, enum value, public JSON payload key, or custom header. These become contracts on merge.
+- **Medium** — a name in application code (variable, function, local type). Renames are cheap and contained.
+- **Low** — a name that is correct but could be clearer.
 
 ---
 

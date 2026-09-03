@@ -1,6 +1,7 @@
 skill: tailwind-css
 skill_files:
   - layers/css/tailwind/SKILL.md
+  - layers/css/tailwind/tailwind-css.md
 version: 1
 
 cases:

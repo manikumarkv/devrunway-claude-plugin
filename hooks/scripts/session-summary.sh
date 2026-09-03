@@ -2,7 +2,10 @@
 # Prints a branch and commit summary at the end of every Claude session.
 # Exits silently if not inside a git repository.
 
-BRANCH=$(git branch --show-current 2>/dev/null)
+# Resolve from the project dir, not ambient cwd — hooks can run inside the
+# plugin marketplace checkout, which is a separate repo on its own branch.
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
+BRANCH=$(git -C "$PROJECT_DIR" branch --show-current 2>/dev/null)
 [ -z "$BRANCH" ] && exit 0
 
 CHANGES=$(git status --short 2>/dev/null | wc -l | tr -d ' ')

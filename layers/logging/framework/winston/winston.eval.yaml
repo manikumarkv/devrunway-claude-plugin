@@ -1,6 +1,7 @@
 skill: winston-logging
 skill_files:
   - layers/logging/framework/winston/SKILL.md
+  - layers/logging/framework/winston/winston.md
 version: 1
 
 cases:

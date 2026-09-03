@@ -133,10 +133,13 @@ export function errorHandler(
   // ─── 1. Zod validation error ────────────────────────────────────────────────
   // Thrown by schema.parse() in controllers or validate middleware
   if (err instanceof ZodError) {
-    const details = err.errors.reduce<Record<string, string>>((acc, issue) => {
-      acc[issue.path.join('.')] = issue.message
-      return acc
-    }, {})
+    // Array of { field, message } — matches the envelope in `api-conventions`.
+    // Do not use err.flatten(): its fieldErrors shape is a Record of arrays and
+    // does not match the documented `error.details` contract.
+    const details = err.errors.map((issue) => ({
+      field: issue.path.join('.'),
+      message: issue.message,
+    }))
     logger.warn({ path: req.path, details }, 'Validation failed')
     return errorResponse(req, res, 400, 'VALIDATION_ERROR', 'Validation failed', details)
   }
@@ -387,6 +390,47 @@ async function create(input: CreateOrderInput, user: AuthUser): Promise<Order> {
   return orderRepository.create({ ...input, userId: user.sub })
 }
 ```
+
+---
+
+### `errorResponse()` — the single writer of the error envelope
+
+Every branch of the error handler returns through this helper, so the envelope
+is produced in exactly one place. Nothing else in the codebase may call
+`res.status(...).json(...)` for an error.
+
+```ts
+// src/lib/response.ts
+import type { Request, Response } from 'express'
+
+export function errorResponse(
+  req: Request,
+  res: Response,
+  status: number,
+  code: string,
+  message: string,
+  details?: Array<{ field: string; message: string }>,
+): void {
+  res.status(status).json({
+    success: false,
+    error: {
+      code,                    // SCREAMING_SNAKE_CASE machine-readable constant
+      message,                 // safe for display; never an internal message
+      path: req.originalUrl,
+      ...(details ? { details } : {}),
+    },
+    meta: {
+      requestId: req.id,       // set by the request-id middleware
+      timestamp: new Date().toISOString(),
+      version: 'v1',
+    },
+  })
+}
+```
+
+The HTTP status lives on the status line, not in the body. Clients read
+`res.status` first — duplicating it as a `statusCode` body field invites the two
+to disagree.
 
 ---
 

@@ -1,6 +1,7 @@
 skill: azure-cloud
 skill_files:
   - layers/cloud/azure/SKILL.md
+  - layers/cloud/azure/azure.md
 version: 1
 
 cases:

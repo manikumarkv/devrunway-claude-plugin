@@ -1,6 +1,7 @@
 skill: bootstrap-css
 skill_files:
   - layers/css/bootstrap/SKILL.md
+  - layers/css/bootstrap/bootstrap.md
 version: 1
 
 cases:

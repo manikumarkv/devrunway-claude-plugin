@@ -1,6 +1,7 @@
 skill: swagger-docs
 skill_files:
   - layers/api-docs/swagger-express/swagger-docs/SKILL.md
+  - layers/api-docs/swagger-express/swagger-docs/swagger-docs.md
 version: 1
 
 cases:

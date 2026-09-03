@@ -1,6 +1,7 @@
 skill: jotai-state
 skill_files:
   - layers/state/jotai/SKILL.md
+  - layers/state/jotai/jotai.md
 version: 1
 
 cases:

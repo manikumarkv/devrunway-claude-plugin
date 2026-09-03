@@ -1,6 +1,7 @@
 skill: paypal-payment
 skill_files:
   - layers/payment/paypal/SKILL.md
+  - layers/payment/paypal/paypal.md
 version: 1
 
 cases:

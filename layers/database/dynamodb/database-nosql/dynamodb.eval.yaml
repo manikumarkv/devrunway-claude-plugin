@@ -1,6 +1,7 @@
 skill: database-nosql
 skill_files:
   - layers/database/dynamodb/database-nosql/SKILL.md
+  - layers/database/dynamodb/database-nosql/nosql.md
 version: 1
 
 cases:

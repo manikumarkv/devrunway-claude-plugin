@@ -59,6 +59,7 @@ Universal skills active for **all** stacks:
 - `error-handling` — typed error hierarchy, never swallow
 - `api-conventions` — response envelopes, pagination, versioning
 - `security-principles` — OWASP Top 10, input validation, secrets hygiene
+- `naming-conventions` — database, payload, env var, and test naming; boundary names as contracts
 
 ---
 

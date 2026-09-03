@@ -1,6 +1,7 @@
 skill: braintree-payment
 skill_files:
   - layers/payment/braintree/SKILL.md
+  - layers/payment/braintree/braintree.md
 version: 1
 
 cases:

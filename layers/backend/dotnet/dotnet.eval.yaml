@@ -1,6 +1,7 @@
 skill: dotnet-standards
 skill_files:
   - layers/backend/dotnet/SKILL.md
+  - layers/backend/dotnet/dotnet.md
 version: 1
 
 cases:

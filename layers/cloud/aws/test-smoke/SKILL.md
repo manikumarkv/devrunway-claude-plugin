@@ -6,7 +6,8 @@ arguments:
   - name: env
     description: "Target environment (default: prod)"
 user-invocable: true
-stack: cloud/awsallowed-tools:
+stack: cloud/aws
+allowed-tools:
   - Read
   - Write
   - Bash(npx *)

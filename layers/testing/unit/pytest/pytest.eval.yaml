@@ -1,6 +1,7 @@
 skill: pytest-testing
 skill_files:
   - layers/testing/unit/pytest/SKILL.md
+  - layers/testing/unit/pytest/pytest.md
 version: 1
 
 cases:

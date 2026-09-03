@@ -3,6 +3,10 @@ name: logging-standards
 description: Comprehensive logging standards — what to log, when to log, log format/schema, what never to log (PII/secrets), Pino setup, request correlation, frontend error logging, CloudWatch config, Sentry integration. Load whenever writing any code that logs, instruments, or debugs.
 user-invocable: false
 stack: logging/framework/pino
+paths:
+  - "**/logger*"
+  - "**/logging/**"
+  - "**/pino*"
 ---
 
 Full standards in [logging.md](logging.md). Always-on summary:

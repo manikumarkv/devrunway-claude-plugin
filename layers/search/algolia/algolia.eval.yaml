@@ -1,6 +1,7 @@
 skill: algolia-search
 skill_files:
   - layers/search/algolia/SKILL.md
+  - layers/search/algolia/algolia.md
 version: 1
 
 cases:

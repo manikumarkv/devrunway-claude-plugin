@@ -1,6 +1,12 @@
 skill: stack-dispatcher
 skill_files:
   - agents/stack-dispatcher.md
+  - agents/code-reviewer.md
+  - agents/debugger.md
+  - agents/eval-runner.md
+  - agents/layer-consultant.md
+  - agents/security-reviewer.md
+  - agents/skill-forge.md
 version: 1
 
 cases:
@@ -62,3 +68,46 @@ cases:
       When zero layers match, dispatcher must return the explicit sentinel so
       the caller can proceed without layer guidance — not invent rules or load
       unrelated layers.
+
+  - id: dispatcher-04
+    name: "Discovery scan is not depth-capped"
+    scenario: |
+      You are the stack-dispatcher agent. The caller passes:
+        task: review a React component and its Prisma-backed repository
+        target_files: ["src/components/UserCard.tsx", "src/db/user.repository.ts"]
+      Several installed layers are nested more than three directories deep, for
+      example layers/frontend/react/react-standards/SKILL.md and
+      layers/logging/framework/pino/logging-standards/SKILL.md.
+      State the exact discovery command you run to enumerate installed layers.
+      Use the stack-dispatcher skill rules.
+    must_contain:
+      - "find layers"
+      - "-mindepth 3"
+    must_not_contain:
+      - "-mindepth 3 -maxdepth"
+    rationale: |
+      Layer directories are not at a fixed depth — 35 of 140 sit at depth 4 or 5.
+      A depth-capped scan drops them silently, with no error: they simply never
+      load. This shipped for real, and dispatcher-01 could not catch it because
+      the buggy command `find layers -name SKILL.md -mindepth 3 -maxdepth 3`
+      also contains the literal "find layers" that case asserts.
+      Targets the buggy command shape rather than the bare "-maxdepth" flag: the
+      skill file itself says "Never add -maxdepth to this search", so asserting
+      absence of the bare flag would reject a correct answer that quotes that
+      guidance.
+
+  - id: dispatcher-05
+    name: "Layers with no paths frontmatter are reported, not silently dropped"
+    scenario: |
+      You are the stack-dispatcher agent. The caller passes:
+        task: add a feature flag to a service
+        target_files: ["src/services/billing.service.ts"]
+      One installed layer on disk has no `paths:` frontmatter and so cannot be
+      routed by file pattern. Produce the DISPATCH RESULT block.
+      Use the stack-dispatcher skill rules.
+    must_contain:
+      - "Unroutable"
+    rationale: |
+      A layer that cannot be routed is a configuration gap. Skipping it in
+      silence is how 28 layers went unnoticed; surfacing it on the Unroutable
+      line makes the gap visible to the caller.

@@ -1,6 +1,7 @@
 skill: cdk
 skill_files:
   - layers/cloud/aws/cdk/SKILL.md
+  - layers/cloud/aws/cdk/cdk.md
 version: 1
 
 cases:

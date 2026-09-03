@@ -1,6 +1,7 @@
 skill: posthog-flags
 skill_files:
   - layers/feature-flags/posthog/SKILL.md
+  - layers/feature-flags/posthog/posthog.md
 version: 1
 
 cases:

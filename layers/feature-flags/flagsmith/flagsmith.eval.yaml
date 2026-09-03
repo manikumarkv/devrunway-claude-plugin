@@ -1,6 +1,7 @@
 skill: flagsmith-flags
 skill_files:
   - layers/feature-flags/flagsmith/SKILL.md
+  - layers/feature-flags/flagsmith/flagsmith.md
 version: 1
 
 cases:

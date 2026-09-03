@@ -1,6 +1,7 @@
 skill: notion
 skill_files:
   - layers/documents/notion/SKILL.md
+  - layers/documents/notion/notion.md
 version: 1
 
 cases:

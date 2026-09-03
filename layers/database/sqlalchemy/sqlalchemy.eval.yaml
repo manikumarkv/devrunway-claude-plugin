@@ -1,6 +1,7 @@
 skill: sqlalchemy-orm
 skill_files:
   - layers/database/sqlalchemy/SKILL.md
+  - layers/database/sqlalchemy/sqlalchemy.md
 version: 1
 
 cases:
