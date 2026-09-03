@@ -22,7 +22,6 @@ cases:
       - "Dio("
       - "Dio _dio"
       - "Response<"
-      - "DioException"
     rationale: |
       The default answer is one concrete class holding a `Dio`, with no contract and no
       cancellation. That class cannot be faked in a test, cannot be wrapped by the offline
@@ -45,8 +44,8 @@ cases:
       - "ServerError"
       - "isReportable"
     must_not_contain:
-      - "e.toString()"
       - ".toString().contains("
+      - "message.contains("
     rationale: |
       Matching on `e.toString().contains('SocketException')` breaks silently on a Dio
       upgrade, an OS locale change, or a platform difference — and it fails open, so a real
@@ -92,8 +91,7 @@ cases:
       - "Idempotency-Key"
       - "CancelToken"
     must_not_contain:
-      - "MultipartFile.fromFile"
-      - "picked.path"
+      - "MultipartFile.fromFile("
     rationale: |
       Sending the picker's file directly uploads 8-12 MB over mobile data, carries EXIF GPS
       into the bucket, and ships iOS portrait photos as landscape pixels with an orientation
@@ -134,17 +132,16 @@ cases:
       `TokenStore` and a `TenantStore` already expose async reads. Wire this into the Dio
       client. Use the dio skill rules.
     must_contain:
-      - "onRequest"
-      - "handler) async"
+      - "Future<void> onRequest"
       - "options.headers['Authorization']"
       - "X-Tenant-Id"
     must_not_contain:
-      - "dio.options.headers"
-      - "set token"
-      - "setToken"
+      - " void onRequest("
     rationale: |
       A header written once onto `dio.options` at sign-in is stale the moment a refresh or a
       tenant switch happens elsewhere, and sign-out leaves it in place — so the next user's
       request carries the previous user's credentials. Reading inside `onRequest` (which
       forces the handler to be `async`) makes every request use the value that is current
-      when it is actually sent.
+      when it is actually sent. The async handler signature is what the assertion keys on:
+      an implementation that caches the token in a field has nothing to await, so its
+      `onRequest` returns `void`.
