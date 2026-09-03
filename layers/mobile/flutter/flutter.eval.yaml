@@ -1,0 +1,173 @@
+skill: flutter
+skill_files:
+  - layers/mobile/flutter/SKILL.md
+version: 1
+
+cases:
+  - id: flutter-01
+    name: "Every flavor entrypoint shares one bootstrap that installs all three error channels and blocks only on the first frame"
+    scenario: |
+      An app has three flavor entrypoints — `lib/main.dart` (prod), `lib/main_staging.dart`
+      and `lib/main_dev.dart`. Startup needs: the crash reporter and logger; a secure token
+      store, `SharedPreferences` and an SQLite database opened (roughly 250 ms each, and the
+      router's first redirect reads the session); and a `RemoteConfigService.warmUp()` that
+      takes about two seconds over the network and is only read by the promotions screen.
+      Write the entrypoints and `lib/bootstrap.dart`, plus whatever the remote-config value
+      needs so the promotions screen can render it. Use the flutter skill rules.
+    must_contain:
+      - "Future<void> bootstrap("
+      - "runZonedGuarded"
+      - "FlutterError.onError"
+      - "PlatformDispatcher.instance.onError"
+      - "Future.wait("
+      - "ProviderScope("
+      - "overrides:"
+      - "FutureProvider"
+    rationale: |
+      The default answer puts the whole of startup inside `main()` and copies it into each
+      flavor entrypoint, so the next channel or init added to one flavor silently never
+      reaches the others — staging stops reporting crashes and nothing looks wrong. It also
+      awaits every dependency in series before `runApp`, including the two-second remote
+      config, which is native splash time the user cannot cancel and cannot retry without a
+      relaunch. `Future.wait` proves the independent opens run in parallel; `FutureProvider`
+      proves the slow, non-first-frame work moved to the screen that needs it. All three
+      error channels are asserted because each catches a class the other two do not, and a
+      missing one loses that class silently rather than loudly.
+
+  - id: flutter-02
+    name: "A failed required startup dependency renders a retry screen instead of continuing"
+    scenario: |
+      Extend the app's `bootstrap` for the case where startup goes wrong: opening the
+      encrypted database can throw (a corrupt file, a rotated keystore key, a failed
+      migration), and so can opening the secure store. Both are required — the router's
+      first redirect reads the session, so there is no usable app without them. Write the
+      startup path and any widget it needs so that the user is told something went wrong and
+      can act on it. Use the flutter skill rules.
+    must_contain:
+      - "StartupFailureApp"
+      - "onRetry"
+      - "runApp("
+    must_not_contain:
+      - "catch (_)"
+    rationale: |
+      The reflexive answer is a try/catch that logs and falls through to `runApp` of the real
+      app. That does not produce a degraded app, it produces one that crashes later in an
+      unrelated screen, so the crash report points at a widget and the user's report is "it
+      just closes". `catch (_)` is the token of that answer specifically: a correct
+      implementation has to bind the error, because it renders and reports it. `onRetry`
+      proves the recovery re-runs the work rather than repainting a dead screen.
+
+  - id: flutter-03
+    name: "Light and dark themes ship together, with semantic colours as a real ThemeExtension"
+    scenario: |
+      Set up `lib/src/core/theme/app_theme.dart` for a new app. The design system has a
+      single brand seed colour, plus three colours that carry meaning and have no slot in
+      `ColorScheme`: success, warning and danger, each with a readable foreground. Write the
+      theme and wire it into the app's `MaterialApp.router`. Name the semantic colour type
+      `AppStatusColors`. Use the flutter skill rules.
+    must_contain:
+      - "ColorScheme.fromSeed"
+      - "Brightness.dark"
+      - "extends ThemeExtension<AppStatusColors>"
+      - "copyWith"
+      - "Color.lerp"
+      - "extensions:"
+      - "darkTheme:"
+      - "themeMode:"
+    must_not_contain:
+      - "primarySwatch"
+    rationale: |
+      Two failures are being separated here. The first is shipping `theme:` alone and leaving
+      dark mode as a later ticket, which turns into an eye-audit of every widget written in
+      between — `darkTheme:` plus `Brightness.dark` proves both were built at once. The
+      second is a `ThemeExtension` whose `lerp` returns `this`, which compiles, passes review
+      and makes every semantic colour snap while the rest of the app cross-fades on a theme
+      change; `Color.lerp` is the token that separates a real implementation from that stub.
+      `primarySwatch` is the Material 2 answer a model reaches for when it is not thinking
+      about `ColorScheme`.
+
+  - id: flutter-04
+    name: "A widget reads semantic colour from the theme extension, never a palette constant"
+    scenario: |
+      An `OrderStatusBadge` widget shows a short label whose colour depends on an
+      `OrderStatus` enum: `delivered` reads as success, `pending` as warning, `cancelled` as
+      danger, and `shipped` uses the ordinary primary container. The app's theme already
+      registers an `AppStatusColors` extension exposing `success`, `onSuccess`,
+      `successContainer`, `onSuccessContainer`, `warning`, `onWarning`, `danger` and
+      `onDanger` for both brightnesses. Write only
+      `lib/src/features/orders/presentation/widgets/order_status_badge.dart` — do not write
+      the theme, the extension or the enum. Use the flutter skill rules.
+    must_contain:
+      - "Theme.of(context).extension<AppStatusColors>()"
+      - "colorScheme"
+      - "textTheme"
+    must_not_contain:
+      - "Colors.green"
+      - "Colors.red"
+      - "Color(0xFF"
+    rationale: |
+      Colouring a badge is the single most common place a hardcoded palette value enters an
+      app, because at the call site `Colors.green` reads as obviously correct. It is invisible
+      in dark mode, invisible in a white-label build, unreachable by a contrast test, and
+      ungreppable as a set once there are also `Colors.green.shade600` and
+      `Colors.lightGreen`. The scenario deliberately excludes the theme file, so any palette
+      literal in the generated code is in a widget and is a defect. `textTheme` is asserted
+      alongside because the same widget is where a literal text size usually appears.
+
+  - id: flutter-05
+    name: "Platform branching in a widget uses the theme's platform, with a real default arm"
+    scenario: |
+      Add a share action to the order detail screen. On iOS it must present a Cupertino
+      action sheet; on Android a Material modal bottom sheet. The app also ships to Flutter
+      web and is run on macOS desktop during development, and its widget tests run on a
+      Linux CI runner where both branches must be exercisable. Write the share widget. Use
+      the flutter skill rules.
+    must_contain:
+      - "Theme.of(context).platform"
+      - "TargetPlatform.iOS"
+      - "_ =>"
+    must_not_contain:
+      - "Platform.isIOS"
+      - "Platform.isAndroid"
+    rationale: |
+      The default answer is an operating-system check from `dart:io`. It reads the host, so
+      on a Linux CI runner every widget test takes the Android branch and the iOS branch is
+      never executed by any test that can be written; the import also fails to compile for a
+      web target; and it ignores an app that sets `platform:` on its own `ThemeData`.
+      `Theme.of(context).platform` has none of those properties and is overridable in a test.
+      The `_ =>` arm is the second half: a switch handling only `android` and `iOS` is a
+      crash or a blank screen on macOS, Windows, Linux, Fuchsia and web — including the
+      desktop debug run a developer uses every day.
+
+  - id: flutter-06
+    name: "A new feature gets the four layers, and reaches another feature only through its domain contract"
+    scenario: |
+      Add a "saved addresses" feature to an existing app: it lists the signed-in user's
+      addresses from `GET /addresses`, lets one be set as default, and its header shows the
+      user's display name — which is owned by the existing `profile` feature, whose UI
+      already renders that name in an avatar widget and whose provider already holds the
+      loaded profile. Lay out every file the new feature needs, then write the address
+      domain model file and the provider that supplies the header's data. Use the flutter
+      skill rules.
+    must_contain:
+      - "features/addresses/domain"
+      - "features/addresses/data"
+      - "features/addresses/application"
+      - "features/addresses/presentation"
+      - "import 'package:"
+    must_not_contain:
+      - "import '../"
+      - "features/profile/presentation"
+      - "features/profile/application"
+    rationale: |
+      Two defaults are being blocked. The first is dropping the new files into whatever
+      directories already exist — a flat `lib/models/`, `lib/screens/` layout, or three of
+      the four layers with providers under a directory named something else, which silently
+      costs the feature its `state/riverpod` rules because the globs are written against the
+      fixed names. The second is the one that decides whether the app still has features in
+      a year: the shortest path to a display name is importing profile's avatar widget or
+      its provider, which welds the two features together so neither can be tested, moved or
+      deleted alone. The contract in `profile/domain` is the only legitimate seam, and it is
+      reached with a package import — a relative one gives Dart two library identities for
+      the same file, and then `is` checks start failing on objects of obviously the right
+      type.
