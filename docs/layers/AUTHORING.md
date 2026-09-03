@@ -198,7 +198,12 @@ The `rationale` is read by whoever triages a future failure — write it for the
 - [ ] `/eval <tech>` passes
 - [ ] `stack-dispatcher` returns this layer for a representative target file, and does not
       return it for an unrelated one
-- [ ] `docs/ROADMAP.md` status table updated
+
+**Shared status tables are not yours to edit.** `docs/layers/README.md` and
+`docs/ROADMAP.md` are updated by whoever is coordinating the build, not by the layer author.
+Several parallel authors writing the same two files produces merge noise and half-staged
+commits — the first three builds each had to hand-stage isolated blobs to work around it.
+Report your layer as done; let the coordinator flip the row.
 
 Commit prefix: `feat(layer):` for a new layer, `chore(plugin):` for tooling around it.
 
