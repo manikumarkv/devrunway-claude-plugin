@@ -12,7 +12,7 @@ Full standards: [Flutter Feature Cookbook](https://claude.ai/code/artifact/53812
 
 | Brief | Issue | Target | Covers | Status |
 |---|---|---|---|---|
-| [mobile-flutter](briefs/mobile-flutter.md) | [#15](https://github.com/manikumarkv/devrunway-claude-plugin/issues/15) | `layers/mobile/flutter/` | structure, bootstrap, theme, platform, app size, monorepo | 📋 |
+| [mobile-flutter](briefs/mobile-flutter.md) | [#15](https://github.com/manikumarkv/devrunway-claude-plugin/issues/15) | `layers/mobile/flutter/` | structure, bootstrap, theme, platform, app size, monorepo | ✅ |
 | [dart-models](briefs/dart-models.md) | [#3](https://github.com/manikumarkv/devrunway-claude-plugin/issues/3) | `layers/language/dart-models/` | models, serialization | ✅ |
 | [dio-services](briefs/dio-services.md) | [#4](https://github.com/manikumarkv/devrunway-claude-plugin/issues/4) | `layers/api-style/dio/` | services, errors, offline, media, contract | ✅ |
 | [riverpod](briefs/riverpod.md) | [#5](https://github.com/manikumarkv/devrunway-claude-plugin/issues/5) | `layers/state/riverpod/` | providers, pagination, realtime | ✅ |
@@ -30,12 +30,12 @@ Full standards: [Flutter Feature Cookbook](https://claude.ai/code/artifact/53812
 
 | Brief | Issue | Target | Status |
 |---|---|---|---|
-| [cmd-flutter-verify](briefs/cmd-flutter-verify.md) | [#16](https://github.com/manikumarkv/devrunway-claude-plugin/issues/16) | `skills/flutter-verify/` | 📋 |
-| [cmd-flutter-signing](briefs/cmd-flutter-signing.md) | [#17](https://github.com/manikumarkv/devrunway-claude-plugin/issues/17) | `skills/flutter-signing/` | 📋 |
-| [cmd-flutter-release](briefs/cmd-flutter-release.md) | [#18](https://github.com/manikumarkv/devrunway-claude-plugin/issues/18) | `skills/flutter-release/` | 📋 |
-| [cmd-flutter-submit](briefs/cmd-flutter-submit.md) | [#19](https://github.com/manikumarkv/devrunway-claude-plugin/issues/19) | `skills/flutter-submit/` | 📋 |
-| [cmd-flutter-monitoring](briefs/cmd-flutter-monitoring.md) | [#20](https://github.com/manikumarkv/devrunway-claude-plugin/issues/20) | `skills/flutter-monitoring/` | 📋 |
-| [cmd-flutter-build-doctor](briefs/cmd-flutter-build-doctor.md) | [#21](https://github.com/manikumarkv/devrunway-claude-plugin/issues/21) | `skills/flutter-build-doctor/` | 📋 |
+| [cmd-flutter-verify](briefs/cmd-flutter-verify.md) | [#16](https://github.com/manikumarkv/devrunway-claude-plugin/issues/16) | `skills/flutter-verify/` | ✅ |
+| [cmd-flutter-signing](briefs/cmd-flutter-signing.md) | [#17](https://github.com/manikumarkv/devrunway-claude-plugin/issues/17) | `skills/flutter-signing/` | ✅ |
+| [cmd-flutter-release](briefs/cmd-flutter-release.md) | [#18](https://github.com/manikumarkv/devrunway-claude-plugin/issues/18) | `skills/flutter-release/` | ✅ |
+| [cmd-flutter-submit](briefs/cmd-flutter-submit.md) | [#19](https://github.com/manikumarkv/devrunway-claude-plugin/issues/19) | `skills/flutter-submit/` | ✅ |
+| [cmd-flutter-monitoring](briefs/cmd-flutter-monitoring.md) | [#20](https://github.com/manikumarkv/devrunway-claude-plugin/issues/20) | `skills/flutter-monitoring/` | ✅ |
+| [cmd-flutter-build-doctor](briefs/cmd-flutter-build-doctor.md) | [#21](https://github.com/manikumarkv/devrunway-claude-plugin/issues/21) | `skills/flutter-build-doctor/` | ✅ |
 
 📋 planned · 🚧 in progress · ✅ done and eval passing
 
