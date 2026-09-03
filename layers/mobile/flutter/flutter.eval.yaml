@@ -104,7 +104,10 @@ cases:
     must_not_contain:
       - "Colors.green"
       - "Colors.red"
+      - "Colors.amber"
+      - "Colors.orange"
       - "Color(0xFF"
+      - "Color(0xff"
     rationale: |
       Colouring a badge is the single most common place a hardcoded palette value enters an
       app, because at the call site `Colors.green` reads as obviously correct. It is invisible
