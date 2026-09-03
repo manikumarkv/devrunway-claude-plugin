@@ -1,0 +1,178 @@
+skill: flutter-test
+skill_files:
+  - layers/testing/flutter-test/SKILL.md
+version: 1
+
+cases:
+  - id: flutter-test-01
+    name: "The harness is written first, wraps in ProviderScope + theme + localizations, and fakes the contract"
+    scenario: |
+      A Flutter app built with Riverpod has no tests at all yet. Its programs feature depends
+      on an `abstract interface class ProgramService` contract (bound in the composition root
+      to `RestProgramService`), an `appConfigProvider`, and a `programCacheStoreProvider`
+      backed by the device database. Its screens read strings through `AppLocalizations`.
+      Write `test/support/harness.dart` — the shared test infrastructure every later test will
+      build on — plus the fake it needs for `ProgramService`. Do not write any test case yet.
+      Use the flutter-test skill rules.
+    must_contain:
+      - "Future<void> pumpApp"
+      - "ProviderScope"
+      - "overrides"
+      - "localizationsDelegates"
+      - "addTearDown("
+      - "implements ProgramService"
+    must_not_contain:
+      - "RestProgramService("
+      - "Dio("
+    rationale: |
+      The default answer is no harness at all: each test file re-invents its own
+      `pumpWidget(ProviderScope(child: MaterialApp(home: ...)))`, three of the four ambient
+      dependencies get forgotten, and a missing localization delegate surfaces as a null-check
+      crash that reads like a bug in the screen. A harness that constructs the real REST
+      service or a real HTTP client is not a harness — the first test then needs a network, so
+      the first test costs a day and the second is never written. `addTearDown(container.dispose)`
+      is what stops a leaked container carrying timers into the next test.
+
+  - id: flutter-test-02
+    name: "A screen test covers four states with a retry that actually re-fetches, faking the service not the transport"
+    scenario: |
+      `ProgramListPage` takes a `schoolId`, watches a Riverpod provider backed by the
+      `ProgramService` contract, and renders `ProgramListSkeleton`, `ErrorStateView` (whose
+      retry button has `Key('error_state_retry')`), `EmptyStateView`, or a list of
+      `ProgramCard`. The `pumpApp` harness already exists. Write
+      `test/features/programs/program_list_page_test.dart` covering every state the screen can
+      be in, including proving the retry does what it claims. Use the flutter-test skill rules.
+    must_contain:
+      - "pumpApp("
+      - "overrideWith"
+      - "findsOneWidget"
+      - "findsNothing"
+      - "tester.tap("
+      - "allCount"
+    must_not_contain:
+      - "Dio("
+      - "Response<"
+      - "DioAdapter"
+    rationale: |
+      Two default wrong answers converge here. The first tests only the data state, so the
+      suite ships a retry button implemented as `Navigator.pop` — the error view disappears,
+      the widget-tree assertion passes, and no request is ever re-issued; `tester.tap` on the
+      retry followed by asserting the fake was called again is the only thing that catches it.
+      The second stubs the HTTP client instead of the contract, which encodes the wire format
+      into the test: renaming the response envelope key turns forty tests red without a single
+      behaviour change, while a real regression (the service now throws a different error type)
+      stays invisible because the adapter was replying 200 all along. `allCount` is the
+      substring every plausible spelling of the fake's call counter shares (`callCount`,
+      `fetchProgramsCallCount`); `tester.tap` alone does not discriminate, because a
+      `Navigator.pop` retry also passes a tap followed by a widget-tree assertion.
+
+  - id: flutter-test-03
+    name: "A notifier is tested through a ProviderContainer, and disposal is proven to cancel in-flight work"
+    scenario: |
+      `ProgramsController` is an `AsyncNotifier` that fetches programs through the
+      `ProgramService` contract. Every contract method takes an optional `CancelToken`, and the
+      controller ties one to `ref.onDispose` so a user leaving the screen mid-request does not
+      leave the request running. Write the test file for this controller: the successful load,
+      the failure path when the service throws a `NetworkError`, and proof that the request is
+      abandoned when the user leaves the screen. The fake service is yours to write. Use the
+      flutter-test skill rules.
+    must_contain:
+      - "ProviderContainer"
+      - "AsyncError"
+      - "NetworkError"
+      - "isCancelled"
+    must_not_contain:
+      - "testWidgets("
+      - "pumpWidget("
+    rationale: |
+      A notifier tested by driving a widget is slow, couples state logic to a layout that will
+      be redesigned, and cannot observe the moment of disposal at all. The subtle half is the
+      third assertion: "leaving the screen cancels the request" has no token unless the fake
+      records the `CancelToken` it was handed and the test asserts `isCancelled` on it. Without
+      that test, the `ref.onDispose` registration is invisible dead-looking code and gets
+      removed in a tidy-up; the symptom is a list the user scrolls in and out of stacking up a
+      dozen live requests nobody will see. Asserting a bare `isA<AsyncError>` without the error
+      type also passes when the controller flattens a typed `NetworkError` into
+      `Exception('failed')`, turning a retryable offline state into an unretryable one.
+
+  - id: flutter-test-04
+    name: "A component golden loads fonts, covers dark and 200% text, and never softens the comparison"
+    scenario: |
+      `ProgramCard` is a design-system component: data in, callbacks out, no provider reads.
+      Write its golden test file, plus the `test/flutter_test_config.dart` the suite needs.
+      Assume `pumpApp` already accepts a `themeMode` and a `textScaler`. Use the flutter-test
+      skill rules.
+    must_contain:
+      - "loadAppFonts("
+      - "matchesGoldenFile("
+      - "TextScaler"
+      - "ThemeMode.dark"
+    must_not_contain:
+      - "textScaleFactor"
+      - "goldenFileComparator"
+    rationale: |
+      Without an explicit font load the test binding uses Ahem, whose every glyph is a filled
+      box — the golden is stable, it passes, and it cannot detect a text regression of any
+      kind, which is most of what a golden is for. A single light-mode default-scale scenario
+      misses dark mode and large text, which is precisely where design systems break. And the
+      tempting fix for a golden that fails on a colleague's machine is to install a comparator
+      that allows a percentage of differing pixels; that percentage sits above the noise floor
+      of a correctly frozen single-platform suite (zero) and below a real regression that moves
+      a label by four pixels, so it silences the flake and the regression together.
+      `textScaleFactor` is the deprecated pre-`TextScaler` spelling and no longer scales text
+      the way the framework does. The assertion is `ThemeMode.dark` rather than a bare "dark",
+      which any harness-derived `MaterialApp` satisfies through its `darkTheme:` argument
+      without ever rendering a dark scenario.
+
+  - id: flutter-test-05
+    name: "A contract test proves the app survives a server value it has never seen"
+    scenario: |
+      The programs API publishes an OpenAPI document, committed in the repo at
+      `contract/programs.v3.yaml`. `Program` is a freezed + json_serializable model whose
+      `status` field is a `ProgramStatus` enum, and `fixture('program.json')` returns the
+      example payload copied from that spec. Write the forward-compatibility tests: the ones
+      that prove the app keeps working when the backend ships a status value and a field that
+      this build of the app has never heard of. Malformed-payload handling is covered
+      elsewhere — do not test it here. Use the flutter-test skill rules.
+    must_contain:
+      - "fromJson("
+      - "ProgramStatus.unknown"
+      - "fixture("
+    must_not_contain:
+      - "throwsA("
+    rationale: |
+      The instinct when a parser meets an unrecognised value is to assert that it throws, and
+      that instinct encodes exactly the wrong behaviour. `json_serializable` throws for the
+      *whole response*, so a backend adding one status value to one program blanks the entire
+      list for every user on an already-shipped build — unrecoverable except by a hotfix that
+      waits on app-store review. The test must assert the fallback (`ProgramStatus.unknown`)
+      and that the extra field is ignored. Reading the payload through `fixture(...)`, sourced
+      from the committed spec's own example, is what stops the suite from verifying a payload
+      the server stopped sending a year ago.
+
+  - id: flutter-test-06
+    name: "An integration journey seeds and destroys its own data and waits on conditions"
+    scenario: |
+      Write `integration_test/enrolment_journey_test.dart`: a member signs in, opens a program
+      from the list, taps enrol, and sees the confirmation. A `TestDataApi` helper on the
+      dedicated test environment exposes `seedTenant(...)` and `destroyTenant(id)`. Sign-in and
+      enrolment each round-trip to a real server, so the screens take an unpredictable amount
+      of time to appear. Include any waiting helper the test needs. Use the flutter-test skill
+      rules.
+    must_contain:
+      - "IntegrationTestWidgetsFlutterBinding"
+      - "tearDown"
+      - "pump("
+      - "destroyTenant"
+    must_not_contain:
+      - "Future.delayed("
+      - "sleep("
+    rationale: |
+      `await Future.delayed(const Duration(seconds: 3))` is the default way to handle "the
+      server is slow": it is too long on every fast run and too short on the one slow run that
+      matters, so it is a flake with a timer. A condition wait that pumps frames until a finder
+      matches, with a timeout that names what it was waiting for, is both faster and
+      deterministic. The seed/tear-down pair is the other half: a journey that leaves its data
+      behind fails on the *second* run because the member is already enrolled, and two journeys
+      sharing fixture data fail non-reproducibly when they run in parallel. `tearDown` runs even
+      when the test fails, which is exactly when the cleanup matters.
