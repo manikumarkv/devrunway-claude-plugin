@@ -59,8 +59,14 @@ cases:
     must_contain:
       - "AsyncValue.guard"
       - "AsyncLoading"
+      - "ref.mounted"
     must_not_contain:
-      - "bool isLoading"
+      # `bool isLoading` alone is a PREFIX of `bool isLoadingMore`, which this
+      # layer's own Paged<T> shape mandates — so it fails correct code the
+      # moment a file holds both a paged state and a guarded action.
+      # The terminators below cannot match the `More` variant.
+      - "bool isLoading;"
+      - "bool isLoading ="
       - "try {"
     rationale: |
       A hand-written try/catch that sets isLoading, data and error as three

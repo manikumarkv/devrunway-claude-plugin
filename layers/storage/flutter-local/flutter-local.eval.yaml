@@ -16,6 +16,13 @@ cases:
       - "FlutterSecureStorage"
       - "first_unlock_this_device"
       - "encryptedSharedPreferences: true"
+      # Declaring the options is not applying them. Without these two, an answer
+      # that defines the option constants and then calls read/write/delete
+      # without them passes every other assertion while writing the token with
+      # the plugin's defaults — iCloud-syncing and restorable onto another
+      # device, which is the exact harm this case exists to prevent.
+      - "iOptions:"
+      - "aOptions:"
     must_not_contain:
       - "SharedPreferences.getInstance("
       - "prefs.setString("

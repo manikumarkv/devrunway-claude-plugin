@@ -116,30 +116,53 @@ and it is the seam the session layer and the tests substitute.
 // lib/core/storage/token_store.dart
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-abstract interface class TokenStore {
+// Named RefreshTokenStore, not TokenStore: `auth/flutter-session` owns the
+// canonical TokenStore contract (StoredTokens, access-token expiry, refresh
+// coordination). This shows the STORAGE mechanics only. Two different
+// contracts under one name would collide whenever both layers load.
+abstract interface class RefreshTokenStore {
   Future<String?> readRefreshToken();
   Future<void> writeRefreshToken(String token);
   Future<void> clear();
 }
 
-final class SecureTokenStore implements TokenStore {
-  const SecureTokenStore(this._storage);
+final class SecureRefreshTokenStore implements RefreshTokenStore {
+  const SecureRefreshTokenStore(this._storage);
 
   final FlutterSecureStorage _storage;
 
   static const _refreshTokenKey = 'auth.refresh_token';
 
+  // The options are not optional. Every call passes them — a single call that
+  // omits them writes that key with the plugin's defaults, which on iOS means
+  // iCloud-syncing and restorable onto a different device.
   @override
-  Future<String?> readRefreshToken() => _storage.read(key: _refreshTokenKey);
+  Future<String?> readRefreshToken() => _storage.read(
+        key: _refreshTokenKey,
+        iOptions: secureStorageIOSOptions,
+        aOptions: secureStorageAndroidOptions,
+      );
 
   @override
-  Future<void> writeRefreshToken(String token) =>
-      _storage.write(key: _refreshTokenKey, value: token);
+  Future<void> writeRefreshToken(String token) => _storage.write(
+        key: _refreshTokenKey,
+        value: token,
+        iOptions: secureStorageIOSOptions,
+        aOptions: secureStorageAndroidOptions,
+      );
 
   @override
-  Future<void> clear() => _storage.delete(key: _refreshTokenKey);
+  Future<void> clear() => _storage.delete(
+        key: _refreshTokenKey,
+        iOptions: secureStorageIOSOptions,
+        aOptions: secureStorageAndroidOptions,
+      );
 }
 ```
+
+The options are defined just below. They are shown after the store only because the
+constants read better once you have seen the call sites — not because the store works
+without them.
 
 **Rule: set the platform options explicitly. The defaults are wrong for a token.**
 
@@ -345,7 +368,12 @@ class CacheStore {
 ```dart
 // ✅ lib/core/storage/storage_providers.dart
 @Riverpod(keepAlive: true)
-FlutterSecureStorage secureStorage(Ref ref) => const FlutterSecureStorage();
+FlutterSecureStorage secureStorage(Ref ref) => const FlutterSecureStorage(
+      iOptions: secureStorageIOSOptions,
+      aOptions: secureStorageAndroidOptions,
+    );
+// Constructor options are the floor, not a substitute for per-call options:
+// any call that passes its own `iOptions`/`aOptions` overrides these entirely.
 
 @Riverpod(keepAlive: true)
 Future<AppDatabase> appDatabase(Ref ref) async {
@@ -356,8 +384,8 @@ Future<AppDatabase> appDatabase(Ref ref) async {
 }
 
 @Riverpod(keepAlive: true)
-TokenStore tokenStore(Ref ref) =>
-    SecureTokenStore(ref.watch(secureStorageProvider));
+RefreshTokenStore refreshTokenStore(Ref ref) =>
+    SecureRefreshTokenStore(ref.watch(secureStorageProvider));
 ```
 
 Three properties fall out: the async gap is in the provider, so a consumer awaits a
@@ -369,7 +397,7 @@ Three properties fall out: the async gap is in the provider, so a consumer await
 ProviderContainer(
   overrides: [
     appDatabaseProvider.overrideWith((ref) async => AppDatabase(NativeDatabase.memory())),
-    tokenStoreProvider.overrideWithValue(FakeTokenStore()),
+    refreshTokenStoreProvider.overrideWithValue(FakeRefreshTokenStore()),
   ],
 );
 ```
@@ -730,7 +758,7 @@ test('an unparseable payload deletes itself and returns null', () async { /* …
 ```
 
 Secure storage is the exception: the platform channel is not available in a unit test.
-Test against a fake implementing `TokenStore` (§3) — which is why the contract exists —
+Test against a fake implementing `RefreshTokenStore` (§3) — which is why the contract exists —
 and cover the real Keystore path in an integration test on a device.
 
 ---

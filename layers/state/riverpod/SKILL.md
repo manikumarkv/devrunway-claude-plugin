@@ -26,7 +26,7 @@ Full standards in [riverpod.md](riverpod.md). Always-on summary:
 
 **Async state:**
 - One `AsyncValue<T>`, never `data` + `isLoading` + `error` as three separate fields
-- Actions: `state = const AsyncLoading();` then `state = await AsyncValue.guard(() => repo.doThing());`
+- Actions: `state = const AsyncLoading();` then `final r = await AsyncValue.guard(() => repo.doThing()); if (!ref.mounted) return; state = r;` — never assign `state` straight from an `await`; the notifier may be disposed by then and the assignment throws
 - Exactly one writer per piece of state
 
 **Pagination:** cursor, never `page`/`offset`. State is `Paged<T> { items, nextCursor, isLoadingMore, pageError }` so a failed page keeps the pages already loaded. `loadMore` guards on `isLoadingMore` and a null cursor; refresh is `ref.invalidateSelf()`, which resets the cursor; dedupe by id on merge.

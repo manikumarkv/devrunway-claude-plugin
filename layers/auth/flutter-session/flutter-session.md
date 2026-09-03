@@ -719,7 +719,10 @@ Future<void> _onUpdates(List<PurchaseDetails> purchases) async {
             );
         if (!granted) {
           state = const PurchaseState.rejected();
-          break;                       // do NOT complete — let the store retry
+          continue;   // `continue`, NOT `break`. `break` leaves the switch and
+                      // falls into the completion block below, telling the store
+                      // the goods were delivered for a purchase the server
+                      // rejected: charged, no entitlement, and no replay.
         }
         ref.invalidate(entitlementProvider);   // re-read server state
         state = const PurchaseState.success();

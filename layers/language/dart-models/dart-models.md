@@ -14,6 +14,8 @@ Hand-written parsing drifts from the class the moment a field is added, and the 
 // lib/domain/models/program.dart
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../converters/utc_date_time_converter.dart';
+
 part 'program.freezed.dart';
 part 'program.g.dart';
 
@@ -163,7 +165,7 @@ A DTO for a payload that is already the right shape is pure ceremony. Reach for 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../domain/models/enrolment.dart';
-import '../converters/utc_date_time_converter.dart';
+import '../../domain/converters/utc_date_time_converter.dart';
 
 part 'enrolment_dto.freezed.dart';
 part 'enrolment_dto.g.dart';
@@ -239,7 +241,7 @@ Never `List<T>?`. The call site then handles null *and* empty, and the two mean 
 `DateTime.parse` returns a *local* `DateTime` unless the string ends in `Z`. Two devices in different zones then compute different values for "is this in the past", and comparing a local `DateTime` with a UTC one silently compares wall-clock numbers.
 
 ```dart
-// lib/data/converters/utc_date_time_converter.dart
+// lib/domain/converters/utc_date_time_converter.dart
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 class UtcDateTimeConverter implements JsonConverter<DateTime, String> {
@@ -301,6 +303,10 @@ A derived value is also not serialized. If a getter must appear in `toJson`, tha
 ## 9. No Flutter imports in `domain/`
 
 **Rule: `domain/` imports `dart:*`, `package:freezed_annotation`, and other `domain/` files. Nothing else — in particular no `package:flutter/...`.**
+
+This is why converters live in `domain/converters/` and not `data/converters/`: a domain
+model that carries `@UtcDateTimeConverter()` has to import it, and an import reaching into
+`data/` would point the dependency outward. `data/` may import `domain/`; never the reverse.
 
 A `Color` or `IconData` on a model binds the data layer to the widget layer: the model can no longer be unit-tested without a Flutter binding, cannot be reused by a CLI or a background isolate, and the theme decision ends up somewhere the designer cannot find it.
 
