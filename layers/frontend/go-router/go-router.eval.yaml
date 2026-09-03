@@ -1,0 +1,180 @@
+skill: go-router
+skill_files:
+  - layers/frontend/go-router/SKILL.md
+version: 1
+
+cases:
+  - id: go-router-01
+    name: "A detail route carries the id in the path, not the model object"
+    scenario: |
+      A programs list shows `Program` rows the list already holds in memory. Tapping a row
+      opens the program detail screen at `/programs/:id`, and that same screen must open
+      correctly when the user arrives from a link in an email with the app not running. A
+      `programProvider(id)` already exists and fetches a program by id. Write the route
+      entry in `lib/core/router/app_router.dart`, the navigation call from the list tile,
+      and the `ProgramDetailScreen` constructor and its data load. No layout or styling.
+      Use the go-router skill rules.
+    must_contain:
+      - "@TypedGoRoute"
+      - ":id"
+      - "required this.id"
+    must_not_contain:
+      - "ProgramDetailScreen(program:"
+      - "as Program;"
+    rationale: |
+      The default answer passes the `Program` the list already has through `extra` and
+      reads it back with a non-nullable `state.extra as Program`. That works for every
+      developer test, because a developer always reaches the screen by tapping the list.
+      It throws for every entry that did not come from an in-app push — email link,
+      notification tap, process-death restore, `flutter run --route` — which is a top
+      crash with no reproduction steps. `as Program;` is the non-nullable cast; the
+      permitted hint form is `as Program?`, which does not match this token. A screen
+      whose constructor takes the object rather than the id cannot be satisfied from a
+      URL at all, so the route is unreachable from outside the app no matter what the
+      route table says.
+
+  - id: go-router-02
+    name: "Authorization is a top-level redirect with refreshListenable, not a screen guard"
+    scenario: |
+      The app has public locations `/sign-in`, `/legal` and `/reset-password`; everything
+      else requires a signed-in user, and `/admin` additionally requires the `admin` role.
+      Signing out from the settings screen must move the user off an authenticated screen
+      immediately. A `sessionProvider` exposes `isSignedIn`, `isRestoring` and `roles`, and
+      its notifier is a `Listenable`. Write the `GoRouter` construction that enforces this.
+      Use the go-router skill rules.
+    must_contain:
+      - "redirect:"
+      - "refreshListenable"
+      - "matchedLocation"
+      - "isRestoring"
+    must_not_contain:
+      - "addPostFrameCallback"
+      - "StreamBuilder"
+    rationale: |
+      Two default wrong answers. The first checks auth inside each protected screen, in
+      `initState` with a post-frame callback — by which point the route has already been
+      entered, `initState` has already fired its fetch and its analytics event, and the
+      next screen someone adds will not have the check. The second wraps the app in a
+      `StreamBuilder` on auth state and swaps the home widget, which destroys URL
+      addressability entirely: there is no location for anything, so every deep link lands
+      wherever the stream happened to be. Without `refreshListenable` the redirect only
+      runs on navigation, so a sign-out leaves the user on an authenticated screen until
+      they tap something. Without the `isRestoring` guard the redirect fires during token
+      restore and bounces a signed-in user to sign-in on every cold start.
+
+  - id: go-router-03
+    name: "A guarded redirect returns the user to the destination they asked for"
+    scenario: |
+      A user taps `https://app.leapstar.com/programs/42?tab=sessions` in an email while
+      signed out. They should be sent to sign-in and, once signed in, land on that exact
+      program with the tab preserved — not on the home screen. There is no back stack,
+      because the app cold-started from the link. Write the redirect branch that sends
+      them to sign-in and the sign-in screen's post-success navigation. Use the go-router
+      skill rules.
+    must_contain:
+      - "?from="
+      - "Uri.encodeComponent"
+      - "queryParameters['from']"
+      - "startsWith('/')"
+    must_not_contain:
+      - "context.pop()"
+      - "Navigator.pop"
+    rationale: |
+      Three things go wrong by default. Sending the user "home" after sign-in silently
+      discards the link they clicked, and they have to go back to the email to find it.
+      Popping instead of going assumes a back stack that does not exist after a cold start
+      from a link, so the user gets a black screen or an assertion. And the destination
+      carries its own query string, so passing it unencoded makes `tab=sessions` a
+      parameter of the sign-in route instead of part of the remembered destination. The
+      `startsWith('/')` check matters because `from` is attacker-controlled: an absolute
+      `https://…` value turns the sign-in screen into an open redirect pointed at a
+      phishing page.
+
+  - id: go-router-04
+    name: "assetlinks.json carries the Play app signing fingerprint, per flavor"
+    scenario: |
+      Enable Android App Links for the staging flavor. Its `applicationId` is
+      `com.leapstar.app.staging` (production is `com.leapstar.app`) and it is served from
+      `staging.leapstar.com`. The app is distributed through Play internal testing. The
+      certificate fingerprint values are injected by the deploy pipeline, so write the
+      checked-in template rather than pasting a hex string. Write the well-known file and
+      the flavor's manifest intent-filter. Use the go-router skill rules.
+    must_contain:
+      - "delegate_permission/common.handle_all_urls"
+      - "android_app"
+      - "com.leapstar.app.staging"
+      - "sha256_cert_fingerprints"
+      - "PLAY_APP_SIGNING_SHA256"
+      - 'android:autoVerify="true"'
+    must_not_contain:
+      - "UPLOAD_KEY"
+      - "upload-keystore"
+    rationale: |
+      The default answer tells you to run `keytool` against the upload keystore, because
+      that is the keystore in the repo. With Play App Signing, Google strips that signature
+      and re-signs the bundle, so the upload certificate is never on any user's device and
+      verification fails — silently, with links continuing to open in the browser and
+      nothing logged. This is the single most common reason App Links never verify. The
+      `PLAY_APP_SIGNING_SHA256` placeholder is the assertion's handle on that: one
+      95-character hex string is indistinguishable from another in review, so the template
+      names the source of the value at the point of use. The flavor's own `applicationId`
+      is the second trap — a staging file listing the production package verifies nothing.
+      Without `android:autoVerify="true"` the link opens a disambiguation dialog rather
+      than the app.
+
+  - id: go-router-05
+    name: "The Apple association file has no extension and uses components"
+    scenario: |
+      Enable iOS Universal Links for the same staging flavor: bundle id
+      `com.leapstar.app.staging`, team id `ABCDE12345`, domain `staging.leapstar.com`.
+      `/programs/*` and `/invites/*` must open the app; `/admin/*` must stay on the web.
+      Write the well-known file, naming the exact path it is served from. Use the
+      go-router skill rules.
+    must_contain:
+      - "apple-app-site-association"
+      - "applinks"
+      - "appIDs"
+      - "ABCDE12345.com.leapstar.app.staging"
+      - "components"
+      - "exclude"
+    must_not_contain:
+      - "apple-app-site-association.json"
+      - "NOT /admin"
+    rationale: |
+      Naming the file `apple-app-site-association.json` is the default, because every other
+      JSON file has that extension. iOS never fetches it, and — as with the Android case —
+      nothing surfaces an error; links just open Safari and the app appears not to support
+      them. The second half is the exclusion syntax: the legacy flat `paths` array
+      expressed a web-only path as the string `"NOT /admin/*"`, which is easy to typo and
+      has no query or fragment matching. `components` with `"exclude": true` is the current
+      form and is what the `appIDs`/`components` pairing implies.
+
+  - id: go-router-06
+    name: "A notification tap goes through the route table, and unknown links land somewhere real"
+    scenario: |
+      Tapping a push notification must open the program it refers to. The FCM data payload
+      carries a `route` key holding an app location. The referenced program may have been
+      deleted, and the payload is not fully trusted. A `NotFoundScreen` widget and a
+      top-level `router` already exist. Write the notification tap handler and the part of
+      the `GoRouter` construction that deals with a location matching no route. Use the
+      go-router skill rules.
+    must_contain:
+      - "data['route']"
+      - "startsWith('/')"
+      - "router.go("
+      - "errorBuilder"
+      - "NotFoundScreen"
+    must_not_contain:
+      - "Navigator.push"
+      - "MaterialPageRoute"
+    rationale: |
+      The default answer maps payload fields to a screen and pushes it with
+      `Navigator.push` / `MaterialPageRoute`. That is a second, hand-written copy of the
+      route table which will drift from the real one; it bypasses the authorization
+      redirect entirely, so a notification tapped while signed out opens an authenticated
+      screen; and the pushed screen has no URL, so it cannot be restored after process
+      death. Routing the payload's location through `router.go` reuses the redirect — a
+      signed-out tap lands on sign-in with `?from=` set and arrives correctly afterwards.
+      Leaving the default `errorBuilder` means a notification for a deleted program, or a
+      truncated link from a chat app, shows a raw exception on a red background with no
+      way out.
