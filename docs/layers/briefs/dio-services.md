@@ -1,6 +1,10 @@
 # Brief — `api-style/dio`
 
-**Kind:** layer · **Issue:** #4 (parent #2) · **Cookbook:** `#service`, `#errors`, `#offline`, `#media`, `#contract`
+**Kind:** layer · **Issue:** #4 (parent #2) · **Cookbook:** `#service`, `#errors`, `#offline`, `#media`
+
+> `#contract` was originally listed here and has been moved to `flutter-test`, which already
+> claimed it. This layer owns the *abstract service contract* pattern; consumer-driven
+> contract testing against the backend schema is a testing concern.
 
 ## Globs
 ```yaml
