@@ -152,3 +152,24 @@ These are universal across git providers:
 **Branch naming:** `type/issue-id-short-description` — e.g. `feat/123-add-payment-retry`, `fix/456-token-expiry`.
 
 **For provider-specific workflow** (PR templates, CI gates, protected branches), see your source-control layer.
+
+---
+
+## Avoid
+
+Each of these is a habit that looks reasonable in the moment and charges interest later.
+
+| Avoid | What it costs | Instead |
+|---|---|---|
+| Abstracting on the second occurrence | The third case almost always breaks the abstraction, and unpicking a wrong abstraction is harder than deduplicating three copies | Wait for three. Duplication is cheaper than the wrong shape |
+| A parameter that only selects behaviour — `doThing(x, isAdmin)` | The function is two functions wearing one name; every caller has to know the flag's meaning, and the body grows a branch per flag | Two named functions |
+| Catching an exception to log and rethrow | Produces duplicate stack traces and moves nothing forward; the same failure is now reported from several places | Catch where you can act, or let it propagate |
+| `catch (e) {}` — an empty catch | Converts a loud failure into silent wrong behaviour. This is the single most expensive line in this table | Handle it, or let it throw |
+| Comments restating the code (`// increment i`) | Rots independently of the code and eventually lies | Comment *why*, never *what* |
+| Keeping dead code "in case we need it" | Version control already keeps it; in the file it still gets read, searched, and maintained | Delete it |
+| Boolean parameters read at the call site — `save(user, true, false)` | Unreadable without opening the signature, and trivially transposed | An options object, or separate functions |
+| Reaching into a singleton from inside business logic | The function now cannot be tested without global setup, and its real dependencies are invisible in its signature | Inject the dependency |
+| Defensive `if (!x) return` at every layer | Hides where the invariant actually broke; the failure surfaces far from its cause | Validate once at the boundary, then trust the types |
+| Renaming across a large diff alongside behaviour changes | The rename buries the behaviour change, and review quality collapses | Rename in its own commit |
+| A function whose name needs "and" | It has more than one reason to change, so every caller depends on both | Split it |
+
