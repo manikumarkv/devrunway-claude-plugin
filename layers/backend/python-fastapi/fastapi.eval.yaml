@@ -1,6 +1,7 @@
 skill: python-fastapi
 skill_files:
   - layers/backend/python-fastapi/SKILL.md
+  - layers/backend/python-fastapi/python-fastapi.md
 version: 1
 
 cases:

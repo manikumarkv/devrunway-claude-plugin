@@ -1,6 +1,7 @@
 skill: gcp-cloud
 skill_files:
   - layers/cloud/gcp/SKILL.md
+  - layers/cloud/gcp/gcp.md
 version: 1
 
 cases:

@@ -1,6 +1,7 @@
 skill: confluence
 skill_files:
   - layers/documents/confluence/SKILL.md
+  - layers/documents/confluence/confluence.md
 version: 1
 
 cases:

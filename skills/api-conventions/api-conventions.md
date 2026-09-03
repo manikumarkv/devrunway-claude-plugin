@@ -208,4 +208,27 @@ If the same key is received twice, return the original response without re-proce
 
 ---
 
+## Avoid
+
+Most of these are decisions that are cheap to make correctly on day one and expensive to change once a client depends on them.
+
+| Avoid | What it costs | Instead |
+|---|---|---|
+| `200 OK` with an error in the body | Every HTTP client, proxy, retry policy and monitoring tool reads the status line first. A 200 error is invisible to all of them | The status code that matches the outcome |
+| A bare array at the response root | Leaves nowhere to add pagination or `meta` later without breaking every client | Always an object root |
+| Returning the ORM row directly (`res.json(row)`) | Couples the public contract to the schema: a private column rename becomes a client-breaking change, and any column added later leaks automatically | Map fields explicitly at the boundary |
+| Verbs in paths — `/getOrders`, `/createUser` | Re-implements HTTP methods in the URL and breaks caching semantics | The noun plus the method: `GET /orders` |
+| Shipping unversioned — `/api/orders` | Every future breaking change now requires coordinating a client release | `/api/v1/orders` from the first endpoint |
+| `OFFSET` pagination on a large or busy table | Cost grows with offset, and rows shift between pages when the underlying data changes — users see duplicates and gaps | Keyset/cursor pagination |
+| `500` for a client mistake | Pages your on-call for a malformed request that no amount of server work will fix | `400`/`422`, and reserve `5xx` for your own faults |
+| Error messages built from exception text | Leaks stack frames, driver internals, table names and sometimes credentials | A safe message plus a machine-readable `code` |
+| `error.details` carrying only the first invalid field | Forces a submit-fix-submit loop for every field in the form | Every failing field in one response |
+| A new status code where an existing one fits | Clients handle the standard set; anything else falls through to a generic error path | The nearest standard code |
+| Idempotency keys with no TTL | The store grows without bound and a replayed key can resurrect an ancient response | A bounded TTL, 24h typical |
+| Breaking a response shape without a version bump | Silently breaks deployed clients — the failure appears in their logs, not yours | Add fields; never repurpose or remove within a version |
+
+**Additive changes are safe within a version; removals and repurposing are not.** Adding a field to a response is backwards-compatible. Renaming one, changing its type, or reusing its name for different data is a breaking change even when the field count stays the same.
+
+---
+
 *For backend-specific implementation (response helper functions, validation middleware, error handler middleware), see your backend layer skill (e.g., `layers/backend/node-express/`).*

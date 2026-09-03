@@ -1,6 +1,7 @@
 skill: composition-patterns
 skill_files:
   - layers/frontend/react/composition-patterns/SKILL.md
+  - layers/frontend/react/composition-patterns/patterns.md
 version: 1
 
 cases:

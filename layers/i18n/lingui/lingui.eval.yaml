@@ -1,6 +1,7 @@
 skill: lingui-i18n
 skill_files:
   - layers/i18n/lingui/SKILL.md
+  - layers/i18n/lingui/lingui.md
 version: 1
 
 cases:

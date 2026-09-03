@@ -1,6 +1,7 @@
 skill: cypress-testing
 skill_files:
   - layers/testing/e2e/cypress/SKILL.md
+  - layers/testing/e2e/cypress/cypress.md
 version: 1
 
 cases:

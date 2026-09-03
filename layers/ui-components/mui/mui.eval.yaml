@@ -1,6 +1,7 @@
 skill: mui-components
 skill_files:
   - layers/ui-components/mui/SKILL.md
+  - layers/ui-components/mui/mui.md
 version: 1
 
 cases:

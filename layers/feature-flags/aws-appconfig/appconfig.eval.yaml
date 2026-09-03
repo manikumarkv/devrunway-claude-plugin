@@ -1,6 +1,7 @@
 skill: appconfig-flags
 skill_files:
   - layers/feature-flags/aws-appconfig/SKILL.md
+  - layers/feature-flags/aws-appconfig/aws-appconfig.md
 version: 1
 
 cases:

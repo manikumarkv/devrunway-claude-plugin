@@ -1,6 +1,7 @@
 skill: python-django
 skill_files:
   - layers/backend/python-django/SKILL.md
+  - layers/backend/python-django/python-django.md
 version: 1
 
 cases:

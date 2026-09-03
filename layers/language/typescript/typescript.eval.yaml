@@ -1,6 +1,7 @@
 skill: typescript-patterns
 skill_files:
   - layers/language/typescript/SKILL.md
+  - layers/language/typescript/typescript.md
 version: 1
 
 cases:

@@ -1,6 +1,7 @@
 skill: nodejs-standards
 skill_files:
   - layers/backend/node-express/nodejs-standards/SKILL.md
+  - layers/backend/node-express/nodejs-standards/nodejs.md
 version: 1
 
 cases:

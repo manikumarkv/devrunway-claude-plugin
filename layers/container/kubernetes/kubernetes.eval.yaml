@@ -1,6 +1,7 @@
 skill: kubernetes-container
 skill_files:
   - layers/container/kubernetes/SKILL.md
+  - layers/container/kubernetes/kubernetes.md
 version: 1
 
 cases:

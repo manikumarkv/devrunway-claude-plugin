@@ -109,6 +109,16 @@ The companion `.md` file is the full standards document. It should cover:
 
 Length guide: 200–600 lines. Enough to be authoritative, short enough to fit in context.
 
+### Eval files
+
+If you add a `.eval.yaml`, its `skill_files:` must list **both** the `SKILL.md` and the companion detail `.md`. `layer-consultant` loads the detail file at runtime, so an eval listing only `SKILL.md` validates rules the runtime never reads. This was true of 95 of the first 100 eval files and hid at least one real contradiction between a `SKILL.md` and its detail file.
+
+Assertions are literal, case-sensitive substring matches against generated output. Check each one adversarially before committing it:
+
+- Can a **compliant** answer fail it? (`must_not_contain: "fetch("` also matches `refetch(`; `"res."` matches `features.`)
+- Can it **ever** fire? (`must_not_contain: "Scan("` never matches `new ScanCommand(`)
+- Does it test what the case name claims, or does it pass vacuously?
+
 ---
 
 ## Step-by-step guide

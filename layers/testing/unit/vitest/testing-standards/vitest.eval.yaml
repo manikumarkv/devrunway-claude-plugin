@@ -1,6 +1,7 @@
 skill: testing-standards
 skill_files:
   - layers/testing/unit/vitest/testing-standards/SKILL.md
+  - layers/testing/unit/vitest/testing-standards/testing.md
 version: 1
 
 cases:

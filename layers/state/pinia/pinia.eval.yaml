@@ -1,6 +1,7 @@
 skill: pinia-state
 skill_files:
   - layers/state/pinia/SKILL.md
+  - layers/state/pinia/pinia.md
 version: 1
 
 cases:

@@ -1,6 +1,7 @@
 skill: cloudwatch-logging
 skill_files:
   - layers/logging/provider/cloudwatch/SKILL.md
+  - layers/logging/provider/cloudwatch/cloudwatch-logging.md
 version: 1
 
 cases:

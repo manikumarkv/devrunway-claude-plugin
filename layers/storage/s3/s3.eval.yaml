@@ -1,6 +1,7 @@
 skill: s3-storage
 skill_files:
   - layers/storage/s3/SKILL.md
+  - layers/storage/s3/s3-storage.md
 version: 1
 
 cases:

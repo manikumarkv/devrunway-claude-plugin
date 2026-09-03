@@ -1,6 +1,7 @@
 skill: cloudinary-storage
 skill_files:
   - layers/storage/cloudinary/SKILL.md
+  - layers/storage/cloudinary/cloudinary.md
 version: 1
 
 cases:

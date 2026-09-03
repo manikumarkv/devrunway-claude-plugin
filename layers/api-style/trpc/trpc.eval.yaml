@@ -1,6 +1,7 @@
 skill: trpc-api
 skill_files:
   - layers/api-style/trpc/SKILL.md
+  - layers/api-style/trpc/trpc.md
 version: 1
 
 cases:

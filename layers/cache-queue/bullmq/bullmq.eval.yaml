@@ -1,6 +1,7 @@
 skill: bullmq-queue
 skill_files:
   - layers/cache-queue/bullmq/SKILL.md
+  - layers/cache-queue/bullmq/bullmq.md
 version: 1
 
 cases:

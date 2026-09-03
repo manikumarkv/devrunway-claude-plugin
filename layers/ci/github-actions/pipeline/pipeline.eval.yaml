@@ -1,6 +1,7 @@
 skill: pipeline
 skill_files:
   - layers/ci/github-actions/pipeline/SKILL.md
+  - layers/ci/github-actions/pipeline/pipeline.md
 version: 1
 
 cases:

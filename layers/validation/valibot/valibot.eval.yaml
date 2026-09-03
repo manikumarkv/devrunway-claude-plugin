@@ -1,6 +1,7 @@
 skill: valibot-validation
 skill_files:
   - layers/validation/valibot/SKILL.md
+  - layers/validation/valibot/valibot.md
 version: 1
 
 cases:

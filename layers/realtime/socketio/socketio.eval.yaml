@@ -1,6 +1,7 @@
 skill: socketio-realtime
 skill_files:
   - layers/realtime/socketio/SKILL.md
+  - layers/realtime/socketio/socketio.md
 version: 1
 
 cases:

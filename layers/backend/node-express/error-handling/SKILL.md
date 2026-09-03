@@ -16,8 +16,9 @@ Full standards in [error-handling.md](error-handling.md). Always-on summary:
 - All custom errors extend `AppError` (message, statusCode, code): `NotFoundError`, `ValidationError`, `ConflictError`, etc.
 - `asyncHandler(fn)` wraps every async route — no try/catch in controllers
 - One centralized `errorHandler` middleware catches everything; never returns stack traces
-- `ZodError` is caught in the error handler and mapped to `400` with field-level messages from `error.flatten()`
-- Response shape: `{ statusCode, error: { code: 'NOT_FOUND', message: '...' } }`
+- Every branch returns through `errorResponse(req, res, status, code, message, details?)` — the single writer of the envelope. Nothing else calls `res.status().json()` for an error
+- `ZodError` is caught in the error handler and mapped to `400` with `error.details` as an array of `{ field, message }` — one entry per invalid field. Not `error.flatten()`, whose `fieldErrors` shape does not match the envelope
+- Response shape: `{ success: false, error: { code, message, path, details? }, meta: { requestId, timestamp, version } }` — identical to `api-conventions`. The HTTP status is on the status line, never duplicated in the body
 - Prisma `P2002` (unique) → 409, `P2025` (not found) → 404
 - Never expose stack traces or internal messages to clients
 

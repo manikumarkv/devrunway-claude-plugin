@@ -1,6 +1,7 @@
 skill: docker-container
 skill_files:
   - layers/container/docker/SKILL.md
+  - layers/container/docker/docker.md
 version: 1
 
 cases:

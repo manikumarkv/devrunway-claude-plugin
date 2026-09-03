@@ -1,6 +1,7 @@
 skill: datadog-monitoring
 skill_files:
   - layers/error-monitoring/datadog-apm/SKILL.md
+  - layers/error-monitoring/datadog-apm/datadog-apm.md
 version: 1
 
 cases:

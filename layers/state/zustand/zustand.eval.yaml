@@ -1,6 +1,7 @@
 skill: zustand-state
 skill_files:
   - layers/state/zustand/SKILL.md
+  - layers/state/zustand/zustand-state.md
 version: 1
 
 cases:

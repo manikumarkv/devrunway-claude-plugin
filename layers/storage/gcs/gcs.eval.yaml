@@ -1,6 +1,7 @@
 skill: gcs-storage
 skill_files:
   - layers/storage/gcs/SKILL.md
+  - layers/storage/gcs/gcs.md
 version: 1
 
 cases:

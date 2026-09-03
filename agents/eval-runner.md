@@ -24,6 +24,8 @@ Read each `.eval.yaml` file passed by `/eval`. Extract:
 ### 2a — Load skill context
 
 Read every file in `skill_files`. These are the **only rules** for code generation.
+
+`skill_files` must list the layer's **detail file** as well as its `SKILL.md`. At runtime `layer-consultant` loads the sibling `<name>.md`, not `SKILL.md`, so an eval that lists only `SKILL.md` is testing a document the runtime does not use for detailed rules — it will pass while the real path fails. If an eval you are given omits the detail file, note it in the report rather than silently reading the file anyway.
 Do not apply any other knowledge — only what these files say.
 
 ### 2b — Generate and assert

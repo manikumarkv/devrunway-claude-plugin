@@ -1,6 +1,7 @@
 skill: sentry-monitoring
 skill_files:
   - layers/error-monitoring/sentry/SKILL.md
+  - layers/error-monitoring/sentry/sentry-monitoring.md
 version: 1
 
 cases:

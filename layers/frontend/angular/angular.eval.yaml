@@ -1,6 +1,7 @@
 skill: angular-standards
 skill_files:
   - layers/frontend/angular/SKILL.md
+  - layers/frontend/angular/angular.md
 version: 1
 
 cases:

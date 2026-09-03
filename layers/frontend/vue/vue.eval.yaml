@@ -1,6 +1,7 @@
 skill: vue-standards
 skill_files:
   - layers/frontend/vue/SKILL.md
+  - layers/frontend/vue/vue.md
 version: 1
 
 cases:

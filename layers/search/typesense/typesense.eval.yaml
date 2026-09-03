@@ -1,6 +1,7 @@
 skill: typesense-search
 skill_files:
   - layers/search/typesense/SKILL.md
+  - layers/search/typesense/typesense.md
 version: 1
 
 cases:
