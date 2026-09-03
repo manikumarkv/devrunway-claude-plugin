@@ -552,6 +552,11 @@ jobs:
       - name: Analyze
         run: flutter analyze --fatal-infos --fatal-warnings
 
+      # Only if the project uses custom_lint rules. `flutter analyze` does NOT
+      # execute analyzer plugins — see the note below.
+      - name: Custom lints
+        run: dart run custom_lint
+
       - name: Test
         run: flutter test --coverage
 ```
@@ -560,8 +565,16 @@ jobs:
 |---|---|---|
 | Format | `dart format --output=none --set-exit-if-changed .` | Whitespace churn in every future diff |
 | Analyze | `flutter analyze --fatal-infos --fatal-warnings` | Every lint in §8, at the severity §8 declares |
+| Custom lints | `dart run custom_lint` | Plugin-enforced rules — **only if** the project declares any |
 | Test | `flutter test --coverage` | The obvious one |
 | Resolution | `flutter pub get --enforce-lockfile` | A transitive upgrade nobody reviewed |
+
+**`flutter analyze` does not execute analyzer plugins.** Any rule enforced by a
+`custom_lint` package — `i18n/flutter-l10n` prescribes one for hardcoded user-facing
+strings — needs `dart run custom_lint` as its own step. Without it the rule sits in
+`analysis_options.yaml`, the gate reports green, and nothing is enforced. That is the most
+convincing kind of unenforced rule, because the config says otherwise. Omit the step only if
+the project declares no plugin rules; do not omit it because analyze already passes.
 
 **`--fatal-infos` is the load-bearing flag.** Most lints — including `prefer_const_constructors`
 and the majority of `flutter_lints` — report at **info** severity. `flutter analyze` with no

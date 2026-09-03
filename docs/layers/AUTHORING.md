@@ -77,6 +77,15 @@ Rules:
   has to answer for a Dart file in no recognised directory. Nothing else may.
 - Prefer three narrow globs over one wide one.
 
+**Non-Dart globs contend with the whole plugin, not just the mobile set.** A `.dart` glob
+only competes with the other Flutter layers, which this document coordinates. A
+`.github/workflows/` glob competes with every CI, security and secrets layer in the
+repository — eight layers currently claim some form of it, so a single `.yml` workflow file
+can exceed the 5-layer cap on its own. The same applies to `pubspec.yaml`, Gradle files and
+plists. When globbing a shared file type, be as specific as the file allows
+(`.github/workflows/*.y*ml` sorts ahead of `.github/workflows/**`) and expect to share the
+slot budget.
+
 ## 4. `SKILL.md`
 
 ```markdown

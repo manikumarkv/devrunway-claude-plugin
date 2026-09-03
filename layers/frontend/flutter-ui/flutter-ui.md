@@ -306,7 +306,7 @@ Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
 Without the guard, a user who taps back while the request is in flight gets
 `Looking up a deactivated widget's ancestor is unsafe` — a crash, not a warning, and one that
 only reproduces on a slow network so it ships. The `use_build_context_synchronously` lint
-catches it; it must be an error, not a warning (`mobile/flutter` owns `analysis_options.yaml`).
+catches it; it must be an error, not a warning (`ci/flutter-release` owns `analysis_options.yaml`).
 
 Inside a provider, the equivalent is `ref.mounted` — see `state/riverpod`.
 
