@@ -20,11 +20,11 @@ Full standards: [Flutter Feature Cookbook](https://claude.ai/code/artifact/53812
 | [go-router](briefs/go-router.md) | [#7](https://github.com/manikumarkv/devrunway-claude-plugin/issues/7) | `layers/frontend/go-router/` | routing, deep links | ✅ |
 | [flutter-session](briefs/flutter-session.md) | [#8](https://github.com/manikumarkv/devrunway-claude-plugin/issues/8) | `layers/auth/flutter-session/` | session, biometrics, payments | ✅ |
 | [flutter-local](briefs/flutter-local.md) | [#9](https://github.com/manikumarkv/devrunway-claude-plugin/issues/9) | `layers/storage/flutter-local/` | local storage | ✅ |
-| [fcm](briefs/fcm.md) | [#11](https://github.com/manikumarkv/devrunway-claude-plugin/issues/11) | `layers/notifications/fcm/` | push, background work | 📋 |
+| [fcm](briefs/fcm.md) | [#11](https://github.com/manikumarkv/devrunway-claude-plugin/issues/11) | `layers/notifications/fcm/` | push, background work | ✅ |
 | [observability](briefs/observability.md) | [#10](https://github.com/manikumarkv/devrunway-claude-plugin/issues/10) | `layers/logging/flutter-observability/` | logging, analytics, flags | ✅ |
-| [flutter-l10n](briefs/flutter-l10n.md) | [#12](https://github.com/manikumarkv/devrunway-claude-plugin/issues/12) | `layers/i18n/flutter-l10n/` | localization | 📋 |
-| [flutter-test](briefs/flutter-test.md) | [#13](https://github.com/manikumarkv/devrunway-claude-plugin/issues/13) | `layers/testing/flutter-test/` | tests, goldens, e2e, contract, perf budgets | 📋 |
-| [flutter-release-ci](briefs/flutter-release-ci.md) | [#14](https://github.com/manikumarkv/devrunway-claude-plugin/issues/14) | `layers/ci/flutter-release/` | flavors, CI/CD, analyzer config | 📋 |
+| [flutter-l10n](briefs/flutter-l10n.md) | [#12](https://github.com/manikumarkv/devrunway-claude-plugin/issues/12) | `layers/i18n/flutter-l10n/` | localization | ✅ |
+| [flutter-test](briefs/flutter-test.md) | [#13](https://github.com/manikumarkv/devrunway-claude-plugin/issues/13) | `layers/testing/flutter-test/` | tests, goldens, e2e, contract, perf budgets | ✅ |
+| [flutter-release-ci](briefs/flutter-release-ci.md) | [#14](https://github.com/manikumarkv/devrunway-claude-plugin/issues/14) | `layers/ci/flutter-release/` | flavors, CI/CD, analyzer config | ✅ |
 
 ## Commands — invoked by the user
 

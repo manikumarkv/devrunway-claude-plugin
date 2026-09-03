@@ -237,6 +237,18 @@ Several parallel authors writing the same two files produces merge noise and hal
 commits — the first three builds each had to hand-stage isolated blobs to work around it.
 Report your layer as done; let the coordinator flip the row.
 
+**Parallel authors share one git index.** This bit us for real: `git commit` commits the
+entire index, not the paths you just named on `git add`. A coordinator running
+`git add <three paths> && git commit` absorbed a concurrent author's already-staged files
+into its own commit.
+
+- Scope the commit to a pathspec: `git commit -- <paths>`, or inspect
+  `git diff --cached --name-only` first and stop if it lists anything you did not stage.
+- If you find your work swept into someone else's commit, **report it and stop.** Do not
+  rewrite shared history to un-pick it, even when the rewrite is content-preserving.
+- Better: give each parallel author its own worktree so there is no shared index at all.
+  Sequential authors in one worktree are fine.
+
 Commit prefix: `feat(layer):` for a new layer, `chore(plugin):` for tooling around it.
 
 ---
