@@ -10,32 +10,32 @@ Full standards: [Flutter Feature Cookbook](https://claude.ai/code/artifact/53812
 
 ## Layers — routed by `paths:` globs
 
-| Brief | Target | Covers | Status |
-|---|---|---|---|
-| [mobile-flutter](briefs/mobile-flutter.md) | `layers/mobile/flutter/` | structure, bootstrap, theme, platform, app size, monorepo | 📋 |
-| [dart-models](briefs/dart-models.md) | `layers/language/dart-models/` | models, serialization | 📋 |
-| [dio-services](briefs/dio-services.md) | `layers/api-style/dio/` | services, errors, offline, media, contract | 📋 |
-| [riverpod](briefs/riverpod.md) | `layers/state/riverpod/` | providers, pagination, realtime | 📋 |
-| [flutter-ui](briefs/flutter-ui.md) | `layers/frontend/flutter-ui/` | pages, components, design system, motion, forms, wizard, search, webview | 📋 |
-| [go-router](briefs/go-router.md) | `layers/frontend/go-router/` | routing, deep links | 📋 |
-| [flutter-session](briefs/flutter-session.md) | `layers/auth/flutter-session/` | session, biometrics, payments | 📋 |
-| [flutter-local](briefs/flutter-local.md) | `layers/storage/flutter-local/` | local storage | 📋 |
-| [fcm](briefs/fcm.md) | `layers/notifications/fcm/` | push, background work | 📋 |
-| [observability](briefs/observability.md) | `layers/logging/flutter-observability/` | logging, analytics, flags | 📋 |
-| [flutter-l10n](briefs/flutter-l10n.md) | `layers/i18n/flutter-l10n/` | localization | 📋 |
-| [flutter-test](briefs/flutter-test.md) | `layers/testing/flutter-test/` | tests, goldens, e2e, contract, perf budgets | 📋 |
-| [flutter-release-ci](briefs/flutter-release-ci.md) | `layers/ci/flutter-release/` | flavors, CI/CD, analyzer config | 📋 |
+| Brief | Issue | Target | Covers | Status |
+|---|---|---|---|---|
+| [mobile-flutter](briefs/mobile-flutter.md) | [#15](https://github.com/manikumarkv/devrunway-claude-plugin/issues/15) | `layers/mobile/flutter/` | structure, bootstrap, theme, platform, app size, monorepo | 📋 |
+| [dart-models](briefs/dart-models.md) | [#3](https://github.com/manikumarkv/devrunway-claude-plugin/issues/3) | `layers/language/dart-models/` | models, serialization | 📋 |
+| [dio-services](briefs/dio-services.md) | [#4](https://github.com/manikumarkv/devrunway-claude-plugin/issues/4) | `layers/api-style/dio/` | services, errors, offline, media, contract | 📋 |
+| [riverpod](briefs/riverpod.md) | [#5](https://github.com/manikumarkv/devrunway-claude-plugin/issues/5) | `layers/state/riverpod/` | providers, pagination, realtime | 📋 |
+| [flutter-ui](briefs/flutter-ui.md) | [#6](https://github.com/manikumarkv/devrunway-claude-plugin/issues/6) | `layers/frontend/flutter-ui/` | pages, components, design system, motion, forms, wizard, search, webview | 📋 |
+| [go-router](briefs/go-router.md) | [#7](https://github.com/manikumarkv/devrunway-claude-plugin/issues/7) | `layers/frontend/go-router/` | routing, deep links | 📋 |
+| [flutter-session](briefs/flutter-session.md) | [#8](https://github.com/manikumarkv/devrunway-claude-plugin/issues/8) | `layers/auth/flutter-session/` | session, biometrics, payments | 📋 |
+| [flutter-local](briefs/flutter-local.md) | [#9](https://github.com/manikumarkv/devrunway-claude-plugin/issues/9) | `layers/storage/flutter-local/` | local storage | 📋 |
+| [fcm](briefs/fcm.md) | [#11](https://github.com/manikumarkv/devrunway-claude-plugin/issues/11) | `layers/notifications/fcm/` | push, background work | 📋 |
+| [observability](briefs/observability.md) | [#10](https://github.com/manikumarkv/devrunway-claude-plugin/issues/10) | `layers/logging/flutter-observability/` | logging, analytics, flags | 📋 |
+| [flutter-l10n](briefs/flutter-l10n.md) | [#12](https://github.com/manikumarkv/devrunway-claude-plugin/issues/12) | `layers/i18n/flutter-l10n/` | localization | 📋 |
+| [flutter-test](briefs/flutter-test.md) | [#13](https://github.com/manikumarkv/devrunway-claude-plugin/issues/13) | `layers/testing/flutter-test/` | tests, goldens, e2e, contract, perf budgets | 📋 |
+| [flutter-release-ci](briefs/flutter-release-ci.md) | [#14](https://github.com/manikumarkv/devrunway-claude-plugin/issues/14) | `layers/ci/flutter-release/` | flavors, CI/CD, analyzer config | 📋 |
 
 ## Commands — invoked by the user
 
-| Brief | Target | Status |
-|---|---|---|
-| [cmd-flutter-verify](briefs/cmd-flutter-verify.md) | `skills/flutter-verify/` | 📋 |
-| [cmd-flutter-signing](briefs/cmd-flutter-signing.md) | `skills/flutter-signing/` | 📋 |
-| [cmd-flutter-release](briefs/cmd-flutter-release.md) | `skills/flutter-release/` | 📋 |
-| [cmd-flutter-submit](briefs/cmd-flutter-submit.md) | `skills/flutter-submit/` | 📋 |
-| [cmd-flutter-monitoring](briefs/cmd-flutter-monitoring.md) | `skills/flutter-monitoring/` | 📋 |
-| [cmd-flutter-build-doctor](briefs/cmd-flutter-build-doctor.md) | `skills/flutter-build-doctor/` | 📋 |
+| Brief | Issue | Target | Status |
+|---|---|---|---|
+| [cmd-flutter-verify](briefs/cmd-flutter-verify.md) | [#16](https://github.com/manikumarkv/devrunway-claude-plugin/issues/16) | `skills/flutter-verify/` | 📋 |
+| [cmd-flutter-signing](briefs/cmd-flutter-signing.md) | [#17](https://github.com/manikumarkv/devrunway-claude-plugin/issues/17) | `skills/flutter-signing/` | 📋 |
+| [cmd-flutter-release](briefs/cmd-flutter-release.md) | [#18](https://github.com/manikumarkv/devrunway-claude-plugin/issues/18) | `skills/flutter-release/` | 📋 |
+| [cmd-flutter-submit](briefs/cmd-flutter-submit.md) | [#19](https://github.com/manikumarkv/devrunway-claude-plugin/issues/19) | `skills/flutter-submit/` | 📋 |
+| [cmd-flutter-monitoring](briefs/cmd-flutter-monitoring.md) | [#20](https://github.com/manikumarkv/devrunway-claude-plugin/issues/20) | `skills/flutter-monitoring/` | 📋 |
+| [cmd-flutter-build-doctor](briefs/cmd-flutter-build-doctor.md) | [#21](https://github.com/manikumarkv/devrunway-claude-plugin/issues/21) | `skills/flutter-build-doctor/` | 📋 |
 
 📋 planned · 🚧 in progress · ✅ done and eval passing
 
