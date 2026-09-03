@@ -194,9 +194,19 @@ that. Either assert the presence of the right thing (`dispose()`, `tooltip:`) or
 token of the wrong thing that would be there instead (`Future.delayed(` for a naive
 debounce). If neither exists, the rule belongs in the detail file without a case.
 
-**Verify before committing.** Run the eval — either `/eval <tech>` or the `eval-runner`
-agent — and confirm every case passes against code generated from `SKILL.md` alone. A
-failing case means one of two things, in this order: the standards are unclear (fix the
+**Your own `SKILL.md` contaminates `must_not_contain`.** If a rule names the anti-pattern's
+token — "never a global mutable `bool isLoggedIn`" — a model that *follows* the rule may
+echo that token in an explanatory comment and fail the case. State the wrong answer without
+naming its token, or assert on something the wrong answer uniquely has.
+
+**Verify before committing, and prove the assertion discriminates.** Run the eval — either
+`/eval <tech>` or the `eval-runner` agent — against code generated from `SKILL.md` alone.
+Passing is necessary and not sufficient: an assertion can pass because its token happened to
+appear elsewhere in the file while the code is still wrong. For any case guarding a subtle
+rule, score it against *both* a correct and an incorrect implementation. It must be 1 on the
+first and 0 on the second. If it scores 1 on both, it is measuring nothing.
+
+A failing case means one of two things, in this order: the standards are unclear (fix the
 layer), or the assertion does not discriminate (fix the eval). Never commit an unrun eval.
 The `rationale` is read by whoever triages a future failure — write it for them.
 
