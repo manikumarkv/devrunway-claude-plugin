@@ -1,0 +1,177 @@
+skill: flutter-ui
+skill_files:
+  - layers/frontend/flutter-ui/SKILL.md
+version: 1
+
+cases:
+  - id: flutter-ui-01
+    name: "A list page renders four real states and its retry re-fetches the provider"
+    scenario: |
+      Write `lib/features/programs/presentation/pages/program_list_page.dart`: the screen
+      that shows a school's programs. A `programsProvider(schoolId: ...)` already exists and
+      returns `AsyncValue<List<Program>>`; a `ProgramCard` widget already exists and takes
+      `program` and `onTap`. The list can hold several hundred programs. The school may have
+      no programs at all, and the user must be able to recover from a failed load without
+      leaving the screen. Write only the page. Use the flutter-ui skill rules.
+    must_contain:
+      - "ConsumerWidget"
+      - ".when("
+      - "ListView.builder"
+      - "ref.invalidate("
+      - "isEmpty"
+    must_not_contain:
+      - "ListView("
+      - "shrinkWrap: true"
+    rationale: |
+      The default answer collapses loading and empty into one spinner-or-blank branch and
+      gives the error branch a button that pops the route — so the only way to retry is to
+      navigate back in and hope. `ref.invalidate` on the same provider (with the same family
+      argument) is what actually re-runs the request. `isEmpty` proves the empty state is
+      distinct from a rendered-but-empty list, which the user reads as a broken screen.
+      `ListView(children: [...])` builds all several hundred rows before the first frame; the
+      escape hatch a model reaches for next — `shrinkWrap: true` — defeats laziness the same
+      way while also nesting scroll contexts.
+
+  - id: flutter-ui-02
+    name: "A reusable card takes data and callbacks, never a WidgetRef"
+    scenario: |
+      Write `lib/features/programs/presentation/widgets/program_card.dart`: a `ProgramCard`
+      that shows a program's title, subtitle and start date, is tappable, and has a favourite
+      toggle. It appears many times on screen inside a scrolling list, and it must be
+      golden-testable in isolation. A `Program` model already exists with `title`, `subtitle`
+      and `startsAt`, and a formatted `startsAtLabel` getter. Use the flutter-ui skill rules.
+    must_contain:
+      - "const ProgramCard("
+      - "required this.program"
+      - "VoidCallback"
+      - "super.key"
+    must_not_contain:
+      - "WidgetRef ref"
+      - "extends ConsumerWidget"
+      - "ref.watch("
+      - "ref.read("
+    rationale: |
+      The default answer makes the card a ConsumerWidget so the favourite toggle can call a
+      provider directly. Thirty cards on screen then means thirty provider subscriptions, and
+      a card that fetches its own detail means thirty requests that fire again on every
+      scroll-back. It also cannot be golden-tested without standing up a ProviderScope with
+      fakes for everything the card transitively reaches. Data in, callbacks out keeps the
+      widget a pure function of its arguments. Missing `super.key` is what silently breaks
+      `ValueKey(item.id)` reuse in a filterable list.
+
+  - id: flutter-ui-03
+    name: "Icon-only actions are named, decorative art is hidden, and padding is directional"
+    scenario: |
+      Write `lib/features/programs/presentation/widgets/program_list_header.dart`: a header
+      widget for the programs screen. It shows a decorative illustration
+      (`assets/img/programs_header.png`), a title, and a row of trailing actions — a filter
+      button and a sort button, both icon-only. The app ships in English and Arabic, and must
+      pass a screen-reader audit. `l10n` is available via `AppLocalizations.of(context)!`.
+      Use the flutter-ui skill rules.
+    must_contain:
+      - "tooltip:"
+      - "ExcludeSemantics"
+      - "EdgeInsetsDirectional"
+    must_not_contain:
+      - "EdgeInsets.only(left:"
+      - "EdgeInsets.only(right:"
+      - "EdgeInsets.fromLTRB("
+      - "Alignment.centerLeft"
+    rationale: |
+      An `IconButton(icon: Icon(Icons.filter_list), onPressed: ...)` with no `tooltip` is
+      announced by TalkBack and VoiceOver as just "button" — the user has no way to know what
+      it does short of pressing it. A decorative illustration without `ExcludeSemantics` is an
+      extra stop in the reader that carries no information. And `EdgeInsets.only(left:)` in an
+      RTL locale pushes padding to the wrong side of the screen; retrofitting it later is a
+      hundred one-line edits with no test that catches a missed one, which is why it is
+      written directionally from the first screen rather than at localisation time.
+
+  - id: flutter-ui-04
+    name: "A form disposes its controllers, guards context after await, and uses shared validators"
+    scenario: |
+      Write `lib/features/support/presentation/pages/contact_page.dart`: a contact form with
+      name, email and message fields plus a send button. Submitting calls
+      `contactControllerProvider.notifier.send(...)`, which exposes an `AsyncValue`. The
+      submit handler awaits that call and then closes the page itself; separately, the page
+      reacts to the controller's state to show a snackbar when sending fails. The user must
+      not be able to submit twice. A shared localized `Validators` class already exists with
+      `Validators.required(context, value)` and `Validators.email(context, value)` — use it,
+      do not write it. Use the flutter-ui skill rules.
+    must_contain:
+      - "dispose()"
+      - "context.mounted"
+      - "validator:"
+      - "Validators."
+      - "autofillHints"
+      - "ref.listen("
+    must_not_contain:
+      - "RegExp("
+      - "contains('@')"
+    rationale: |
+      Three defaults collapse into one screen here. A `TextEditingController` created without
+      a matching `dispose()` leaks its listener list every time the page opens. Popping the
+      route after the await without `if (!context.mounted) return;` throws "Looking up a
+      deactivated widget's ancestor is unsafe" — but only when the user taps back mid-request,
+      so it reproduces on a slow network and ships. And an inline `RegExp` or
+      `value.contains('@')` validator is untranslatable (the message is a literal), untestable
+      without pumping a widget, and guaranteed to disagree with the next form's email rule.
+      `ref.listen` rather than `ref.watch` is what stops the snackbar stacking and the pop
+      firing twice on an unrelated rebuild.
+
+  - id: flutter-ui-05
+    name: "A search field debounces with a cancellable timer and cancels the superseded request"
+    scenario: |
+      Write `lib/features/programs/presentation/widgets/program_search_field.dart`: the search
+      box above the programs list. Typing queries the server through
+      `programSearchControllerProvider.notifier.search(query, cancelToken: ...)`, which accepts
+      an optional `CancelToken`. Results come from the server, not from a local list. The user
+      types fast on a slow connection, and must never end up looking at results for a query
+      they have already finished typing past. Use the flutter-ui skill rules.
+    must_contain:
+      - "Timer("
+      - "Duration(milliseconds:"
+      - "CancelToken"
+      - "dispose()"
+    must_not_contain:
+      - "Future.delayed("
+      - ".toLowerCase().contains("
+    rationale: |
+      Firing a request per keystroke turns "programming" into ten requests, nine of them
+      wasted and all of them queued behind each other on a slow link. The subtler failure is
+      ordering: request 3 ("pro") is slow and request 8 ("programming") is fast, so without
+      cancelling the superseded token request 3 lands last and overwrites the correct results.
+      A `mounted` check does not help — the widget is mounted. `await Future.delayed` is the
+      debounce a model writes by default; it leaves one live future per keystroke, each of
+      which still wakes up, and offers nothing to cancel in `dispose`. Client-side
+      `.toLowerCase().contains()` filtering both does work in `build` and returns results the
+      server would not agree with.
+
+  - id: flutter-ui-06
+    name: "An embedded WebView allowlists navigation and never carries the user's token"
+    scenario: |
+      Write `lib/features/help/presentation/pages/help_center_page.dart`: a page embedding the
+      partner help centre at `https://help.example.com` with `webview_flutter`. The user must
+      be able to reach pages on that host only — anything else opens in the system browser.
+      The help centre needs to know who the user is; the backend exposes
+      `authService.createWebViewCode()`, which returns a single-use code valid for 60 seconds
+      that the help centre exchanges for its own session. The app also holds the user's
+      access token. Use the flutter-ui skill rules.
+    must_contain:
+      - "onNavigationRequest"
+      - "NavigationDecision.prevent"
+      - "NavigationDecision.navigate"
+      - ".host"
+    must_not_contain:
+      - "runJavaScript("
+      - "'Authorization'"
+      - '"Authorization"'
+      - "Bearer $"
+    rationale: |
+      With no `onNavigationRequest` gate, one redirect on a page you do not control moves the
+      user to an attacker's page inside your app chrome, where there is no URL bar and no
+      certificate to check. The token rules matter more: an `Authorization: Bearer` header on
+      `loadRequest` travels on every redirect the page makes, and
+      `runJavaScript("localStorage.setItem('token', '$accessToken')")` is both a string
+      injection sink and a way of handing a long-lived credential to every third-party script
+      the page loads. A single-use 60-second code is worthless to anyone who intercepts it
+      after the exchange.
