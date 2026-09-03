@@ -1,6 +1,7 @@
 skill: firebase-auth
 skill_files:
   - layers/auth/firebase/SKILL.md
+  - layers/auth/firebase/firebase.md
 version: 1
 
 cases:

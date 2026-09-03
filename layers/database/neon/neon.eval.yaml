@@ -1,6 +1,7 @@
 skill: neon
 skill_files:
   - layers/database/neon/SKILL.md
+  - layers/database/neon/neon.md
 version: 1
 
 cases:

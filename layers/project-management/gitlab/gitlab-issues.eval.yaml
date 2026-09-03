@@ -1,6 +1,7 @@
 skill: gitlab-issues
 skill_files:
   - layers/project-management/gitlab/SKILL.md
+  - layers/project-management/gitlab/gitlab-issues.md
 version: 1
 
 cases:

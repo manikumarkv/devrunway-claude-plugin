@@ -1,6 +1,7 @@
 skill: graphql-api
 skill_files:
   - layers/api-style/graphql/SKILL.md
+  - layers/api-style/graphql/graphql.md
 version: 1
 
 cases:

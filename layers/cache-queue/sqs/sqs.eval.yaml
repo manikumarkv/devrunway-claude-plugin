@@ -1,6 +1,7 @@
 skill: sqs-queue
 skill_files:
   - layers/cache-queue/sqs/SKILL.md
+  - layers/cache-queue/sqs/sqs.md
 version: 1
 
 cases:

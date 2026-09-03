@@ -1,6 +1,7 @@
 skill: azure-ad-auth
 skill_files:
   - layers/auth/azure-ad/SKILL.md
+  - layers/auth/azure-ad/azure-ad.md
 version: 1
 
 cases:

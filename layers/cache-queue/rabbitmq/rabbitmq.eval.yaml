@@ -1,6 +1,7 @@
 skill: rabbitmq-queue
 skill_files:
   - layers/cache-queue/rabbitmq/SKILL.md
+  - layers/cache-queue/rabbitmq/rabbitmq.md
 version: 1
 
 cases:

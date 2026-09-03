@@ -1,6 +1,7 @@
 skill: ably-realtime
 skill_files:
   - layers/realtime/ably/SKILL.md
+  - layers/realtime/ably/ably.md
 version: 1
 
 cases:

@@ -1,6 +1,7 @@
 skill: openapi-fastapi
 skill_files:
   - layers/api-docs/openapi-fastapi/SKILL.md
+  - layers/api-docs/openapi-fastapi/openapi-fastapi.md
 version: 1
 
 cases:

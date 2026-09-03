@@ -1,6 +1,7 @@
 skill: auth0-auth
 skill_files:
   - layers/auth/auth0/SKILL.md
+  - layers/auth/auth0/auth0.md
 version: 1
 
 cases:

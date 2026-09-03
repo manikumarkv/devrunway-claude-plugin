@@ -1,6 +1,7 @@
 skill: msw-mocking
 skill_files:
   - layers/mocking/msw/SKILL.md
+  - layers/mocking/msw/msw-mocking.md
 version: 1
 
 cases:

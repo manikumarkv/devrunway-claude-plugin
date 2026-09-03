@@ -1,6 +1,7 @@
 skill: neon-branching
 skill_files:
   - layers/ci/neon-branching/SKILL.md
+  - layers/ci/neon-branching/neon-branching.md
 version: 1
 
 cases:

@@ -1,6 +1,7 @@
 skill: bugsnag-monitoring
 skill_files:
   - layers/error-monitoring/bugsnag/SKILL.md
+  - layers/error-monitoring/bugsnag/bugsnag.md
 version: 1
 
 cases:

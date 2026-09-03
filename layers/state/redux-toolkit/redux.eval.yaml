@@ -1,6 +1,7 @@
 skill: redux-state
 skill_files:
   - layers/state/redux-toolkit/SKILL.md
+  - layers/state/redux-toolkit/redux-toolkit.md
 version: 1
 
 cases:

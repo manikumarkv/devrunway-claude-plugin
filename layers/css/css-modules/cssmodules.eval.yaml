@@ -1,6 +1,7 @@
 skill: css-modules
 skill_files:
   - layers/css/css-modules/SKILL.md
+  - layers/css/css-modules/css-modules.md
 version: 1
 
 cases:

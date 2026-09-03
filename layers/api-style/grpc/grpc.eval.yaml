@@ -1,6 +1,7 @@
 skill: grpc-api
 skill_files:
   - layers/api-style/grpc/SKILL.md
+  - layers/api-style/grpc/grpc.md
 version: 1
 
 cases:

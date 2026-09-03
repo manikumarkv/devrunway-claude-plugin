@@ -1,6 +1,7 @@
 skill: react-standards
 skill_files:
   - layers/frontend/react/react-standards/SKILL.md
+  - layers/frontend/react/react-standards/react.md
 version: 1
 
 cases:

@@ -1,6 +1,7 @@
 skill: styled-components
 skill_files:
   - layers/css/styled-components/SKILL.md
+  - layers/css/styled-components/styled-components.md
 version: 1
 
 cases:

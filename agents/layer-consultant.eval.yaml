@@ -1,6 +1,12 @@
 skill: layer-consultant
 skill_files:
   - agents/layer-consultant.md
+  - agents/code-reviewer.md
+  - agents/debugger.md
+  - agents/eval-runner.md
+  - agents/security-reviewer.md
+  - agents/skill-forge.md
+  - agents/stack-dispatcher.md
 version: 1
 
 cases:

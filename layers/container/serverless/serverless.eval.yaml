@@ -1,6 +1,7 @@
 skill: serverless-framework
 skill_files:
   - layers/container/serverless/SKILL.md
+  - layers/container/serverless/serverless.md
 version: 1
 
 cases:

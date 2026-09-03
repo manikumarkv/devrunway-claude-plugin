@@ -1,6 +1,7 @@
 skill: resend-email
 skill_files:
   - layers/email/resend/SKILL.md
+  - layers/email/resend/resend.md
 version: 1
 
 cases:

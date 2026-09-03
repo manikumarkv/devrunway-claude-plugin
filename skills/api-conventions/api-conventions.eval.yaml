@@ -1,6 +1,7 @@
 skill: api-conventions
 skill_files:
   - skills/api-conventions/SKILL.md
+  - skills/api-conventions/api-conventions.md
 version: 1
 
 cases:

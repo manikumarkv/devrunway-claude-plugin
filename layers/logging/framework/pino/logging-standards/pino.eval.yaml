@@ -1,6 +1,7 @@
 skill: logging-standards
 skill_files:
   - layers/logging/framework/pino/logging-standards/SKILL.md
+  - layers/logging/framework/pino/logging-standards/logging.md
 version: 1
 
 cases:

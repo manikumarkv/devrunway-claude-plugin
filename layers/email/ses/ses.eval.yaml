@@ -1,6 +1,7 @@
 skill: ses-email
 skill_files:
   - layers/email/ses/SKILL.md
+  - layers/email/ses/ses.md
 version: 1
 
 cases:

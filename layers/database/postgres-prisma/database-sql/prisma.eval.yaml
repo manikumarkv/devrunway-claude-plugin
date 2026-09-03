@@ -1,6 +1,7 @@
 skill: database-sql
 skill_files:
   - layers/database/postgres-prisma/database-sql/SKILL.md
+  - layers/database/postgres-prisma/database-sql/sql.md
 version: 1
 
 cases:

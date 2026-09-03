@@ -1,6 +1,7 @@
 skill: error-handling
 skill_files:
   - layers/backend/node-express/error-handling/SKILL.md
+  - layers/backend/node-express/error-handling/error-handling.md
 version: 1
 
 cases:
