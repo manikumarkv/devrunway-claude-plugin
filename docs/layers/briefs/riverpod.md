@@ -29,6 +29,9 @@ paths:
    the source of truth and the stream is an accelerator; messages idempotent by id.
 
 ## Eval cases
+*Assertions below are sketches of intent, not literal strings. Replace any prose
+with a discriminating code token — see AUTHORING.md section 6.*
+
 | id | Scenario | must_contain | must_not_contain |
 |---|---|---|---|
 | 01 | A provider fetching a list, cancelled on dispose | `@riverpod`, `ref.onDispose`, `CancelToken` | `StateProvider`, `legacy.dart` |

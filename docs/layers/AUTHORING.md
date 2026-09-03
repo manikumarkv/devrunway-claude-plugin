@@ -164,14 +164,22 @@ must_not_contain: ["dynamic"]
 must_not_contain: ["json['_id']", "as String"]
 ```
 
-Two further traps:
+Three further traps:
 
+- **An assertion is a literal code token, never a description.** `must_not_contain:
+  ["connection held past dispose"]` asserts nothing — no generated file contains that
+  string, so the case passes unconditionally and proves nothing. If you cannot name a token,
+  the rule is not eval-testable; state it in the detail file and drop the case.
 - **Substrings match inside longer identifiers.** `"String status"` also matches a field
   named `statusLabel`. Prefer a token with a boundary — a full declaration, an annotation,
   or a call with its parenthesis.
 - **`must_not_contain` also matches comments.** A generated answer that *mentions* the wrong
   approach in a comment while doing the right thing will fail. Assert on tokens that only
   appear in executable code.
+
+The eval tables in `briefs/` are **sketches of intent, not literal assertions**. Several
+were written before this section existed and contain prose. Treat a brief's assertion as
+"prove this rule was followed" and choose the discriminating token yourself.
 
 **Verify before committing.** Run the eval — either `/eval <tech>` or the `eval-runner`
 agent — and confirm every case passes against code generated from `SKILL.md` alone. A

@@ -44,6 +44,9 @@ paths:
    runs analyze/test/codegen across packages.
 
 ## Eval cases
+*Assertions below are sketches of intent, not literal strings. Replace any prose
+with a discriminating code token — see AUTHORING.md section 6.*
+
 | id | Scenario | must_contain | must_not_contain |
 |---|---|---|---|
 | 01 | App entrypoint with error capture and startup gating | `runZonedGuarded`, `PlatformDispatcher`, `ProviderScope` | awaiting five inits before `runApp` |

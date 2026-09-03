@@ -36,6 +36,9 @@ paths:
    make work idempotent and resumable; verify with battery optimization on, on a real device.
 
 ## Eval cases
+*Assertions below are sketches of intent, not literal strings. Replace any prose
+with a discriminating code token — see AUTHORING.md section 6.*
+
 | id | Scenario | must_contain | must_not_contain |
 |---|---|---|---|
 | 01 | Wire up FCM handlers for all app states | `@pragma('vm:entry-point')`, `getInitialMessage`, `onMessageOpenedApp` | only `onMessage` |

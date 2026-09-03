@@ -28,6 +28,9 @@ paths:
    `application/json`. Every deep-linkable path has a real web page behind it.
 
 ## Eval cases
+*Assertions below are sketches of intent, not literal strings. Replace any prose
+with a discriminating code token — see AUTHORING.md section 6.*
+
 | id | Scenario | must_contain | must_not_contain |
 |---|---|---|---|
 | 01 | Add a program detail route | `:id`, `pathParameters` | `state.extra as Program` |

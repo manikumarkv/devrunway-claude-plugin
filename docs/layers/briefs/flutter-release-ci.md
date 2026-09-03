@@ -44,6 +44,9 @@ paths:
     `prefer_const_constructors`, `avoid_print`.
 
 ## Eval cases
+*Assertions below are sketches of intent, not literal strings. Replace any prose
+with a discriminating code token — see AUTHORING.md section 6.*
+
 | id | Scenario | must_contain | must_not_contain |
 |---|---|---|---|
 | 01 | A release build step for the prod flavor | `--dart-define=FLAVOR=`, `--obfuscate`, `--split-debug-info` | `--flavor prod` alone |

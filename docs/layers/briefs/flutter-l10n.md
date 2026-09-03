@@ -28,6 +28,9 @@ paths:
 8. Server-supplied text carries a locale or is translated server-side.
 
 ## Eval cases
+*Assertions below are sketches of intent, not literal strings. Replace any prose
+with a discriminating code token — see AUTHORING.md section 6.*
+
 | id | Scenario | must_contain | must_not_contain |
 |---|---|---|---|
 | 01 | Show a count of enrolled students | `plural`, `count` | `'$count students'` |

@@ -25,6 +25,9 @@ paths:
 9. No Flutter imports in `domain/`.
 
 ## Eval cases
+*Assertions below are sketches of intent, not literal strings. Replace any prose
+with a discriminating code token — see AUTHORING.md section 6.*
+
 | id | Scenario | must_contain | must_not_contain |
 |---|---|---|---|
 | 01 | Model a `Program` with id, name, status, optional start date | `@freezed`, `_$ProgramFromJson` | `as String`, `json['name'] as` |

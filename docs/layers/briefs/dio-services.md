@@ -34,6 +34,9 @@ paths:
     progress + cancel + idempotency key; resumable chunks for large files.
 
 ## Eval cases
+*Assertions below are sketches of intent, not literal strings. Replace any prose
+with a discriminating code token — see AUTHORING.md section 6.*
+
 | id | Scenario | must_contain | must_not_contain |
 |---|---|---|---|
 | 01 | Write a service method fetching a list of programs | `CancelToken`, `abstract` | `dynamic>` cast at call site |
