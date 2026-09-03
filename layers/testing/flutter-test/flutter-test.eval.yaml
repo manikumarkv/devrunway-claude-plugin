@@ -1,6 +1,7 @@
 skill: flutter-test
 skill_files:
   - layers/testing/flutter-test/SKILL.md
+  - layers/testing/flutter-test/flutter-test.md
 version: 1
 
 cases:

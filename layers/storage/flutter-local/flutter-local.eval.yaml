@@ -1,6 +1,7 @@
 skill: flutter-local
 skill_files:
   - layers/storage/flutter-local/SKILL.md
+  - layers/storage/flutter-local/flutter-local.md
 version: 1
 
 cases:

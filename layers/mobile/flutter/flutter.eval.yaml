@@ -1,6 +1,7 @@
 skill: flutter
 skill_files:
   - layers/mobile/flutter/SKILL.md
+  - layers/mobile/flutter/flutter.md
 version: 1
 
 cases:

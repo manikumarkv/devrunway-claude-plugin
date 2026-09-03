@@ -1,6 +1,7 @@
 skill: dio
 skill_files:
   - layers/api-style/dio/SKILL.md
+  - layers/api-style/dio/dio.md
 version: 1
 
 cases:

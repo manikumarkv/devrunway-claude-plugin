@@ -1,6 +1,7 @@
 skill: flutter-release
 skill_files:
   - layers/ci/flutter-release/SKILL.md
+  - layers/ci/flutter-release/flutter-release.md
 version: 1
 
 cases:

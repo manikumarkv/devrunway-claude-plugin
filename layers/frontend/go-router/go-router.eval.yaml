@@ -1,6 +1,7 @@
 skill: go-router
 skill_files:
   - layers/frontend/go-router/SKILL.md
+  - layers/frontend/go-router/go-router.md
 version: 1
 
 cases:

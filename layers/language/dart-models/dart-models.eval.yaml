@@ -1,6 +1,7 @@
 skill: dart-models
 skill_files:
   - layers/language/dart-models/SKILL.md
+  - layers/language/dart-models/dart-models.md
 version: 1
 
 cases:

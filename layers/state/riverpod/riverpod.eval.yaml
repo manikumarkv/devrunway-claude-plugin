@@ -1,6 +1,7 @@
 skill: riverpod
 skill_files:
   - layers/state/riverpod/SKILL.md
+  - layers/state/riverpod/riverpod.md
 version: 1
 
 cases:

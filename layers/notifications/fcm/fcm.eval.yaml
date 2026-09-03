@@ -1,6 +1,7 @@
 skill: fcm
 skill_files:
   - layers/notifications/fcm/SKILL.md
+  - layers/notifications/fcm/fcm.md
 version: 1
 
 cases:

@@ -1,6 +1,7 @@
 skill: flutter-l10n
 skill_files:
   - layers/i18n/flutter-l10n/SKILL.md
+  - layers/i18n/flutter-l10n/flutter-l10n.md
 version: 1
 
 cases:

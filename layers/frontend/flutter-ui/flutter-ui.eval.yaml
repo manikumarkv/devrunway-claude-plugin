@@ -1,6 +1,7 @@
 skill: flutter-ui
 skill_files:
   - layers/frontend/flutter-ui/SKILL.md
+  - layers/frontend/flutter-ui/flutter-ui.md
 version: 1
 
 cases:

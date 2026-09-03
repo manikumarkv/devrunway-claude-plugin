@@ -128,8 +128,24 @@ The substance. Structure for retrieval, not for reading start to finish.
   developer writes by default — otherwise it is noise.
 - Tables for anything with a decision axis (which store, which policy, which API level).
 - No prose paragraph longer than four lines.
+- **End with `## Common mistakes`**, a `| Mistake | Fix |` table, per `CONTRIBUTING.md`. Some
+  Flutter layers currently close with a `## N. Never` list instead — same content, different
+  heading, and the split makes the set inconsistent with itself and ungreppable. New layers
+  use the CONTRIBUTING heading.
+- CONTRIBUTING's 200–600 line guide is aspirational: 15 layers already on `main` exceed it,
+  including `react.md` at 1535. Judge by whether a consultant can extract one concern without
+  reading linearly, not by line count.
 
 ## 6. The eval
+
+> **`CONTRIBUTING.md` is canonical** for repo-wide eval rules — the `skill_files` requirement
+> and the three adversarial questions (can a compliant answer fail it, can it ever fire, does
+> it test what its name claims). Read it first. This section adds what building the Flutter
+> set taught on top; where the two ever disagree, `CONTRIBUTING.md` wins.
+
+`skill_files` must list **both** the `SKILL.md` and the companion detail `.md`.
+`layer-consultant` loads the detail file at runtime, so an eval listing only `SKILL.md`
+validates rules the runtime never reads.
 
 The eval runner reads the scenario, generates code with the skill loaded, and asserts on
 **the generated code** — not on prose. Assertions are therefore code tokens.

@@ -1,6 +1,7 @@
 skill: flutter-session
 skill_files:
   - layers/auth/flutter-session/SKILL.md
+  - layers/auth/flutter-session/flutter-session.md
 version: 1
 
 cases:

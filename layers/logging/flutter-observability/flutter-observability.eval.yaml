@@ -1,6 +1,7 @@
 skill: flutter-observability
 skill_files:
   - layers/logging/flutter-observability/SKILL.md
+  - layers/logging/flutter-observability/flutter-observability.md
 version: 1
 
 cases:
