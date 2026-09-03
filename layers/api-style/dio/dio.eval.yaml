@@ -1,0 +1,150 @@
+skill: dio
+skill_files:
+  - layers/api-style/dio/SKILL.md
+version: 1
+
+cases:
+  - id: dio-01
+    name: "A service is an abstract contract plus a REST implementation that never touches Dio"
+    scenario: |
+      A programs feature needs a paginated list from `GET /programs`, which returns
+      `{"data": [...]}`. An `ApiClient` already exists in `lib/core/network/` and exposes
+      typed `get`/`post` helpers that decode JSON and throw `AppError`. Write only the
+      service layer in `lib/features/programs/data/services/` — do not write the ApiClient,
+      the model, or any provider wiring. Use the dio skill rules.
+    must_contain:
+      - "abstract"
+      - "implements"
+      - "CancelToken"
+      - "ApiClient"
+      - "fromJson"
+    must_not_contain:
+      - "Dio("
+      - "Dio _dio"
+      - "Response<"
+      - "DioException"
+    rationale: |
+      The default answer is one concrete class holding a `Dio`, with no contract and no
+      cancellation. That class cannot be faked in a test, cannot be wrapped by the offline
+      decorator, and pulls transport concerns (Response, DioException, headers) into every
+      call site — where the next twenty call sites will not repeat them consistently.
+
+  - id: dio-02
+    name: "DioException is classified by type, not by a toString() substring"
+    scenario: |
+      Write `lib/core/error/map_dio_exception.dart`: the single boundary function that
+      converts a `DioException` into the app's error type, covering connectivity failures,
+      timeouts, cancellation, 401/403/404/422/429, and 5xx. Also write enough of the error
+      type itself to show how the app decides whether an error is sent to the crash
+      reporter. Use the dio skill rules.
+    must_contain:
+      - "switch"
+      - "sealed class AppError"
+      - "DioExceptionType"
+      - "NetworkError"
+      - "ServerError"
+      - "isReportable"
+    must_not_contain:
+      - "e.toString()"
+      - ".toString().contains("
+    rationale: |
+      Matching on `e.toString().contains('SocketException')` breaks silently on a Dio
+      upgrade, an OS locale change, or a platform difference — and it fails open, so a real
+      server error is classified "unknown" and the user sees the wrong message. A `switch`
+      over `DioExceptionType` plus the status code is stable and exhaustive. `isReportable`
+      belongs on the error type so an expected 4xx never floods the crash reporter.
+
+  - id: dio-03
+    name: "Cache fallback happens only on network errors, and staleness reaches the UI"
+    scenario: |
+      The programs list must keep working offline: when the device has no connection the
+      app shows the last-known list, and the UI must be able to tell the user the data is
+      not live. `ProgramService` and a `ProgramCacheStore` (with `readPage`/`writePage`)
+      already exist. Write the caching layer over the existing service. Use the dio skill
+      rules.
+    must_contain:
+      - "CachePolicy"
+      - "isStale"
+      - "on NetworkError catch"
+      - "implements ProgramService"
+    must_not_contain:
+      - "} catch ("
+      - "on AppError catch"
+    rationale: |
+      A bare `catch` around the network call serves the cached copy for a 404 (the resource
+      was deleted) and for a parse failure (the contract changed) — the first shows the user
+      a program that no longer exists, the second hides a broken client until it is a
+      production incident. Only connectivity and timeout errors may fall back. And a cache
+      hit that arrives without `isStale` lets the user act on yesterday's data believing it
+      is live.
+
+  - id: dio-04
+    name: "A picked photo is oriented and re-encoded before upload, never sent raw"
+    scenario: |
+      The user picked a photo from the gallery to attach to a program. Write the code that
+      prepares the picked `File` and uploads it to `POST /programs/{id}/photos`, reporting
+      upload progress to the caller and allowing the user to cancel. Use the dio skill rules.
+    must_contain:
+      - "bakeOrientation"
+      - "encodeJpg"
+      - "MultipartFile.fromBytes"
+      - "onSendProgress"
+      - "Idempotency-Key"
+      - "CancelToken"
+    must_not_contain:
+      - "MultipartFile.fromFile"
+      - "picked.path"
+    rationale: |
+      Sending the picker's file directly uploads 8-12 MB over mobile data, carries EXIF GPS
+      into the bucket, and ships iOS portrait photos as landscape pixels with an orientation
+      tag most backends ignore — so the photo appears rotated everywhere but the picker.
+      Re-encoding after `bakeOrientation` fixes all three. Without an idempotency key the
+      retry interceptor turns one attachment into two.
+
+  - id: dio-05
+    name: "Token refresh is single-flight and all Dio timeouts are configured"
+    scenario: |
+      Write `lib/core/network/` setup for the app's Dio instance and the interceptor that
+      handles an expired access token: the API returns 401, the client must exchange the
+      refresh token at `POST /auth/refresh` and replay the original request, and must sign
+      the user out if the refresh itself fails. Several requests can be in flight at once.
+      Use the dio skill rules.
+    must_contain:
+      - "QueuedInterceptor"
+      - "connectTimeout"
+      - "sendTimeout"
+      - "receiveTimeout"
+      - "extra["
+    must_not_contain:
+      - "(InterceptorsWrapper"
+    rationale: |
+      With a plain `InterceptorsWrapper`, ten requests failing 401 together fire ten
+      refreshes; the first rotates the token and the other nine present a dead refresh
+      token, so the backend revokes the family and signs the user out for having a fast
+      connection. `QueuedInterceptor` serialises them into one refresh. The `extra` flag is
+      what stops a replayed request that fails again from looping forever. Only
+      `connectTimeout` set is the usual gap — a server dribbling bytes resets
+      `receiveTimeout` indefinitely.
+
+  - id: dio-06
+    name: "Auth and tenant headers are read per request, not cached in a field"
+    scenario: |
+      Every request needs an `Authorization: Bearer` header and an `X-Tenant-Id` header.
+      The user can sign in, sign out, and switch tenant while the app is running; a
+      `TokenStore` and a `TenantStore` already expose async reads. Wire this into the Dio
+      client. Use the dio skill rules.
+    must_contain:
+      - "onRequest"
+      - "handler) async"
+      - "options.headers['Authorization']"
+      - "X-Tenant-Id"
+    must_not_contain:
+      - "dio.options.headers"
+      - "set token"
+      - "setToken"
+    rationale: |
+      A header written once onto `dio.options` at sign-in is stale the moment a refresh or a
+      tenant switch happens elsewhere, and sign-out leaves it in place — so the next user's
+      request carries the previous user's credentials. Reading inside `onRequest` (which
+      forces the handler to be `async`) makes every request use the value that is current
+      when it is actually sent.

@@ -14,7 +14,7 @@ Full standards: [Flutter Feature Cookbook](https://claude.ai/code/artifact/53812
 |---|---|---|---|---|
 | [mobile-flutter](briefs/mobile-flutter.md) | [#15](https://github.com/manikumarkv/devrunway-claude-plugin/issues/15) | `layers/mobile/flutter/` | structure, bootstrap, theme, platform, app size, monorepo | 📋 |
 | [dart-models](briefs/dart-models.md) | [#3](https://github.com/manikumarkv/devrunway-claude-plugin/issues/3) | `layers/language/dart-models/` | models, serialization | ✅ |
-| [dio-services](briefs/dio-services.md) | [#4](https://github.com/manikumarkv/devrunway-claude-plugin/issues/4) | `layers/api-style/dio/` | services, errors, offline, media, contract | 📋 |
+| [dio-services](briefs/dio-services.md) | [#4](https://github.com/manikumarkv/devrunway-claude-plugin/issues/4) | `layers/api-style/dio/` | services, errors, offline, media, contract | ✅ |
 | [riverpod](briefs/riverpod.md) | [#5](https://github.com/manikumarkv/devrunway-claude-plugin/issues/5) | `layers/state/riverpod/` | providers, pagination, realtime | ✅ |
 | [flutter-ui](briefs/flutter-ui.md) | [#6](https://github.com/manikumarkv/devrunway-claude-plugin/issues/6) | `layers/frontend/flutter-ui/` | pages, components, design system, motion, forms, wizard, search, webview | 📋 |
 | [go-router](briefs/go-router.md) | [#7](https://github.com/manikumarkv/devrunway-claude-plugin/issues/7) | `layers/frontend/go-router/` | routing, deep links | 📋 |
