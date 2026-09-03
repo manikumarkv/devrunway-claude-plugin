@@ -5,30 +5,34 @@ version: 1
 
 cases:
   - id: neon-branch-01
-    name: "Created branch carries an expiry as a cleanup backstop"
+    name: "Branch creation command carries an expiry"
     scenario: |
-      Write the CI step that creates a Neon database branch when a pull
-      request is opened. Use the neon-branching skill rules.
+      Write the Neon CLI command that a CI job runs to create the database
+      branch for a newly opened pull request. Use the neon-branching skill rules.
     must_contain:
-      - "expires"
+      - "--expires-at"
     rationale: |
       A delete step does not run when a job is cancelled or a runner dies.
-      Expiry is the only backstop that survives those cases, and orphaned CI
-      branches are the most common source of unexpected Neon cost.
+      Expiry is the only backstop that survives those cases.
+      The scenario pins the imperative CLI path, because the skill also offers a
+      declarative ttl in neon.ts (covered by neon-branch-08). An earlier version
+      asserted "expires" against an unpinned scenario and would have failed
+      output that took the neon.ts route the skill explicitly prefers.
 
   - id: neon-branch-02
-    name: "Cleanup runs on the failure path"
+    name: "Cleanup keys on close and runs on the failure path"
     scenario: |
-      Write the CI job that deletes a pull request's Neon branch when the pull
-      request is closed. Use the neon-branching skill rules.
+      Write the CI job that deletes a pull request's Neon branch once the pull
+      request is finished. Use the neon-branching skill rules.
     must_contain:
       - "always()"
+      - "closed"
     must_not_contain:
-      - "merged == true"
+      - "pull_request.merged"
     rationale: |
-      Cleanup keyed on merge misses abandoned PRs, which never merge. Cleanup
-      without if:always() leaks a branch whenever a test job fails — exactly
-      when the most branches exist.
+      Cleanup keyed on merge misses abandoned PRs, which never merge. Asserting
+      the absence of "merged" entirely is stricter than the earlier
+      "merged == true", which only caught one exact spacing.
 
   - id: neon-branch-03
     name: "Migrations run on the unpooled string against the PR branch"
@@ -52,21 +56,61 @@ cases:
       - "add-mask"
       - "secrets."
     rationale: |
-      A branch connection string contains a password. Unmasked, it lands in
-      job logs that are readable by anyone with repository access. The API key
-      must come from CI secrets, never from workflow YAML.
+      A branch connection string contains a password. Unmasked, it lands in job
+      logs readable by anyone with repository access. The API key must come from
+      CI secrets, never from workflow YAML.
 
   - id: neon-branch-05
     name: "Schema-only branch chosen when the parent holds PII"
     scenario: |
-      A team's production database contains customer PII. Write the CI step
-      that creates an isolated database branch for a developer environment.
-      Use the neon-branching skill rules.
+      A team's production database contains customer PII. Write the Neon CLI
+      command that creates an isolated database branch for a developer
+      environment. Use the neon-branching skill rules.
     must_contain:
-      - "schema-only"
+      - "--schema-only"
     must_not_contain:
-      - "reset --parent"
+      - "branches reset"
     rationale: |
       Schema-only branches clone structure without rows. They are independent
-      root branches with no parent, so reset-from-parent does not apply and a
-      pipeline built around it breaks when the branch type changes.
+      root branches with no parent, so reset-from-parent does not apply.
+      Asserts on the command "branches reset" rather than the prose phrase
+      "reset --parent", which appears in the skill's own explanatory wording.
+
+  - id: neon-branch-06
+    name: "Fork pull requests do not receive the Neon API key"
+    scenario: |
+      Write the workflow trigger block for a job that creates a Neon preview
+      branch, for a public repository that receives pull requests from forks.
+      Use the neon-branching skill rules.
+    must_not_contain:
+      - "pull_request_target:"
+    rationale: |
+      pull_request_target runs in the base repository's context with secrets
+      available while checking out untrusted code — using it to create Neon
+      branches hands a fork author the database API key. This is the
+      highest-severity rule in the layer and had no case before.
+
+  - id: neon-branch-07
+    name: "Branch name is derived deterministically from the PR number"
+    scenario: |
+      Write the CI step that names and creates the Neon branch for a pull
+      request, such that re-running the workflow does not create a second
+      branch for the same PR. Use the neon-branching skill rules.
+    must_contain:
+      - ".number"
+    rationale: |
+      A non-deterministic name creates another branch on every re-run. Deriving
+      it from the PR number makes creation idempotent.
+
+  - id: neon-branch-08
+    name: "Branch lifetime declared once in neon.ts"
+    scenario: |
+      Write the neon.ts configuration that gives every preview branch in the
+      project an automatic lifetime, without repeating a flag at each call
+      site. Use the neon-branching skill rules.
+    must_contain:
+      - "ttl"
+    rationale: |
+      A per-command flag is forgotten in the one workflow nobody reviewed; a
+      rule in neon.ts applies to every branch the project creates. This is the
+      declarative path the skill prefers, and it had no case before.

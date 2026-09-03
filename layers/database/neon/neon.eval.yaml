@@ -17,20 +17,23 @@ cases:
       than cleanly, producing a green CI run against a broken schema.
 
   - id: neon-02
-    name: "Explicit column projection — no SELECT *"
+    name: "Explicit column projection and a bounded result set"
     scenario: |
-      Write a Neon query that returns a paginated list of users for an API
-      list endpoint. The users table has a wide JSONB settings column.
+      Using the @neondatabase/serverless HTTP driver, write the raw SQL query
+      that returns one page of users for an API list endpoint. The users table
+      has a wide JSONB settings column that the list does not display.
       Use the neon skill rules.
     must_contain:
-      - "limit"
+      - "LIMIT"
     must_not_contain:
       - "SELECT *"
       - "select *"
     rationale: |
-      Neon bills egress. Unprojected queries transfer every column of every
-      row, and wide JSONB columns dominate that cost. Every list query also
-      needs a LIMIT or the bill scales with the table.
+      Neon bills egress. Unprojected queries transfer every column of every row,
+      and wide JSONB columns dominate that cost. Every list query needs a bound
+      or the bill scales with the table.
+      Scenario pins raw SQL so the LIMIT keyword is deterministic — an earlier
+      version asserted lowercase "limit" and would have failed valid SQL.
 
   - id: neon-03
     name: "Transaction uses the WebSocket Pool, not the HTTP driver"
@@ -41,34 +44,48 @@ cases:
       - "Pool"
       - "BEGIN"
     must_not_contain:
-      - "neon("
+      - "= neon("
     rationale: |
       Each HTTP call via neon() is its own implicit transaction, so two
-      sequential calls permit a partial transfer. Atomicity in serverless
-      requires the WebSocket Pool.
+      sequential calls permit a partial transfer. Atomicity requires the
+      WebSocket Pool.
+      Asserts on the assignment "= neon(" rather than "neon(" so that a comment
+      explaining why the HTTP driver is unsuitable does not fail the case.
 
   - id: neon-04
-    name: "No pooled client cached in a serverless module global"
+    name: "Edge one-shot read uses the HTTP driver, not a Pool"
     scenario: |
-      Write the database client setup for a Neon-backed edge function that
-      serves a single read query. Use the neon skill rules.
+      Write the database client setup and handler for a Neon-backed edge
+      function that serves a single read query per request.
+      Use the neon skill rules.
+    must_contain:
+      - "neon("
     must_not_contain:
+      - "new Pool("
       - "rejectUnauthorized: false"
-      - "sslmode=disable"
     rationale: |
-      The client is created per invocation, not cached across them — a frozen
-      sandbox resumes holding a connection the server already closed. TLS
-      verification is never disabled.
+      A single read on an edge runtime is the HTTP driver's case. A WebSocket
+      Pool there is the cached-client anti-pattern: a frozen sandbox resumes
+      holding a connection the server already closed.
+      Replaces an earlier version whose assertions only checked TLS flags and
+      so passed a module-global Pool — the exact thing the case claimed to test.
 
   - id: neon-05
-    name: "Timeouts account for scale-to-zero cold start"
+    name: "Connection settings account for scale-to-zero cold start"
     scenario: |
-      Configure connection and statement timeouts for an application talking
-      to a Neon branch that has scale-to-zero enabled. Use the neon skill rules.
+      Configure the connection timeout and the connection-error retry policy
+      for a Node application talking to a Neon branch that has scale-to-zero
+      enabled. Use the neon skill rules.
+    must_contain:
+      - "connectionTimeoutMillis"
+      - "retry"
     must_not_contain:
-      - "timeout: 500"
-      - "connectTimeoutMS: 500"
+      - "connectTimeoutMS"
     rationale: |
-      Idle compute suspends after ~5 minutes and the first query afterwards
-      pays a cold start of several hundred milliseconds. Timeouts below ~1s
-      turn a normal resume into a false outage.
+      Idle compute suspends after ~5 minutes and the first query afterwards pays
+      a cold start of several hundred milliseconds, which can surface as a
+      connection error rather than a slow query — hence retry-once.
+      connectTimeoutMS is the MongoDB option name; pg and @neondatabase/serverless
+      use connectionTimeoutMillis. Asserting its absence catches that carry-over.
+      An earlier version asserted "timeout: 500", which also matched the fully
+      compliant "timeout: 5000".
