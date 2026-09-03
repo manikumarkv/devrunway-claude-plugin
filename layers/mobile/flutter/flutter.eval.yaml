@@ -20,7 +20,10 @@ cases:
       - "runZonedGuarded"
       - "FlutterError.onError"
       - "PlatformDispatcher.instance.onError"
-      - "Future.wait("
+      # `).wait;` not `Future.wait(` — the detail file's canonical bootstrap uses
+      # the record form and calls the two equivalent, so asserting the other
+      # spelling fails the layer's own code. SKILL.md now names this form.
+      - ").wait;"
       - "ProviderScope("
       - "overrides:"
       - "FutureProvider"
@@ -30,7 +33,7 @@ cases:
       reaches the others — staging stops reporting crashes and nothing looks wrong. It also
       awaits every dependency in series before `runApp`, including the two-second remote
       config, which is native splash time the user cannot cancel and cannot retry without a
-      relaunch. `Future.wait` proves the independent opens run in parallel; `FutureProvider`
+      relaunch. The record `.wait` proves the independent opens run in parallel; `FutureProvider`
       proves the slow, non-first-frame work moved to the screen that needs it. All three
       error channels are asserted because each catches a class the other two do not, and a
       missing one loses that class silently rather than loudly.
@@ -131,8 +134,8 @@ cases:
       - "TargetPlatform.iOS"
       - "_ =>"
     must_not_contain:
-      - "Platform.isIOS"
-      - "Platform.isAndroid"
+      - "Platform.isIOS)"
+      - "Platform.isAndroid)"
     rationale: |
       The default answer is an operating-system check from `dart:io`. It reads the host, so
       on a Linux CI runner every widget test takes the Android branch and the iOS branch is

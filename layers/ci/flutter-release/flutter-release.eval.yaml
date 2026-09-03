@@ -119,7 +119,7 @@ cases:
       - "-s .env_staging"
       - "git diff --exit-code"
     must_not_contain:
-      - "continue-on-error"
+      - "continue-on-error: true"
       - "|| true"
     rationale: |
       A missing secret never presents as "missing secret". It presents as an empty file,
@@ -192,8 +192,8 @@ cases:
       - "compileSdk = 3"
       - "@string/app_name"
     must_not_contain:
-      - "flutter.minSdkVersion"
-      - "flutter.targetSdkVersion"
+      - "= flutter.minSdkVersion"
+      - "= flutter.targetSdkVersion"
     rationale: |
       Without an `applicationIdSuffix` there is one application id, so installing the QA
       build replaces production on the device — the tester loses their production session

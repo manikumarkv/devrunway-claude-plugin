@@ -73,12 +73,16 @@ cases:
       `ProgramsController` is an `AsyncNotifier` that fetches programs through the
       `ProgramService` contract. Every contract method takes an optional `CancelToken`, and the
       controller ties one to `ref.onDispose` so a user leaving the screen mid-request does not
-      leave the request running. Write the test file for this controller: the successful load,
-      the failure path when the service throws a `NetworkError`, and proof that the request is
-      abandoned when the user leaves the screen. The fake service is yours to write. Use the
-      flutter-test skill rules.
+      leave the request running. The `test/support/harness.dart` helpers already exist. Write
+      the test file for this controller: the successful load, the failure path when the service
+      throws a `NetworkError`, and proof that the request is abandoned when the user leaves the
+      screen. The fake service is yours to write. Use the flutter-test skill rules.
     must_contain:
-      - "ProviderContainer"
+      # NOT `ProviderContainer` — this layer mandates the harness factory, and
+      # `ProviderContainer(` appears exactly once in the detail file, inside the
+      # harness definition itself. Asserting it fails code that follows the rule.
+      - "createContainer("
+      - "container.dispose()"
       - "AsyncError"
       - "NetworkError"
       - "isCancelled"

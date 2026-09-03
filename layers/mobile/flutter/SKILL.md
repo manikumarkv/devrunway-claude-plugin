@@ -27,7 +27,7 @@ Full standards in [flutter.md](flutter.md). Always-on summary:
 **Bootstrap — one function, every entrypoint:**
 - `lib/bootstrap.dart` exports one `bootstrap(...)`; each `main_<flavor>.dart` is a few lines that calls it. Nothing is duplicated per flavor.
 - Everything runs inside `runZonedGuarded`, starting with `WidgetsFlutterBinding.ensureInitialized()`. Install `FlutterError.onError` and `PlatformDispatcher.instance.onError` too — all three, or a whole class of crash is lost.
-- Await only what the first frame needs, and run those in parallel with `Future.wait`. Anything slower — remote config, catalogue warm-up, migrations — goes behind a `FutureProvider` the screen that needs it watches.
+- Await only what the first frame needs, and run those in parallel — `final (a, b, c) = await (openA(), openB(), openC()).wait;` (`Future.wait([...])` is the same thing; prefer the record form, it keeps the types). Anything slower — remote config, catalogue warm-up, migrations — goes behind a `FutureProvider` the screen that needs it watches.
 - A required dependency that fails must not be swallowed: `runApp(StartupFailureApp(error: e, onRetry: _start))`, a screen naming what failed with a retry that re-runs bootstrap.
 - `runApp(ProviderScope(overrides: [...], child: App()))` — the composition root is the `overrides` list, and it is the only place a concrete implementation is named.
 
