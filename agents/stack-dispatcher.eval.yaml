@@ -86,7 +86,7 @@ cases:
     must_not_contain:
       - "-mindepth 3 -maxdepth"
     rationale: |
-      Layer directories are not at a fixed depth — 35 of 140 sit at depth 4 or 5.
+      Layer directories are not at a fixed depth — 35 of 153 sit at depth 4 or 5.
       A depth-capped scan drops them silently, with no error: they simply never
       load. This shipped for real, and dispatcher-01 could not catch it because
       the buggy command `find layers -name SKILL.md -mindepth 3 -maxdepth 3`
@@ -109,5 +109,5 @@ cases:
       - "Unroutable"
     rationale: |
       A layer that cannot be routed is a configuration gap. Skipping it in
-      silence is how 28 layers went unnoticed; surfacing it on the Unroutable
+      silence is how those layers went unnoticed; surfacing it on the Unroutable
       line makes the gap visible to the caller.
