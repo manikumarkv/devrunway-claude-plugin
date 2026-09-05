@@ -111,3 +111,74 @@ cases:
       A layer that cannot be routed is a configuration gap. Skipping it in
       silence is how those layers went unnoticed; surfacing it on the Unroutable
       line makes the gap visible to the caller.
+
+  - id: dispatcher-06
+    name: "Scope line of a colliding layer reaches the dispatch result"
+    scenario: |
+      You are the stack-dispatcher agent. The caller passes:
+        task: write a Zod schema for the User object
+        target_files: ["src/schemas/user.schema.ts"]
+      Four installed layers match this file on shared globs — validation/zod,
+      validation/joi, validation/yup and validation/valibot. All four are within
+      the 5-layer cap, so all four are consulted. Each of their SKILL.md files
+      opens its body with a scope blockquote. Two of them read, verbatim:
+
+      > **Scope — applies only if this project uses zod.** This layer shares `**/*.schema.ts` with `joi`, `valibot`, `yup` in `layers/validation/`, so more than one may load at once and their rules conflict. If the project is not using zod, ignore this layer.
+      > See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
+      > **Scope — applies only if this project uses joi.** This layer shares `**/*.schema.js`, `**/*.schema.ts`, `**/schemas/**` with `valibot`, `yup`, `zod` in `layers/validation/`, so more than one may load at once and their rules conflict. If the project is not using joi, ignore this layer.
+      > See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
+      The consultants have already returned their LAYER/SOURCE/ALWAYS/NEVER blocks.
+      Produce the DISPATCH RESULT block exactly as your instructions specify, with
+      nothing before or after it. Use the stack-dispatcher skill rules.
+    must_contain:
+      - "DISPATCH RESULT"
+      - "SCOPE:"
+      - "applies only if this project uses zod"
+      - "applies only if this project uses joi"
+      - "ignore this layer"
+    rationale: |
+      ADR 0001 calls the per-layer scope line the load-bearing part of its
+      decision: shared globs are added to, never removed, so competing layers
+      still load together and the scope line is the only thing that lets the
+      reader discard the ones that do not apply. The line lives in SKILL.md,
+      which layer-consultant opens only to learn the layer name — its return
+      template has no slot for a scope statement and its hard limits forbid
+      closing commentary, so the consultant drops it. The dispatcher already
+      reads every SKILL.md for `paths:` globs, so it is the agent that must
+      carry the line through to the caller.
+      Asserts the text after the em dash rather than the whole quoted sentence
+      so a straight-vs-curly punctuation difference cannot fail a compliant
+      answer, and asserts two different layers so a single hoisted note above
+      the sections does not pass in place of per-layer attribution.
+
+  - id: dispatcher-07
+    name: "No scope line is fabricated for layers that do not carry one"
+    scenario: |
+      You are the stack-dispatcher agent. The caller passes:
+        task: review a React component
+        target_files: ["src/components/UserCard.tsx"]
+      Two layers match: frontend/react/react-standards (on `**/*.tsx`) and
+      frontend/react/composition-patterns (on `**/components/**`). Neither
+      layer's SKILL.md contains a scope blockquote — neither collides with a
+      competing sibling. The consultants have already returned their
+      LAYER/SOURCE/ALWAYS/NEVER blocks.
+      Produce the DISPATCH RESULT block exactly as your instructions specify, with
+      nothing before or after it. Use the stack-dispatcher skill rules.
+    must_contain:
+      - "DISPATCH RESULT"
+      - "Layers consulted:"
+    must_not_contain:
+      - "SCOPE:"
+      - "applies only if this project uses"
+    rationale: |
+      Only 65 of the installed layers carry a scope line, so the common case is
+      a layer with none. The failure mode this guards is the mirror of
+      dispatcher-06: a dispatcher told to surface scope lines inventing an
+      applicability claim, or emitting a placeholder such as `SCOPE: none`, for
+      a layer whose author never made one. Both assertions target text the
+      dispatcher can only produce by fabricating — the scenario states outright
+      that neither SKILL.md has the blockquote, and the skill file forbids
+      `SCOPE: none` explicitly, so a compliant answer cannot contain either
+      string.
