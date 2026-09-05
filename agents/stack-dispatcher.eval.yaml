@@ -86,7 +86,7 @@ cases:
     must_not_contain:
       - "-mindepth 3 -maxdepth"
     rationale: |
-      Layer directories are not at a fixed depth — 35 of 153 sit at depth 4 or 5.
+      Layer directories are not at a fixed depth — 33 of 152 sit at depth 4 or 5.
       A depth-capped scan drops them silently, with no error: they simply never
       load. This shipped for real, and dispatcher-01 could not catch it because
       the buggy command `find layers -name SKILL.md -mindepth 3 -maxdepth 3`
