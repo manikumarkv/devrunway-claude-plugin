@@ -20,6 +20,8 @@ Full standards in [aws-secrets-manager.md](aws-secrets-manager.md). Always-on su
 - Use `SecretsManagerClient` (AWS SDK v3) with `GetSecretValueCommand({ SecretId: secretArn })`
 - Always cache secret values in memory with a TTL (default 5 min) — never call `GetSecretValue` on every request
 - Parse JSON secrets once at startup; surface typed config objects, not raw strings
+- **A typed config object must not print its own secrets.** A `@dataclass` builds `__repr__` from every field, so a bare `password: str` leaks on `print(config)`, an f-string startup log, a Sentry capture with `include_local_variables=True`, or `pytest --showlocals`. Mark every secret field `field(repr=False)` (Pydantic: `SecretStr`)
+- Build a connection string in a method that is called at the point of use, not a `url` property that reads like an attribute and ends up interpolated into a log line; expose a masked `safe_url` for logging, and URL-quote the password
 - Use `SecretString` for credentials; `SecretBinary` only for binary key material
 
 **IAM least-privilege:**
@@ -39,7 +41,8 @@ Full standards in [aws-secrets-manager.md](aws-secrets-manager.md). Always-on su
 
 **Never:**
 - Never log secret values — log only the secret ARN or name
+- Never log or interpolate the whole config object; log named non-secret fields
 - Never hardcode ARNs — use CDK resource refs or environment variables
 - Never store secrets in environment variables baked into container images
 
-**Related skills:** cdk, security-principles, logging-standards
+**Related skills:** `cdk`, `security-principles` (never log a secret; redact before logging, not after), `logging-standards`

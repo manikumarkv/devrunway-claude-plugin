@@ -63,11 +63,23 @@ def _get_client():
 
 ## Typed config object
 
+A `@dataclass` generates `__repr__` from **every** field. A bare `password: str`
+therefore means `print(config)`, an f-string in a startup log, Sentry's default
+`include_local_variables=True`, and `pytest --showlocals` each write the database
+password, the JWT secret and the live Stripe key into somewhere they persist.
+Mark every secret field `repr=False` — the value still works, it just stops
+printing itself.
+
 ```python
 # config.py
+import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from urllib.parse import quote_plus
+
 from secrets.loader import get_secret
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -76,18 +88,34 @@ class DatabaseConfig:
     port: int
     name: str
     username: str
-    password: str
+    # repr=False keeps this out of __repr__/__str__, so the object is safe to log
+    password: str = field(repr=False)
+
+    def dsn(self) -> str:
+        """Connection string, built at the point of use. Never log the result.
+
+        This is a method, not a property, deliberately: a `config.url` attribute
+        reads as harmless and ends up interpolated into log lines and error
+        messages, which is how a password reaches a log aggregator. Calling
+        `dsn()` is a decision. quote_plus is not optional either — a rotated
+        password containing `@` or `/` silently rewrites the host otherwise.
+        """
+        return (
+            f"postgresql+asyncpg://{self.username}:{quote_plus(self.password)}"
+            f"@{self.host}:{self.port}/{self.name}"
+        )
 
     @property
-    def url(self) -> str:
-        return f"postgresql+asyncpg://{self.username}:{self.password}@{self.host}:{self.port}/{self.name}"
+    def safe_url(self) -> str:
+        """The one form that may be logged."""
+        return f"postgresql+asyncpg://{self.username}:***@{self.host}:{self.port}/{self.name}"
 
 
 @dataclass(frozen=True)
 class AppSecrets:
     database: DatabaseConfig
-    jwt_secret: str
-    stripe_secret_key: str
+    jwt_secret: str = field(repr=False)
+    stripe_secret_key: str = field(repr=False)
 
 
 def load_secrets() -> AppSecrets:
@@ -114,7 +142,16 @@ def get_app_secrets() -> AppSecrets:
     if _secrets is None:
         _secrets = load_secrets()
     return _secrets
+
+
+# Startup log — the ARN and the masked URL, never the object and never a value
+logger.info("secrets_loaded", extra={"secret_id": os.environ["APP_SECRET_ID"],
+                                     "db": get_app_secrets().database.safe_url})
 ```
+
+The same rule applies to any other holder of a secret: Pydantic has `SecretStr`,
+attrs has `repr=False`, and a plain class needs an explicit `__repr__`. If a type
+holds a credential, printing it must not print the credential.
 
 ## Node.js / TypeScript loader with cache
 
@@ -348,6 +385,9 @@ log_level = get_parameter("/myapp/prod/log-level")
 |---|---|
 | Calling `GetSecretValue` on every request | Cache in memory with TTL; reload on rotation event |
 | Logging `SecretString` value | Log only `SecretId` / ARN; never log raw secret |
+| A dataclass field holding a secret without `repr=False` | `__repr__` is generated from every field, so printing the config, capturing it in an error report, or running `pytest --showlocals` prints the secret |
+| A `url`/`dsn` **property** that embeds the password | Make it a method so building it is a decision, expose a masked `safe_url` for logs, and URL-quote the password |
+| Interpolating the whole config object into a log line | Log named non-secret fields, or the masked form |
 | IAM `Resource: "*"` for secrets | Scope to specific ARN: `arn:aws:secretsmanager:*:*:secret:myapp/*` |
 | Hardcoding secret ARN in code | Store ARN in env var or CDK cross-stack reference |
 | Rotation Lambda missing `testSecret` | All four steps required; missing one causes rotation failure |
