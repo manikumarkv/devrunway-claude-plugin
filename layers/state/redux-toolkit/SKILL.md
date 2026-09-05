@@ -25,6 +25,12 @@ Full standards in [redux-toolkit.md](redux-toolkit.md). Always-on summary:
 - State mutations via Immer are allowed inside `createSlice` — `state.count++` is fine
 - Selectors live alongside slices: `export const selectOrderById = ...`
 
+**Authentication in `baseQuery`:**
+- `baseQuery` is the single place every request passes through, so what it reads the credential from *is* the app's credential store
+- Use an httpOnly, SameSite session cookie with `credentials: 'include'` — the browser attaches it and no script can read it
+- Never read an auth token from browser storage (`localStorage`, `sessionStorage`): every script on the page can read it and it outlives the tab, so one XSS becomes a durable account takeover
+- If a cross-origin API needs a bearer token, hold it in a module variable and refresh it from an httpOnly cookie — in memory, never persisted
+
 **Async / RTK Query:**
 - **RTK Query** for all data fetching — use `createApi(` with `endpoints:` key; handles caching, loading states, and invalidation automatically
 - For one-off async operations not involving server data, use RTK's async thunk pattern (prefer RTK Query first)
@@ -38,5 +44,6 @@ Full standards in [redux-toolkit.md](redux-toolkit.md). Always-on summary:
 - Mutate state outside of `createSlice` reducers — use `setState` pattern or RTK
 - Put derived data in state — use `createSelector` (memoised selectors)
 - Put server state in Redux if using RTK Query — that's RTK Query's job
+- Keep a token, session id, or any credential in browser storage or in Redux state — Redux devtools and any persist middleware will happily write it out
 
-**Related skills:** Your frontend layer (React hooks, component patterns), `mocking/msw` (mock RTK Query endpoints in tests)
+**Related skills:** `security-principles` (never send a secret to the client or store one where a script can read it; derive identity from the verified token), your frontend layer (React hooks, component patterns), `mocking/msw` (mock RTK Query endpoints in tests)

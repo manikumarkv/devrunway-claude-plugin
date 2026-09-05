@@ -46,3 +46,35 @@ cases:
     rationale: |
       Typed hooks (useAppDispatch, useAppSelector) are defined once and
       provide full TypeScript inference everywhere they're used.
+
+  - id: redux-04
+    name: "baseQuery authenticates with the session cookie, not browser storage"
+    scenario: |
+      Write the RTK Query api slice for an authenticated API — show how each
+      request is authenticated. Use the redux-state skill rules.
+    must_contain:
+      - "fetchBaseQuery("
+      - "credentials:"
+    must_not_contain:
+      - "localStorage.getItem("
+      - "sessionStorage.getItem("
+    rationale: |
+      The layer modelled `localStorage.getItem('auth_token')` in the canonical
+      baseQuery — the one place every request in the app passes through, so the
+      example set the app's credential store. Browser storage is readable by
+      every script on the page and outlives the tab, which turns one XSS into a
+      durable account takeover. That contradicts the always-on
+      `security-principles` skill, and the two would be loaded together for the
+      same file.
+
+      The guards reject the pattern the layer used to teach, in both its
+      spellings. `credentials:` is what a correct answer has and the storage
+      answer does not — an httpOnly cookie is attached by the browser, so there
+      is nothing to read and nothing to set a header from. Both compliant shapes
+      the layer now documents satisfy it: the same-origin cookie session, and the
+      cross-origin variant that keeps a bearer token in a module variable and
+      refreshes it from an httpOnly cookie.
+
+      Neither guard's literal appears in the layer's guidance — the rule is
+      written as "browser storage (`localStorage`, `sessionStorage`)", so an
+      answer reproducing the warning cannot trip the assertion.

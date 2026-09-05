@@ -111,11 +111,10 @@ export const ordersApi = createApi({
   reducerPath: 'ordersApi',
   baseQuery: fetchBaseQuery({
     baseUrl: '/api/v1',
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem('auth_token')
-      if (token) headers.set('Authorization', `Bearer ${token}`)
-      return headers
-    },
+    // The session is an httpOnly, SameSite cookie that the browser attaches
+    // itself. No script on the page can read it, so an XSS bug — one bad
+    // dependency, one unescaped string — cannot walk off with the session.
+    credentials: 'include',
   }),
   tagTypes: ['Order'],    // for cache invalidation
   endpoints: (builder) => ({
@@ -165,6 +164,42 @@ export const {
   useUpdateOrderMutation,
 } = ordersApi
 ```
+
+### Authenticating the request
+
+`baseQuery` is the one place every request in the app passes through, so whatever
+it reads the credential from is the app's credential store. Do not make that
+browser storage: anything in `localStorage` or `sessionStorage` is readable by
+every script on the page and survives the tab closing, which turns any XSS into a
+durable account takeover. A cookie the browser sets `httpOnly` is not reachable
+from JavaScript at all, so `credentials: 'include'` is the default answer.
+
+If the API is on another origin and requires a bearer token, keep the access token
+in a module variable — in memory, for this tab, gone on reload — and refresh it
+from an httpOnly refresh cookie:
+
+```typescript
+// src/features/auth/accessToken.ts
+let accessToken: string | null = null
+export const setAccessToken = (value: string | null) => { accessToken = value }
+export const getAccessToken = () => accessToken
+```
+
+```typescript
+// src/features/orders/orders.api.ts — cross-origin variant
+baseQuery: fetchBaseQuery({
+  baseUrl: 'https://api.example.com/v1',
+  credentials: 'include',          // carries the httpOnly refresh cookie
+  prepareHeaders: (headers) => {
+    const token = getAccessToken()
+    if (token) headers.set('Authorization', `Bearer ${token}`)
+    return headers
+  },
+}),
+```
+
+A page reload leaves the token undefined, and the refresh call restores it. That
+is the cost, and it is the whole benefit: nothing persisted, nothing readable.
 
 ---
 
@@ -295,4 +330,6 @@ const ordersSlice = createSlice({
 | Derived data stored in state | Use `createSelector` — compute from existing state |
 | Mutating state outside a reducer | Only mutations inside `createSlice` reducers (Immer) are safe |
 | One giant slice for everything | One slice per feature/domain |
+| Reading the auth token from browser storage in `baseQuery` | Use an httpOnly session cookie with `credentials: 'include'`; browser storage is readable by every script on the page, so an XSS bug becomes a stolen session |
+| Persisting an access token so it survives a reload | Hold it in a module variable and refresh it from an httpOnly cookie — persistence is what turns a script injection into a durable takeover |
 | Not calling `.unwrap()` on mutations | `.unwrap()` converts RTK's error envelope into a thrown error |
