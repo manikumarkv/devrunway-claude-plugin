@@ -6,39 +6,155 @@ version: 1
 
 cases:
   - id: bt-01
-    name: "Client token generated server-side"
+    name: "Client token generated server-side on an authenticated route"
     scenario: |
-      Write the server endpoint and client setup for a Braintree payment flow.
+      Write the server endpoint that issues a Braintree client token and the
+      client setup that consumes it.
       Use the braintree-payment skill rules.
     must_contain:
       - "gateway.clientToken.generate("
-      - "clientToken"
+      - "requireAuth"
+      - "process.env.BRAINTREE_PRIVATE_KEY"
+      - "res.json({ clientToken })"
+    must_not_contain:
+      - "fetch('/api/braintree/client-token'"
+      - "privateKey: '"
     rationale: |
-      The client token is generated server-side using the Braintree gateway
-      with server credentials. Client-side token generation exposes keys.
+      The client token is generated server-side with server credentials;
+      generating it in the browser exposes the private key.
+
+      `requireAuth` is one half. The token is scoped to a customer id and
+      pre-selects that customer's stored payment methods, so an unauthenticated
+      token endpoint hands a caller a session against somebody else's vaulted
+      cards. An answer that mounts the route without middleware scores 0.
+
+      The other half — that generation happens on the SERVER — was previously
+      untested, which is the defect this revision fixes. `gateway`,
+      `clientToken` and even `requireAuth` can all appear in a browser bundle
+      that calls the SDK client-side; such an answer scored 3/3 while shipping
+      the private key to every visitor.
+
+      `res.json({ clientToken })` is the discriminating token: it only exists in
+      a route handler that owns a response object, which a browser bundle does
+      not have. `process.env.BRAINTREE_PRIVATE_KEY` pins the credential to the
+      server environment. `privateKey: '` rejects the literal-credential form,
+      and the `fetch(` guard rejects an answer that shows only the consuming
+      side and never writes the endpoint the scenario asks for.
 
   - id: bt-02
-    name: "Payment method nonce not raw card data"
+    name: "Charge uses the nonce and the server's own amount, on an owned order"
     scenario: |
-      Write the server-side code to charge a customer using Braintree.
+      Write the server-side `/checkout` route that charges a customer with
+      Braintree after the browser has tokenised a card. Your database has an
+      orders table with `id`, `userId`, `totalCents` and `status`. Show the
+      middleware, the request shape you accept, and the charge.
       Use the braintree-payment skill rules.
     must_contain:
       - "paymentMethodNonce"
       - "gateway.transaction.sale("
+      - "requireAuth"
+      - "order.totalCents"
+      - "order.userId"
+      - "result.success"
     must_not_contain:
       - "cardNumber"
+      - "Number(amount)"
     rationale: |
-      Braintree's nonce-based flow tokenizes card data client-side via
-      the Drop-in UI. The server only ever sees the nonce, never card data.
+      The nonce assertions keep the original property: card data is tokenised in
+      the browser and the server never sees a card number.
+
+      Everything else on this list is a defect the layer shipped while scoring
+      3/3. `order.totalCents` rejects charging the amount posted in the request
+      — the buyer's own price, accepted by a route that is otherwise flawless.
+      `Number(amount)` is the exact conversion the old guidance applied to that
+      body value; it appears nowhere in the corrected files, so it cannot fire on
+      a compliant answer. `requireAuth` rejects the unauthenticated charge route,
+      and `order.userId` rejects the version that authenticates the caller but
+      never checks the order is theirs. `result.success` rejects reading
+      `result.transaction` without checking the outcome, which throws on exactly
+      the declines it needs to report.
 
   - id: bt-03
-    name: "Webhook verified with signature"
+    name: "Webhook signature verified before the acknowledgement, not after it"
     scenario: |
-      Write the Braintree webhook handler for subscription charges.
+      Write the Braintree webhook route that handles subscription charge events.
+      The route is publicly reachable, Braintree retries any delivery that does
+      not return 2xx, and the handler writes to your database and can fail.
+      Show the whole route handler.
       Use the braintree-payment skill rules.
     must_contain:
       - "gateway.webhookNotification.parse("
-      - "signature"
+      - "bt_signature"
+      - "tatus(400)"
+      - "tatus(500)"
     rationale: |
-      Braintree webhook payloads must be verified with the gateway signature.
-      Unverified webhooks allow attackers to fake payment confirmations.
+      The assertion this replaces was `must_contain: "signature"`, which matched
+      inside the parameter name `bt_signature` — a name any handler writes,
+      because Braintree posts the field under that name. It scored 1 on the
+      correct ordering and 1 on the broken one, so the layer sat at 3/3 while
+      teaching `res.sendStatus(200)` *before* `parse()`.
+
+      The two status codes discriminate. `parse` throwing is the only rejection
+      a forged payload gets, and a handler that has already sent 200 cannot turn
+      that into a 400 — the response is committed — so the ack-first shape scores
+      0 on `res.status(400)`. The same applies to `res.status(500)`: a handler
+      that acked first can only log a processing failure, and Braintree, told
+      the event was handled, never redelivers it. A parse-then-work-then-ack
+      handler scores 1 on both.
+
+      `bt_signature` stays, because the parse call genuinely takes it — but it is
+      now a necessary token next to two that are sufficient, rather than the
+      whole test.
+
+  - id: bt-04
+    name: "Declined card renders as a failure, not a completed purchase"
+    scenario: |
+      Write the Drop-in UI submit handler for the checkout form. It requests the
+      payment method from the Drop-in instance and posts it to your `/checkout`
+      route, which answers 422 with `{ success: false, error }` when the card is
+      declined. Show what the buyer sees in each outcome.
+      Use the braintree-payment skill rules.
+    must_contain:
+      - ".ok"
+      - "setError("
+      - "internalOrderId"
+    rationale: |
+      `fetch` rejects only on a network failure, so every gateway outcome —
+      declined, processor-rejected, gateway-rejected for fraud — arrives as a
+      resolved response. The old guidance awaited the call and read nothing from
+      it, which means a decline and a successful charge rendered identically:
+      the spinner stopped, the form closed, and the buyer left believing they
+      had paid for goods that were never charged for.
+
+      `.ok` scores 0 on that fire-and-forget handler, which has no property
+      access on the response at all, and 1 on any handler that branches on the
+      status — it matches whether the answer names the response `res` or
+      `response`. `setError(` requires the failure to reach the buyer rather
+      than only the console. `internalOrderId` pins the request shape: the form
+      posts an identifier and a nonce, never an amount.
+
+  - id: bt-05
+    name: "A retried checkout submit does not charge the card twice"
+    scenario: |
+      The checkout button can be double-clicked and the browser retries the
+      POST when the first attempt times out, so `/checkout` can receive the same
+      charge more than once. Write the route so the buyer is charged once.
+      Use the braintree-payment skill rules.
+    must_contain:
+      - "insertIfAbsent("
+      - "findByOrderId("
+      - "gateway.transaction.sale("
+    rationale: |
+      Braintree's transaction API accepts no idempotency key, which is why the
+      protection has to be built rather than passed as an argument — and why the
+      old guidance had none at all: it called `transaction.sale` directly on
+      whatever arrived, so a double-clicked button was two charges.
+
+      The claim is what discriminates. `insertIfAbsent(` requires the order to be
+      claimed behind a unique index *before* the gateway call, and
+      `findByOrderId(` requires the losing attempt to return the transaction the
+      winner created instead of erroring or charging. An implementation with no
+      idempotency has neither, and one that merely disables the button
+      client-side — the common wrong answer, since it makes the symptom go away
+      in manual testing — has neither either, while still charging twice on a
+      retried request the button never sees.

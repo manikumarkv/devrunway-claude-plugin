@@ -6,23 +6,35 @@ version: 1
 
 cases:
   - id: pp-01
-    name: "Orders API not legacy Payments API"
+    name: "Orders v2 REST routes, not the legacy Payments API and not a phantom SDK method"
     scenario: |
-      Write the server-side code to create a PayPal order and capture payment.
+      Write the server-side code that creates a PayPal order and captures it
+      after the buyer approves.
       Use the paypal-payment skill rules.
     must_contain:
-      - "orders.create("
-      - "orders.capture("
+      - "/v2/checkout/orders"
+      - "/capture"
+      - "paypalRequest("
     must_not_contain:
-      - "payment.create("
+      - "paypalClient.orders"
+      - "checkoutNodeJssdk"
     rationale: |
-      The Orders API is the current PayPal standard. The legacy Payments API
-      is deprecated and lacks modern features.
+      The Orders v2 API is the current PayPal standard; the legacy Payments API
+      is deprecated, hence `payment.create(`.
+
+      `orders.create(` is forbidden for a different reason. This layer's summary
+      used to name `orders.create(` and `orders.capture(` as the calls to make,
+      and those are not methods of any shipping PayPal server SDK — the detail
+      file has always used the REST routes through a `paypalRequest` helper. An
+      answer generated from the old summary compiles into nothing: it scores 1 on
+      an assertion for a method that does not exist. Asserting the REST paths
+      instead scores 1 on code that can actually run, and 0 on an answer that
+      invents an SDK surface.
 
   - id: pp-02
     name: "Client ID and secret from environment variables"
     scenario: |
-      Write the PayPal SDK configuration for a Node.js backend.
+      Write the PayPal access-token helper for a Node.js backend.
       Use the paypal-payment skill rules.
     must_contain:
       - "process.env.PAYPAL_CLIENT_ID"
@@ -32,13 +44,118 @@ cases:
       Hardcoded client IDs and secrets are committed to source control.
 
   - id: pp-03
-    name: "Webhook event validated before fulfillment"
+    name: "Webhook verified and deduped before fulfilment, acknowledged after it"
     scenario: |
-      Write the PayPal webhook handler that fulfills orders.
+      Write the PayPal webhook route that fulfils orders on
+      `PAYMENT.CAPTURE.COMPLETED`. The route is publicly reachable, PayPal
+      delivers each event at least once, and it retries any delivery that does
+      not return 2xx. Fulfilment writes to your database and can fail. Show the
+      whole route handler.
       Use the paypal-payment skill rules.
     must_contain:
-      - "webhookId"
-      - "verifyWebhookSignature("
+      - "/v1/notifications/verify-webhook-signature"
+      - "process.env.PAYPAL_WEBHOOK_ID"
+      - "verification_status"
+      - "event.id"
+      - "res.status(400)"
+      - "res.status(500)"
     rationale: |
-      PayPal webhook events must be verified before fulfilling orders.
-      Unverified webhooks allow payment bypass via forged events.
+      `webhook_id` and `verifyWebhookSignature(` were the old assertions. The
+      first is written `webhook_id` only inside the verify call the detail file
+      makes, and the second is a method name that appears in no shipping SDK —
+      so the pair tested the summary's vocabulary rather than the runtime's.
+      The REST path plus `process.env.PAYPAL_WEBHOOK_ID` plus
+      `verification_status` pin the call *and* the check on its result: an
+      answer that posts to the verify endpoint and then ignores the returned
+      status is indistinguishable from one that skips verification, and it fails
+      on `verification_status`.
+
+      The two status codes are what catch the ordering defect. This layer used
+      to open the handler with `res.sendStatus(200)` and verify afterwards.
+      That shape cannot reject a forged payload with 400 and cannot ask for a
+      redelivery with 500 — the response is already committed — so it scores 0
+      on both, while verify-then-work-then-ack scores 1 on both. In production
+      the difference is that a forged event gets a 200 and a genuine event whose
+      handler throws is never sent again, having consumed its three-day retry
+      budget on the attempt that failed.
+
+      `event.id` rejects a handler with no inbound dedupe, which double-fulfils
+      on the redelivery that at-least-once delivery guarantees.
+
+  - id: pp-04
+    name: "Amount and fulfilment target come from the server; capture route is authenticated and ownership-checked"
+    scenario: |
+      Write the two PayPal routes: one that creates a PayPal order for a cart
+      the buyer is checking out, and one that captures it after approval. Your
+      database has an orders table with `id`, `userId`, `totalCents`, `currency`
+      and `status`. Show the middleware, the request shapes you accept, and how
+      each route decides which internal order it is acting on.
+      Use the paypal-payment skill rules.
+    must_contain:
+      - "requireAuth"
+      - "order.totalCents"
+      - "order.userId"
+      - "reference_id"
+    must_not_contain:
+      - "Number(amount)"
+    rationale: |
+      Three separate defects, one route pair.
+
+      `order.totalCents` rejects the pricing defect: the layer used to build
+      `amount.value` from a client-posted `amount`, so a buyer could pay 0.01
+      for a 500.00 cart and receive a genuine, fully verified `COMPLETED`
+      capture. An implementation that prices from the body has no order record
+      to read `totalCents` from and scores 0; `Number(amount)` is the exact
+      conversion the old guidance used on the body-supplied value and appears
+      nowhere in the corrected files, so it cannot fire on a compliant answer.
+
+      `requireAuth` rejects the unauthenticated capture route — a route that
+      moves money and marks an order paid, reachable by anyone. `order.userId`
+      rejects the weaker version of the same bug: authenticating the caller and
+      then not checking that this order is theirs.
+
+      `reference_id` rejects the target-selection defect. The old capture route
+      marked whichever internal order id arrived in the request body as paid, so
+      the caller chose what a payment fulfilled. Reading the internal order out
+      of the PayPal order's `reference_id` is the only source the caller does
+      not control, and an answer that takes it from the body never mentions it.
+
+  - id: pp-05
+    name: "Capture is idempotent, the capture id is persisted before responding, and fulfilment happens once"
+    scenario: |
+      Write the PayPal capture route and the fulfilment function it calls. The
+      capture request can time out and be retried by the client. A capture can
+      come back with status `PENDING` rather than `COMPLETED` and settle later.
+      The same order can also be reported paid by the `PAYMENT.CAPTURE.COMPLETED`
+      and `CHECKOUT.ORDER.APPROVED` webhooks.
+      Use the paypal-payment skill rules.
+    must_contain:
+      - "PayPal-Request-Id"
+      - "paypalCaptureId"
+      - "paypalCaptureStatus"
+      - "fulfillOnce("
+    must_not_contain:
+      - "${Date.now()}"
+      - "randomUUID"
+    rationale: |
+      `PayPal-Request-Id` is PayPal's idempotency header and the old guidance
+      sent it nowhere, so a timed-out capture retried by the browser took a
+      second payment. The two forbidden tokens are the ways a request id stops
+      being idempotent: interpolating a clock or a UUID makes every attempt a
+      new key, which is precisely the property the header exists to remove.
+      `${Date.now()}` is used rather than the bare call because this layer reads
+      the clock legitimately when caching the OAuth token — the guard targets
+      the interpolation into a key, not the clock itself.
+
+      `paypalCaptureStatus` is what discriminates the persist-before-respond
+      rule. The old route returned 422 on any non-`COMPLETED` status *before*
+      extracting or storing the capture id: the buyer's money had moved and
+      nothing in the system recorded where. An implementation that writes the id
+      only on the happy path has no reason to store a status column at all, so
+      it scores 0; one that persists the outcome of every capture before
+      branching scores 1 on both fields.
+
+      `fulfillOnce(` rejects fulfilment inlined into each path. Three paths
+      conclude "paid" for one order and at least two of them fire in normal
+      operation, so without a single claim on the capture id the buyer is
+      entitled twice and receives two receipts.

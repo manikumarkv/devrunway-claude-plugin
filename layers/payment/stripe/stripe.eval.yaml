@@ -6,27 +6,72 @@ version: 1
 
 cases:
   - id: stripe-01
-    name: "Webhook signature verified before processing payment events"
+    name: "Webhook verifies, dedupes on event.id, and acks only after fulfilment"
     scenario: |
-      Write the Stripe webhook handler for payment.intent.succeeded events.
+      Write the Stripe webhook route that fulfils an order when
+      `checkout.session.completed` arrives. Stripe delivers each event at least
+      once and retries a delivery that does not return 2xx. Fulfilment writes to
+      your database and can fail. Show the whole route handler.
       Use the stripe-payment skill rules.
     must_contain:
       - "stripe.webhooks.constructEvent("
       - "webhookSecret"
+      - "event.id"
+      - "res.status(500)"
     rationale: |
-      Webhook events must be verified with stripe.webhooks.constructEvent.
-      Unverified webhooks can be spoofed to grant access without payment.
+      Signature verification is the part everybody already gets right, so on its
+      own it proves nothing: the defect this case exists to catch is a handler
+      that verifies perfectly and then hands Stripe a 2xx before the order is
+      written.
+
+      `res.status(500)` is what discriminates. An ack-first handler — the shape
+      this layer used to teach, `res.status(200).json({ received: true })`
+      followed by `await processWebhookEvent(event)` — has no 500 path and can
+      never grow one: the response is already sent, so a failure inside
+      fulfilment can only be logged. It scores 0 here. A handler that awaits
+      fulfilment, returns 500 when it throws and acks last scores 1. The
+      difference in production is a charge that stands with no order and no
+      redelivery, because the 2xx retired the retry schedule.
+
+      `event.id` rejects the second half: a handler with no inbound dedupe.
+      At-least-once delivery is normal operation, not an edge case, so a route
+      that never mentions the event id fulfils the same order on every
+      redelivery.
 
   - id: stripe-02
-    name: "Idempotency keys on all payment mutations"
+    name: "Idempotency key is deterministic — the same charge retried computes the same key"
     scenario: |
-      Write the server-side code to create a Stripe PaymentIntent for an order.
+      Write the server-side code that creates a Stripe PaymentIntent for order
+      `order`. The call is wrapped in a retry that fires on network timeout, so
+      the same charge can be attempted several times.
       Use the stripe-payment skill rules.
     must_contain:
       - "idempotencyKey"
+      - "pi-${order"
+      - "order.totalCents"
+    must_not_contain:
+      - "${Date.now()}"
+      - "randomUUID"
+      - "Math.random("
     rationale: |
-      Idempotency keys prevent duplicate charges if the request is retried.
-      Network errors during payment creation require safe retry.
+      The previous version of this case asserted only the token
+      `idempotencyKey`, which the pre-fix guidance satisfied while shipping
+      `checkout-${userId}-${Date.now()}` — a key that regenerates on every
+      attempt and therefore prevents nothing. The token was present; the
+      property was absent.
+
+      Determinism is the whole property, so it is what gets asserted. The three
+      `must_not_contain` entries are the three ways to destroy it — a clock, a
+      UUID, a random number — and each one is exactly the construction that
+      turns a retried timeout into a second charge. `pi-${order` requires the
+      key to be derived from the order's identity, which is the only input that
+      is stable across attempts and distinct between orders; it matches whether
+      the answer writes `pi-${order.id}` or `pi-${orderId}`.
+
+      `order.totalCents` requires the amount to come from the server's order
+      record rather than the request. None of the three forbidden tokens appears
+      anywhere in this layer's corrected guidance, so a compliant answer cannot
+      trip them.
 
   - id: stripe-03
     name: "No raw card data — use Stripe Elements or Checkout"
@@ -34,10 +79,63 @@ cases:
       Write the frontend payment form for collecting card details.
       Use the stripe-payment skill rules.
     must_contain:
-      - "Elements"
+      - "elements.create("
+      - "stripe.confirmCardPayment("
     must_not_contain:
       - "cardNumber"
-      - "cvv"
+      - "card_number"
+      - "cvc"
     rationale: |
-      Stripe Elements collects card data in Stripe's PCI-compliant iframe.
-      Handling raw card fields requires full PCI DSS compliance.
+      Stripe Elements collects card data in Stripe's iframe, so no card value
+      reaches the page's own DOM and the merchant stays in SAQ A scope.
+
+      Assertion notes — the previous version of this case did not discriminate.
+      It asserted `must_contain: "Elements"`, which is a substring of
+      `document.getElementsByTagName`, `getElementsByClassName` and
+      `getElementsByName`: a hand-rolled raw-card form scored 3/3 purely because
+      it queried the DOM. Replaced with two tokens only the Elements integration
+      produces — mounting a field, and confirming through Stripe's JS.
+
+      This exposed a guidance gap rather than only an assertion bug: the layer
+      prohibited raw card fields but shipped no frontend example at all, so the
+      scenario asked for a form the standards never showed how to build. The
+      Elements form was added to the detail file, and these tokens come from it.
+
+      Negatives corrected too. `cvv` was the wrong spelling to guard — Stripe's
+      own field is `cvc` — and `pan` was rejected as a candidate because it is a
+      substring of ordinary prose (`expand`), which would fire on compliant
+      output. `cvc` is safe here precisely because the compliant integration
+      never names the field; Stripe's iframe owns it.
+
+  - id: stripe-04
+    name: "Line item amounts come from the server's product record, not the request body"
+    scenario: |
+      Write `createCheckoutSession`. The browser posts a cart to your API and
+      your server creates the Stripe Checkout Session from it. A product
+      repository is available that returns records with `name`, `priceCents` and
+      `currency` for a set of SKUs. Show the request shape you accept and the
+      `line_items` you build from it.
+      Use the stripe-payment skill rules.
+    must_contain:
+      - "unit_amount: product.priceCents"
+      - "sku"
+    must_not_contain:
+      - "item.priceCents"
+    rationale: |
+      This is the defect that made the layer dangerous while it was passing its
+      own suite: signature verification, idempotency and PCI scope were all
+      correct, and the checkout session priced its line items straight from the
+      client-posted cart. Post a one-cent price and you get a real payment for
+      one cent, fully signed and verified.
+
+      `unit_amount: product.priceCents` scores 1 only on an implementation that
+      looked the price up server-side — `product` cannot come from the request
+      body in an answer that also accepts SKUs and quantities. The
+      client-priced implementation reads the amount off the posted cart line and
+      scores 0 on it, and 0 again on `item.priceCents`, the field name a cart
+      line carries a price in. That literal appears nowhere in the corrected
+      guidance, so it cannot fire on a compliant answer that merely quotes the
+      standard back.
+
+      `sku` pins the request shape: the client says what it wants, the server
+      says what it costs.
