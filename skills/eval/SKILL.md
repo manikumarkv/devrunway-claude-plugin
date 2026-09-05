@@ -29,9 +29,24 @@ Parse `$ARGUMENTS[0]` as `target` (skill name | category | `all`, default `all`)
 
 Find all `.eval.yaml` files matching the target:
 
-- `all` → `find . -name "*.eval.yaml" | sort`
-- skill name → `find . -name "*.eval.yaml" | xargs grep -l "^skill: $TARGET"`
-- category → `find . -path "*/$TARGET*/*.eval.yaml"`
+- `all` → `find layers skills agents -name "*.eval.yaml" | sort`
+- skill name → `find layers skills agents -name "*.eval.yaml" | xargs grep -l "^skill: $TARGET"`
+- category → `find layers skills agents -path "*/$TARGET*/*.eval.yaml"`
+
+**Search `layers skills agents`, never bare `find .`.** Those three directories hold
+every eval file — 109, 3 and 2 respectively. A bare `find .` also descends into
+`.claude/worktrees/`, where git worktrees keep a full copy of the tree for each
+checked-out branch. That doubled discovery to 227 files and scored half the suite
+against whatever branch a worktree happened to be parked on, silently reporting
+results for guidance that is not on the current branch. `.claude/` is gitignored,
+but `find` does not read `.gitignore`.
+
+Verify the count before a full run — `all` should discover **114** files today. A
+number near 227 means the worktree copies are being scored again.
+
+If a discovered path contains `/.claude/`, stop and report it rather than scoring
+it. A stale worktree is not a second opinion; it is an old branch wearing the same
+filenames.
 
 If none found:
 > No eval files found for "$TARGET". Check that the skill name matches the `skill:` field in an .eval.yaml file, or that the category path exists.
