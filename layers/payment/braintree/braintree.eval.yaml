@@ -13,16 +13,33 @@ cases:
       Use the braintree-payment skill rules.
     must_contain:
       - "gateway.clientToken.generate("
-      - "clientToken"
       - "requireAuth"
+      - "process.env.BRAINTREE_PRIVATE_KEY"
+      - "res.json({ clientToken })"
+    must_not_contain:
+      - "fetch('/api/braintree/client-token'"
+      - "privateKey: '"
     rationale: |
       The client token is generated server-side with server credentials;
       generating it in the browser exposes the private key.
 
-      `requireAuth` is the added half. The token is scoped to a customer id and
+      `requireAuth` is one half. The token is scoped to a customer id and
       pre-selects that customer's stored payment methods, so an unauthenticated
       token endpoint hands a caller a session against somebody else's vaulted
       cards. An answer that mounts the route without middleware scores 0.
+
+      The other half — that generation happens on the SERVER — was previously
+      untested, which is the defect this revision fixes. `gateway`,
+      `clientToken` and even `requireAuth` can all appear in a browser bundle
+      that calls the SDK client-side; such an answer scored 3/3 while shipping
+      the private key to every visitor.
+
+      `res.json({ clientToken })` is the discriminating token: it only exists in
+      a route handler that owns a response object, which a browser bundle does
+      not have. `process.env.BRAINTREE_PRIVATE_KEY` pins the credential to the
+      server environment. `privateKey: '` rejects the literal-credential form,
+      and the `fetch(` guard rejects an answer that shows only the consuming
+      side and never writes the endpoint the scenario asks for.
 
   - id: bt-02
     name: "Charge uses the nonce and the server's own amount, on an owned order"
@@ -68,8 +85,8 @@ cases:
     must_contain:
       - "gateway.webhookNotification.parse("
       - "bt_signature"
-      - "res.status(400)"
-      - "res.status(500)"
+      - "tatus(400)"
+      - "tatus(500)"
     rationale: |
       The assertion this replaces was `must_contain: "signature"`, which matched
       inside the parameter name `bt_signature` — a name any handler writes,

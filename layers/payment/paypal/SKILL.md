@@ -1,5 +1,5 @@
 ---
-name: paypal
+name: paypal-payment
 description: PayPal REST API standards — Orders v2, server-side pricing, capture, webhook verification, sandbox, and smart buttons. Load when working with PayPal.
 user-invocable: false
 stack: payment/paypal

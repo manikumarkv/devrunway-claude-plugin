@@ -8,6 +8,45 @@ Never handle raw card data. Always use:
 
 This means never building your own card form fields.
 
+### Client-Side: the Elements form
+
+The prohibition above is only actionable with the alternative beside it. Mount
+Stripe's fields and confirm through Stripe's JS — the card value never reaches
+your origin, your state, or your network tab.
+
+```tsx
+// src/components/PaymentForm.tsx
+const stripe = useStripe()
+const elements = useElements()
+
+useEffect(() => {
+  // Stripe owns the input; you own the container it mounts into
+  const card = elements.create('card', { hidePostalCode: false })
+  card.mount('#card-element')
+  return () => card.destroy()
+}, [elements])
+
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault()
+  // clientSecret comes from the server-created PaymentIntent — never build it client-side
+  const result = await stripe.confirmCardPayment(clientSecret, {
+    payment_method: { card: elements.getElement('card')! },
+  })
+
+  if (result.error) {
+    setError(result.error.message ?? 'Payment failed')
+    return
+  }
+  // Do NOT fulfil here. The webhook is the source of truth — this browser may
+  // close before the promise resolves. Redirect and let the webhook fulfil.
+  navigate(`/orders/${orderId}/confirmation`)
+}
+```
+
+**Never** render an `<input>` for a card number, expiry or security code — not
+even a masked one. A field you render is a field in your PCI scope, and a value
+in your DOM is a value in your error reports and session replays.
+
 ## Server-Side: Checkout Session
 
 ```ts

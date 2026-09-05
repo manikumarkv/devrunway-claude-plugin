@@ -1,5 +1,5 @@
 ---
-name: braintree
+name: braintree-payment
 description: Braintree payment standards — client token, nonce, transaction, vault, webhooks, and sandbox. Load when working with Braintree.
 user-invocable: false
 stack: payment/braintree

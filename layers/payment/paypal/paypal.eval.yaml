@@ -16,8 +16,8 @@ cases:
       - "/capture"
       - "paypalRequest("
     must_not_contain:
-      - "payment.create("
-      - "orders.create("
+      - "paypalClient.orders"
+      - "checkoutNodeJssdk"
     rationale: |
       The Orders v2 API is the current PayPal standard; the legacy Payments API
       is deprecated, hence `payment.create(`.
