@@ -120,6 +120,32 @@ function scheduleRenewal(client: vault.client, leaseDuration: number): void {
   }, renewAt);
 }
 
+## Node.js SDK — Kubernetes Auth (pods)
+
+```typescript
+// src/lib/vaultKubernetes.ts
+import fs from "fs";
+
+const SA_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token";
+
+async function authenticateWithKubernetes(): Promise<vault.client> {
+  const client = vault({ apiVersion: "v1", endpoint: process.env.VAULT_ADDR! });
+
+  // The pod's projected service account token is the credential. Nothing static
+  // is injected, nothing is rotated by hand, and nothing shows up in `ps aux`.
+  const jwt = fs.readFileSync(SA_TOKEN_PATH, "utf8");
+
+  const result = await client.write("auth/kubernetes/login", {
+    role: "myapp-api",
+    jwt,
+  });
+
+  client.token = result.auth.client_token;
+  scheduleRenewal(client, result.auth.lease_duration);
+  return client;
+}
+```
+
 let vaultClient: vault.client | null = null;
 
 export async function getVaultClient(): Promise<vault.client> {
@@ -190,8 +216,8 @@ vault read database/creds/myapp-api
 ```
 
 ```typescript
-// Dynamic credentials — fetch on startup and renew before expiry
-async function getDynamicDbCreds(): Promise<{ username: string; password: string; leaseId: string; leaseDuration: number }> {
+// Dynamic credentials — fetch on startup, then renew the LEASE before expiry
+async function getDynamicDbCreds(): Promise<DbLease> {
   const client = await getVaultClient();
   const result = await client.read("database/creds/myapp-api");
   return {
@@ -199,9 +225,114 @@ async function getDynamicDbCreds(): Promise<{ username: string; password: string
     password: result.data.password,
     leaseId: result.lease_id,
     leaseDuration: result.lease_duration,
+    renewable: result.renewable,
   };
 }
 ```
+
+## Renewing a dynamic credential lease
+
+**A token lease and a secret lease are two different objects.** Renewing the token
+keeps the *client* authenticated. It does nothing for the Postgres role Vault
+created for you: that role has its own `lease_id`, and when its lease ends Vault
+drops the role. The connection pool then fails with an authentication error on a
+service whose Vault token is perfectly healthy — which is why this failure is
+usually diagnosed as anything but a lease.
+
+Renew the credential's own lease against `sys/leases/renew`, using the `lease_id`
+that came back with it. A long-running service runs both loops.
+
+```typescript
+// src/lib/dbCredentials.ts
+import { Pool } from "pg";
+import { getVaultClient } from "./vault";
+
+export interface DbLease {
+  username: string;
+  password: string;
+  leaseId: string;
+  leaseDuration: number;
+  renewable: boolean;
+}
+
+let pool: Pool | null = null;
+
+export async function startDbCredentials(): Promise<Pool> {
+  const lease = await getDynamicDbCreds();
+  pool = buildPool(lease);
+  scheduleLeaseRenewal(lease);
+  return pool;
+}
+
+function scheduleLeaseRenewal(lease: DbLease): void {
+  // 75% of the TTL. Scheduling at the full TTL is scheduling at the moment of
+  // expiry: the renewal request races Vault's revocation, and the loser is the
+  // database role.
+  const renewAt = lease.leaseDuration * 0.75 * 1000;
+
+  setTimeout(async () => {
+    if (!lease.renewable) {
+      // A non-renewable lease can only be replaced.
+      await rotateCredentials(lease);
+      return;
+    }
+    try {
+      const client = await getVaultClient();
+      const renewed = await client.write("sys/leases/renew", {
+        lease_id: lease.leaseId,
+        increment: lease.leaseDuration,
+      });
+      // Vault clamps the increment to max_ttl. Getting back less than you asked
+      // for is the warning that this lease is near the end of its life.
+      scheduleLeaseRenewal({
+        ...lease,
+        leaseDuration: renewed.lease_duration,
+        renewable: renewed.renewable,
+      });
+    } catch (err) {
+      // Log the lease id, never the credentials it stands for.
+      console.warn("Lease renewal failed — issuing fresh credentials", { leaseId: lease.leaseId });
+      await rotateCredentials(lease);
+    }
+  }, renewAt);
+}
+
+// max_ttl is a ceiling no amount of renewal crosses, so every dynamic credential
+// is eventually replaced. The swap is normal operation, not an error path — build
+// it on day one or the service dies at max_ttl on its first long run.
+async function rotateCredentials(old: DbLease): Promise<void> {
+  const next = await getDynamicDbCreds();
+  const previous = pool;
+  pool = buildPool(next);
+  await previous?.end();
+
+  const client = await getVaultClient();
+  await client.write("sys/leases/revoke", { lease_id: old.leaseId });
+
+  scheduleLeaseRenewal(next);
+}
+
+function buildPool(lease: DbLease): Pool {
+  return new Pool({
+    host: process.env.DB_HOST,
+    port: 5432,
+    user: lease.username,
+    password: lease.password,
+    database: "myapp",
+    ssl: { rejectUnauthorized: true },
+  });
+}
+```
+
+```python
+# hvac — same two loops, same distinction
+client.auth.token.renew_self()                     # keeps the CLIENT authenticated
+client.sys.renew_lease(lease_id=lease_id, increment=3600)   # keeps the DB ROLE alive
+client.sys.revoke_lease(lease_id=old_lease_id)     # hand the old role back early
+```
+
+Never write a dynamic credential anywhere it outlives its lease: not to a file, not
+to a `.env`, not into a log line. The whole point is that it expires.
 
 ## Python SDK
 
@@ -274,6 +405,8 @@ template {
 
 - [ ] AppRole `role_id` in config; `secret_id` injected at startup via secure bootstrap
 - [ ] Token renewal loop scheduled at 75% of TTL
+- [ ] Separate lease renewal loop for every dynamic credential, against `sys/leases/renew`
+- [ ] Credential swap path implemented and exercised — `max_ttl` ends every lease
 - [ ] KV v2 enabled (not v1) — supports versioning
 - [ ] Secrets namespaced by service: `secret/data/{service}/{category}`
 - [ ] Explicit HCL policies — no wildcard capabilities
@@ -291,4 +424,8 @@ template {
 | Reading secrets on every request instead of caching | Cache secrets in memory for the duration of the lease; re-fetch only on renewal or startup |
 | Committing Vault tokens or `role_id` / `secret_id` to source control | `role_id` is non-secret (store in config); `secret_id` is secret — inject via CI/CD secret store only |
 | Using the root token in production | The root token is for bootstrapping only; revoke it after setup and use AppRole or Kubernetes auth for all services |
+| Renewing the token and calling it lease renewal | `auth/token/renew-self` keeps the client authenticated; the Postgres role has its own `lease_id` and is renewed against `sys/leases/renew`. Renewing only the token loses the database role at `max_ttl` |
+| No swap path for when a lease can no longer be renewed | `max_ttl` is a hard ceiling; fetch fresh credentials, rebuild the pool, then revoke the old lease |
+| Scheduling renewal at the full `lease_duration` | Renew at 75%; at 100% the renewal races the revocation |
+| Logging the Vault response for dynamic credentials | Log the `lease_id` only — the response body contains a live database password |
 | Not using dynamic database secrets | Static database credentials are long-lived; use the Vault database secrets engine to issue short-lived, per-service credentials |
