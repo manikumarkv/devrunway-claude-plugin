@@ -4,10 +4,18 @@ description: Django standards for views/URLs, ORM, migrations, DRF serializers, 
 user-invocable: false
 stack: backend/python-django
 paths:
-  - "**/*.py"
   - "**/requirements*.txt"
   - "**/manage.py"
   - "**/pyproject.toml"
+  - "**/settings.py"
+  - "**/urls.py"
+  - "**/views.py"
+  - "**/models.py"
+  - "**/admin.py"
+  - "**/serializers.py"
+  - "**/apps.py"
+  - "**/wsgi.py"
+  - "**/asgi.py"
 ---
 
 Full standards in [python-django.md](python-django.md). Always-on summary:

@@ -4,11 +4,13 @@ description: Amazon SES standards for sending email, templates, DKIM/SPF/DMARC s
 user-invocable: false
 stack: email/ses
 paths:
-  - "**/*ses*"
+  - "**/ses.*"
+  - "**/ses-*"
+  - "**/sesClient*"
+  - "**/*-ses*"
+  - "**/*Ses*"
   - "**/*email*"
   - "**/*mailer*"
-  - "**/*.ts"
-  - "**/*.py"
   - "**/cdk/**"
 ---
 

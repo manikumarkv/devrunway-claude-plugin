@@ -9,7 +9,6 @@ paths:
   - "**/*.env*"
   - "**/Dockerfile*"
   - "**/.github/workflows/*.yml"
-  - "**/*.sh"
 ---
 
 Full standards in [doppler.md](doppler.md). Always-on summary:

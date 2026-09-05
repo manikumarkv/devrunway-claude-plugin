@@ -4,14 +4,13 @@ description: RabbitMQ exchanges, queues, durable messages, dead-letter queues, a
 user-invocable: false
 stack: cache-queue/rabbitmq
 paths:
-  - "**/*.ts"
-  - "**/*.js"
-  - "**/*.py"
   - "**/rabbitmq*"
   - "**/amqp*"
   - "**/queue*"
   - "**/consumer*"
   - "**/publisher*"
+  - "**/queues/**"
+  - "**/workers/**"
 ---
 
 Full standards in [rabbitmq.md](rabbitmq.md). Always-on summary:

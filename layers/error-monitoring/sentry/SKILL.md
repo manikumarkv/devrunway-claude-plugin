@@ -6,8 +6,8 @@ stack: error-monitoring/sentry
 paths:
   - "src/lib/sentry*"
   - "sentry.*.config.*"
-  - "**/*.tsx"
-  - "**/*.ts"
+  - "**/*sentry*"
+  - "**/instrumentation.*"
 ---
 
 Full standards in [sentry-monitoring.md](sentry-monitoring.md). Always-on summary:

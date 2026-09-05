@@ -6,11 +6,9 @@ stack: storage/gcs
 paths:
   - "**/*gcs*"
   - "**/*storage*"
-  - "**/*.py"
-  - "**/*.ts"
-  - "**/*.js"
   - "**/cdk/**"
   - "**/*google*"
+  - "**/buckets/**"
 ---
 
 Full standards in [gcs.md](gcs.md). Always-on summary:

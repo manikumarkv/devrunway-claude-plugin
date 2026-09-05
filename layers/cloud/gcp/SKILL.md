@@ -7,9 +7,10 @@ paths:
   - "**/terraform/**"
   - "**/*.tf"
   - "**/cloudbuild.yaml"
-  - "**/*.yaml"
   - "**/*gcp*"
   - "**/*google*"
+  - "**/app.yaml"
+  - "**/cloudbuild.yml"
 ---
 
 Full standards in [gcp.md](gcp.md). Always-on summary:

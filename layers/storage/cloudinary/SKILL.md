@@ -6,9 +6,9 @@ stack: storage/cloudinary
 paths:
   - "**/*cloudinary*"
   - "**/upload*"
-  - "**/*.tsx"
-  - "**/*.ts"
-  - "**/*.js"
+  - "**/uploads/**"
+  - "**/media/**"
+  - "**/*Cloudinary*"
 ---
 
 Full standards in [cloudinary.md](cloudinary.md). Always-on summary:

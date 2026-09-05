@@ -90,6 +90,25 @@ if '/layers/' in path.replace('\\', '/') or path.startswith('layers/'):
     if 'paths' not in d and d.get('user-invocable') is not True:
         print(f"⚠️  {path}: background layer has no `paths:` — stack-dispatcher "
               f"cannot route it, so it will never load. Add globs, or set user-invocable: true.")
+
+    # Catch-all globs: a pattern constrained only by file extension, anywhere in
+    # the tree. stack-dispatcher takes at most 5 layers per dispatch, so these
+    # crowd out the layer the file was actually about. See ADR 0001 and the
+    # "Glob scope" rule in CONTRIBUTING.md. Warn only — a language or format
+    # layer (typescript-patterns on **/*.ts, sketch on **/*.sketch) is a
+    # legitimate exception, and this script cannot tell which is which.
+    catchall_re = re.compile(r'^(?:\*\*/)?\*(?:\.[A-Za-z0-9]+)?$')
+    paths = d.get('paths')
+    if isinstance(paths, list):
+        offenders = [str(x) for x in paths if catchall_re.match(str(x))]
+        if offenders:
+            print(f"⚠️  {path}: catch-all glob(s) {', '.join(offenders)} — constrained only "
+                  f"by extension, so they match that file type anywhere in any project. This "
+                  f"layer then competes for one of stack-dispatcher's 5 slots on every such "
+                  f"file and displaces more specific layers. Scope by "
+                  f"directory or filename instead. Ignore this only if the layer's subject "
+                  f"IS that file format. Do not over-narrow: a layer that matches nothing "
+                  f"never loads and nothing reports it.")
 PY
 
 exit 0

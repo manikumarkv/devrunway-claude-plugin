@@ -7,8 +7,11 @@ paths:
   - "k8s/**"
   - "kubernetes/**"
   - "helm/**"
-  - "**/*.yaml"
-  - "**/*.yml"
+  - "**/manifests/**"
+  - "**/kustomization.yaml"
+  - "**/Chart.yaml"
+  - "**/values*.yaml"
+  - "**/*.k8s.yaml"
 ---
 
 Full standards in [kubernetes.md](kubernetes.md). Always-on summary:

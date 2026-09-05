@@ -109,6 +109,36 @@ The companion `.md` file is the full standards document. It should cover:
 
 Length guide: 200–600 lines. Enough to be authoritative, short enough to fit in context.
 
+### Glob scope — no catch-all patterns
+
+`paths:` globs are the *only* signal `stack-dispatcher` has. It matches them against the files being edited and takes **at most five layers**, ranked by specificity. So a glob like `**/*.ts` does not merely describe your layer — it enters your layer into a bidding war on every TypeScript file in every project, and pushes out the layer that file was actually about.
+
+A **catch-all** is a glob whose only constraint is a file extension, free-floating anywhere in the tree: `**/*.ts`, `**/*.tsx`, `**/*.js`, `**/*.py`, `**/*.vue`, `**/*.yaml`, `*.md`, `**/*`. Do not add one. Scope by directory or filename instead — the places that technology's code actually lives.
+
+```yaml
+# ✗ Before — Vault bids for a slot on every TS/JS/Python file in the repo
+paths:
+  - "**/*.ts"
+  - "**/*.js"
+  - "**/*.py"
+  - "**/vault*"
+  - "**/*secrets*"
+
+# ✓ After — Vault loads where secrets handling actually lives
+paths:
+  - "**/vault*"
+  - "**/vault/**"
+  - "**/*secrets*"
+  - "**/secrets/**"
+  - "**/policies/*.hcl"
+```
+
+**The one exception:** a layer whose subject *is* that file format may claim it. `typescript-patterns` claims `**/*.ts`, `react-standards` claims `**/*.tsx`, `sketch` claims `**/*.sketch`. The test is whether the extension identifies the technology. `.sketch` files only exist in Sketch projects; `.ts` files exist in every TypeScript project whether or not it uses your library. If your layer is a *library or service* that merely happens to be written in a language, the language's extension is not yours to claim.
+
+**Do not over-correct.** A layer that matches nothing fails silently — it never loads, and nothing reports it, the same invisible failure class as the `-maxdepth` bug described in [ADR 0001](docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md). Before narrowing, write down the filenames a real project using this technology would actually have, and check each one still matches. Watch for prefix collisions in particular — `**/use*.ts` also matches `user.repository.ts`, and `**/*ses*` also matches `session.ts`. If you cannot find a defensible narrow glob, **leave the broad one in place** and say so in the PR: a layer that loads too often is a nuisance, a layer that never loads is a silent hole.
+
+Shared globs are a separate matter — see ADR 0001. When your layer competes with a sibling in the same category, **add** vendor-specific globs alongside the shared one and open the body with a scope line. Never strip a shared glob to win the collision.
+
 ### Eval files
 
 If you add a `.eval.yaml`, its `skill_files:` must list **both** the `SKILL.md` and the companion detail `.md`. `layer-consultant` loads the detail file at runtime, so an eval listing only `SKILL.md` validates rules the runtime never reads. This was true of 95 of the first 100 eval files and hid at least one real contradiction between a `SKILL.md` and its detail file.
@@ -161,6 +191,8 @@ A layer PR will be merged when:
 
 - [ ] `SKILL.md` has all required frontmatter fields
 - [ ] `paths:` globs correctly match the tech's file types
+- [ ] No catch-all glob (`**/*.ts`-class) unless the layer's subject *is* that file format
+- [ ] Each glob was checked against realistic filenames, so the layer is not silently unroutable
 - [ ] Standards are concrete and actionable (Claude can follow them without guessing)
 - [ ] No duplicate content with `core/` (core covers universal principles; layers cover tech-specific implementation)
 - [ ] Anti-patterns section explains *why*, not just *what*

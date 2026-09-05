@@ -4,10 +4,11 @@ description: Tailwind CSS v3 conventions — class ordering, responsive design, 
 user-invocable: false
 stack: css/tailwind
 paths:
-  - "**/*.tsx"
-  - "**/*.jsx"
-  - "**/*.html"
   - "tailwind.config.*"
+  - "postcss.config.*"
+  - "**/globals.css"
+  - "**/tailwind.css"
+  - "**/index.css"
 ---
 
 Full standards in [tailwind-css.md](tailwind-css.md). Always-on summary:

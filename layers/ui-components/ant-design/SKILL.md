@@ -4,10 +4,9 @@ description: Ant Design standards — ConfigProvider, theme tokens, Form with Fo
 user-invocable: false
 stack: ui-components/ant-design
 paths:
-  - "**/*.tsx"
-  - "**/*.ts"
   - "**/*antd*"
   - "**/*ant-design*"
+  - "**/antd/**"
 ---
 
 Full standards in [ant-design.md](ant-design.md). Always-on summary:

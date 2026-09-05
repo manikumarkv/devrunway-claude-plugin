@@ -4,9 +4,10 @@ description: Bootstrap 5 standards — utility classes, component customisation,
 user-invocable: false
 stack: css/bootstrap
 paths:
-  - "**/*.scss"
   - "**/bootstrap*"
   - "**/custom.scss"
+  - "**/_variables.scss"
+  - "**/_bootstrap*.scss"
 ---
 
 Full standards in [bootstrap.md](bootstrap.md). Always-on summary:
