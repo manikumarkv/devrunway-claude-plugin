@@ -4,9 +4,6 @@ description: Bugsnag — init, breadcrumbs, error groups, severity, source maps,
 user-invocable: false
 stack: error-monitoring/bugsnag
 paths:
-  - "**/*.ts"
-  - "**/*.tsx"
-  - "**/*.js"
   - "**/bugsnag*"
   - "**/error-boundary*"
   - "**/*monitoring*"

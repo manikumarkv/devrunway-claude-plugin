@@ -4,12 +4,11 @@ description: HashiCorp Vault — static/dynamic secrets, AppRole auth, KV v2, No
 user-invocable: false
 stack: secrets/vault
 paths:
-  - "**/*.ts"
-  - "**/*.js"
-  - "**/*.py"
-  - "**/*.hcl"
   - "**/vault*"
   - "**/*secrets*"
+  - "**/vault/**"
+  - "**/secrets/**"
+  - "**/policies/*.hcl"
 ---
 
 Full standards in [vault.md](vault.md). Always-on summary:

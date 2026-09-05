@@ -4,12 +4,12 @@ description: styled-components standards — ThemeProvider, styled function, css
 user-invocable: false
 stack: css/styled-components
 paths:
-  - "**/*.tsx"
-  - "**/*.ts"
-  - "**/*.jsx"
-  - "**/*.js"
   - "**/*styled*"
   - "**/*theme*"
+  - "**/*.styles.ts"
+  - "**/*.styles.tsx"
+  - "**/styles/**"
+  - "**/*Styled*"
 ---
 
 Full standards in [styled-components.md](styled-components.md). Always-on summary:

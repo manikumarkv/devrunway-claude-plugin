@@ -4,10 +4,12 @@ description: OpenAPI spec generation with FastAPI and Pydantic models
 user-invocable: false
 stack: api-docs/openapi-fastapi
 paths:
-  - "**/*.py"
   - "**/main.py"
   - "**/routers/*.py"
   - "**/schemas/*.py"
+  - "**/dependencies.py"
+  - "**/api/**/*.py"
+  - "**/openapi*"
 ---
 
 Full standards in [openapi-fastapi.md](openapi-fastapi.md). Always-on summary:

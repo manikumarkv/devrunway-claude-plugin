@@ -4,11 +4,11 @@ description: AWS Secrets Manager standards for boto3 client, in-process caching,
 user-invocable: false
 stack: secrets/aws-secrets-manager
 paths:
-  - "**/*.py"
-  - "**/*.ts"
-  - "**/*.js"
   - "**/cdk/**"
   - "**/*secrets*"
+  - "**/secrets/**"
+  - "**/*secretsmanager*"
+  - "**/*Secret*"
 ---
 
 Full standards in [aws-secrets-manager.md](aws-secrets-manager.md). Always-on summary:

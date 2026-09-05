@@ -9,7 +9,8 @@ mcp:
     GITHUB_PERSONAL_ACCESS_TOKEN: "github.com → Settings → Developer settings → Personal access tokens → Fine-grained → Create"
 paths:
   - ".github/**"
-  - "*.md"
+  - "**/CODEOWNERS"
+  - "**/PULL_REQUEST_TEMPLATE*"
 ---
 
 Full standards in [github-projects.md](github-projects.md). Always-on summary:

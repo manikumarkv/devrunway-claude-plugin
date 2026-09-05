@@ -4,12 +4,11 @@ description: AWS AppConfig — feature flag configuration, deployment strategy, 
 user-invocable: false
 stack: feature-flags/aws-appconfig
 paths:
-  - "**/*.ts"
-  - "**/*.js"
-  - "**/*.py"
   - "**/*appconfig*"
   - "**/*feature-flag*"
   - "**/*featureFlag*"
+  - "**/flags/**"
+  - "**/*appConfig*"
 ---
 
 Full standards in [aws-appconfig.md](aws-appconfig.md). Always-on summary:

@@ -4,10 +4,13 @@ description: FastAPI standards for async endpoints, Pydantic models, dependency 
 user-invocable: false
 stack: backend/python-fastapi
 paths:
-  - "**/*.py"
   - "**/requirements*.txt"
   - "**/pyproject.toml"
   - "**/Pipfile"
+  - "**/main.py"
+  - "**/routers/**"
+  - "**/dependencies.py"
+  - "**/api/**/*.py"
 ---
 
 Full standards in [python-fastapi.md](python-fastapi.md). Always-on summary:

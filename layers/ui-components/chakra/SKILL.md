@@ -4,10 +4,10 @@ description: Chakra UI standards — ChakraProvider, useColorMode, custom theme,
 user-invocable: false
 stack: ui-components/chakra
 paths:
-  - "**/*.tsx"
-  - "**/*.ts"
   - "**/*chakra*"
   - "**/*theme*"
+  - "**/theme/**"
+  - "**/*Chakra*"
 ---
 
 Full standards in [chakra.md](chakra.md). Always-on summary:

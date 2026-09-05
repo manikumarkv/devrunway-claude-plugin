@@ -6,7 +6,6 @@ stack: i18n/vue-i18n
 paths:
   - "**/i18n/**"
   - "**/locales/**"
-  - "**/*.vue"
   - "**/vue-i18n/**"
 ---
 

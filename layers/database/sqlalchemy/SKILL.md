@@ -4,11 +4,13 @@ description: SQLAlchemy 2.0 — declarative models, async session, Alembic migra
 user-invocable: false
 stack: database/sqlalchemy
 paths:
-  - "**/*.py"
   - "**/models/**"
   - "**/repositories/**"
   - "**/alembic/**"
   - "**/alembic.ini"
+  - "**/database.py"
+  - "**/db.py"
+  - "**/session.py"
 ---
 
 Full standards in [sqlalchemy.md](sqlalchemy.md). Always-on summary:

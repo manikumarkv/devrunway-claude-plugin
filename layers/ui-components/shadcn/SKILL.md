@@ -6,7 +6,8 @@ stack: ui-components/shadcn
 paths:
   - "src/components/ui/**"
   - "components/ui/**"
-  - "**/*.tsx"
+  - "components.json"
+  - "**/lib/utils.ts"
 ---
 
 Full standards in [shadcn-ui.md](shadcn-ui.md). Always-on summary:

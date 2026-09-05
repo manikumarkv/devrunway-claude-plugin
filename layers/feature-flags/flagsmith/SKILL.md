@@ -4,11 +4,9 @@ description: Flagsmith — SDK setup, remote evaluation, traits, segments, React
 user-invocable: false
 stack: feature-flags/flagsmith
 paths:
-  - "**/*.ts"
-  - "**/*.tsx"
-  - "**/*.js"
   - "**/*flagsmith*"
   - "**/*feature-flag*"
+  - "**/flags/**"
 ---
 
 Full standards in [flagsmith.md](flagsmith.md). Always-on summary:

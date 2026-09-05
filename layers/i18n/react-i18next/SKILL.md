@@ -6,8 +6,9 @@ stack: i18n/react-i18next
 paths:
   - "src/i18n/**"
   - "public/locales/**"
-  - "**/*.tsx"
-  - "**/*.ts"
+  - "**/i18n/**"
+  - "**/locales/**"
+  - "**/*i18n*"
 ---
 
 Full standards in [react-i18next.md](react-i18next.md). Always-on summary:

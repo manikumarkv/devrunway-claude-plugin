@@ -4,12 +4,12 @@ description: Azure Active Directory (Entra ID) auth with MSAL, JWT validation, a
 user-invocable: false
 stack: auth/azure-ad
 paths:
-  - "**/*.ts"
-  - "**/*.tsx"
-  - "**/*.py"
   - "**/auth/**"
   - "**/msal*"
   - "**/*azure-ad*"
+  - "**/authConfig.*"
+  - "**/*msal*"
+  - "**/*entra*"
 ---
 
 Full standards in [azure-ad.md](azure-ad.md). Always-on summary:

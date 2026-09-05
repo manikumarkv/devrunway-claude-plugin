@@ -6,7 +6,7 @@ stack: frontend/react
 paths:
   - "**/*.tsx"
   - "**/*.jsx"
-  - "src/**/*.ts"
+  - "**/hooks/**"
 ---
 
 Full rules in [react.md](react.md). Always-on summary:
