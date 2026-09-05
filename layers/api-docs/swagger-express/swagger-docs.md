@@ -2,6 +2,20 @@
 
 ---
 
+## Approach: generate from code, never hand-write the spec
+
+Use `@asteasolutions/zod-to-openapi` to derive OpenAPI schemas directly from the Zod schemas already used for request validation. Docs and implementation then stay in sync by construction — a hand-written YAML or JSON spec drifts from the schemas that actually validate requests.
+
+Two conventions are fixed across projects so that generated specs, Bruno/Postman imports and generated clients all agree:
+
+| Decision | Canonical value | Not |
+|---|---|---|
+| Spec assembly module | `src/docs/openapi.ts` exporting `buildOpenApiSpec()` | `src/lib/openapi.ts` / `generateOpenAPIDocument()` |
+| Swagger UI mount path | `/api-docs` | `/api/docs` |
+| Raw spec endpoint | `GET /api-docs/spec.json` | `/api/docs.json` |
+
+---
+
 ## Package installation
 
 ```bash
@@ -432,6 +446,68 @@ Use `openapi.json` for:
 
 ---
 
+## Every endpoint must document
+
+| Field | Required | Notes |
+|---|---|---|
+| `summary` | Yes | One-line verb phrase — "List orders", "Create order" |
+| `description` | Recommended | When behaviour, business rules or side effects aren't obvious |
+| `tags` | Yes | Groups the endpoint in Swagger UI by domain |
+| `security` | Yes | `[{ bearerAuth: [] }]` for protected routes; omit only for explicitly public endpoints |
+| `request.params` / `request.query` | If applicable | Every path/query param typed, with `.openapi({ example })` |
+| `request.body` | Yes | For POST/PUT/PATCH — a named `$ref` schema, never inline |
+| Response 200/201 | Yes | Success shape, wrapped in the success envelope |
+| Response 204 | If applicable | Delete — no body |
+| Response 400 | Yes | Zod validation failure |
+| Response 401 | Yes | Auth required |
+| Response 403 | If applicable | Authorization (wrong role/group) |
+| Response 404 | If applicable | Resource not found |
+| Response 409 / 422 | If applicable | Conflict / unprocessable (e.g. invalid status transition) |
+| Response 500 | Yes | Generic server error |
+
+Every documented response shape must be the shape the handler actually returns. A response documented as `Order` but returned as `{ order: Order }` is worse than no documentation — consumers generate clients from it.
+
+---
+
+## Legacy projects — swagger-jsdoc annotations
+
+New work never uses `swagger-jsdoc`; the spec is code-generated from Zod. Some inherited codebases still document routes with `@swagger` JSDoc blocks. When working in one of those, keep the existing convention rather than mixing two sources of truth in the same service:
+
+```ts
+/**
+ * @swagger
+ * /products:
+ *   get:
+ *     summary: List products
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Product list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProductListResponse'
+ *       401:
+ *         description: Not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/products', asyncHandler(listProducts))
+```
+
+Rules that still apply in legacy mode:
+
+- Every reusable type is defined once under `components:` and referenced with `$ref:` — never inline `type: object` in a route annotation
+- The annotation lives directly above the route handler it documents, so the two move together
+- The same response-code coverage as the table above
+- Migrating a service off `swagger-jsdoc` is a whole-service change, not a per-route one
+
+---
+
 ## Documentation quality checklist
 
 Before merging a new endpoint:
@@ -485,4 +561,29 @@ router.post('/orders', asyncHandler(createOrder))  // no registry.registerPath()
 // ✅ — every route has a matching docs entry
 // (docs/routes/orders.docs.ts loaded in docs/index.ts)
 router.post('/orders', asyncHandler(createOrder))
+
+// ❌ — z.any() in a documented schema: generates an empty schema, documents nothing
+const payloadSchema = z.object({ metadata: z.any() })
+
+// ✅ — document the actual shape
+const payloadSchema = z.object({ metadata: z.record(z.string()) })
 ```
+
+---
+
+## Common mistakes
+
+| Mistake | Fix |
+|---|---|
+| Hand-writing `openapi.yaml` alongside Zod validators | Generate the spec from the Zod schemas — `registry.register()` + `registry.registerPath()` |
+| Declaring the OpenAPI version as `openapi: '3.0.0'` | `OpenApiGeneratorV31` with `openapi: '3.1.0'` — the layer targets 3.1 |
+| Inline `type: object` schemas in route docs | Register a named schema and `$ref` it, so it is reusable and appears under `components:` |
+| Mounting Swagger UI at `/api/docs` or exporting `/api/docs.json` | Mount at `/api-docs`, serve the raw spec at `/api-docs/spec.json` |
+| Calling the assembly function `generateOpenAPIDocument()` in `src/lib/openapi.ts` | `buildOpenApiSpec()` in `src/docs/openapi.ts` — schemas live under `src/docs/schemas/` |
+| Serving Swagger UI unconditionally | Gate on `process.env.NODE_ENV !== 'production'` |
+| Documenting only the success response | Document every realistic error code — minimum success + 400 + 401 + 404 + 500 |
+| Error responses documented as a bare `{ error: { message } }` | Use the shared `errorResponseSchema` — `{ success: false, error, meta }`, matching `api-conventions` |
+| `z.any()` on a field so the schema "just works" | Document the real shape; `z.any()` produces an empty, useless schema |
+| Mixing `swagger-jsdoc` annotations into a code-generated service | One source of truth per service — code-generated for new work, `@swagger` blocks only in legacy services |
+| Forgetting to import `src/docs` before building the spec | `import './docs'` in `app.ts` — `registerPath()` calls only run when the doc modules are loaded |
+| Committing a stale `openapi.json` | Regenerate with `npm run docs:export` as part of the change that touched the route |

@@ -1,43 +1,72 @@
 skill: swagger-docs
 skill_files:
-  - layers/api-docs/swagger-express/swagger-docs/SKILL.md
-  - layers/api-docs/swagger-express/swagger-docs/swagger-docs.md
+  - layers/api-docs/swagger-express/SKILL.md
+  - layers/api-docs/swagger-express/swagger-docs.md
 version: 1
 
 cases:
   - id: swagger-01
-    name: "JSDoc @swagger annotations not manual JSON"
+    name: "Legacy swagger-jsdoc service uses @swagger annotations, not a hand-written spec"
     scenario: |
-      Write an Express GET /products route with Swagger documentation.
+      This service is a legacy codebase that documents its routes with
+      swagger-jsdoc annotations rather than the code-generated spec.
+      Write an Express GET /products route with its Swagger documentation.
       Use the swagger-docs skill rules.
     must_contain:
       - "@swagger"
     must_not_contain:
       - "openapi: '3.0'"
     rationale: |
-      JSDoc @swagger annotations keep documentation co-located with routes.
-      Hardcoded JSON spec files diverge from the actual implementation.
+      In a legacy swagger-jsdoc service the annotation stays co-located with the
+      route handler, so the two move together. A hand-written spec file — and
+      especially one pinned to OpenAPI 3.0 when this layer targets 3.1 —
+      diverges from the implementation.
 
   - id: swagger-02
-    name: "swaggerUi.serve and swaggerUi.setup mounted correctly"
+    name: "swaggerUi.serve and swaggerUi.setup mounted, gated out of production"
     scenario: |
       Write the Express app setup that mounts Swagger UI at /api-docs.
       Use the swagger-docs skill rules.
     must_contain:
       - "swaggerUi.serve"
       - "swaggerUi.setup("
+      - "NODE_ENV"
     rationale: |
-      Both serve (static files) and setup (spec configuration) must be
-      mounted for the Swagger UI to render correctly.
+      Both serve (static files) and setup (spec configuration) must be mounted
+      for the Swagger UI to render correctly, and the mount must be gated behind
+      NODE_ENV !== 'production' — an unauthenticated docs UI in production
+      publishes the whole API surface.
 
   - id: swagger-03
-    name: "Schemas use $ref to reusable components"
+    name: "Legacy annotations use $ref to reusable components"
     scenario: |
-      Write a Swagger annotation for an endpoint that returns a User object.
-      Reference the schema from components. Use the swagger-docs skill rules.
+      This service is a legacy codebase documented with swagger-jsdoc
+      annotations. Write the documentation for an endpoint that returns a User
+      object: show both the components: section that defines the User schema and
+      the route annotation that references it. Use the swagger-docs skill rules.
     must_contain:
       - "$ref:"
       - "components:"
     rationale: |
-      Reusable schemas via $ref prevent duplication and keep the spec DRY.
-      Inline schemas repeated across routes diverge over time.
+      Reusable schemas defined once under components: and referenced via $ref
+      prevent duplication and keep the spec DRY. Inline schemas repeated across
+      routes diverge over time.
+
+  - id: swagger-04
+    name: "New work registers the path in code — no JSDoc annotations, no z.any()"
+    scenario: |
+      Document a new Express POST /api/v1/orders endpoint for a project that
+      generates its OpenAPI spec from Zod schemas. Include the request body and
+      the response codes. Use the swagger-docs skill rules.
+    must_contain:
+      - "registry.registerPath("
+      - "bearerAuth"
+    must_not_contain:
+      - "@swagger"
+      - "z.any()"
+    rationale: |
+      New work derives the spec from the Zod validators via
+      registry.registerPath(), so validation and documentation cannot drift, and
+      declares the bearerAuth security scheme on protected routes. A @swagger
+      JSDoc block would introduce a second source of truth, and z.any() emits an
+      empty schema that documents nothing.
