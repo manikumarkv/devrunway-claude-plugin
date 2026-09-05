@@ -17,6 +17,16 @@ Read each `.eval.yaml` file passed by `/eval`. Extract:
 - `skill_files` — files to load as context
 - `cases` — list of eval cases
 
+**Refuse any path containing `/.claude/`.** Git worktrees under `.claude/worktrees/`
+hold a full copy of the tree for every checked-out branch, so those files carry the
+same names and the same `skill:` identifiers as the real ones while containing a
+different branch's guidance. Scoring them reports a result for code that is not on
+the current branch, with nothing in the output revealing it. Report such a path as
+an error instead of scoring it.
+
+If you discover files yourself rather than receiving a list, search
+`layers skills agents` — never bare `find .`, which descends into those worktrees.
+
 ---
 
 ## Step 2 — For each skill, run cases
