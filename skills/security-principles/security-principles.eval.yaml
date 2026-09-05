@@ -1,0 +1,117 @@
+skill: security-principles
+skill_files:
+  - skills/security-principles/SKILL.md
+  - skills/security-principles/security-principles.md
+version: 1
+
+cases:
+  - id: sec-01
+    name: "Ownership is checked in the service layer, actor comes from the token"
+    scenario: |
+      Write an Express service method `updateOrder(orderId, patch, actor)` that
+      updates an order. `actor` is the authenticated caller, already derived from
+      a verified token. Orders have an `ownerId` field. Apply the
+      security-principles skill rules.
+    must_contain:
+      - "ownerId"
+      - "actor"
+    must_not_contain:
+      - "req.body.userId"
+      - "req.headers['x-user-id']"
+    rationale: |
+      Authentication is not authorization: the method must compare the record's
+      ownerId against the authenticated actor before mutating. The negative
+      assertions catch the actor being read from client-controlled input, which
+      the skill names as trivially impersonated. Both negatives are literal
+      client-input reads that cannot appear in a compliant answer.
+
+  - id: sec-02
+    name: "SQL is parameterised, never interpolated"
+    scenario: |
+      Write a node-postgres repository function `findOrderById(id)` that selects
+      a single order row by its id. Apply the security-principles skill rules.
+    must_contain:
+      - "$1"
+    must_not_contain:
+      - "${id}"
+    rationale: |
+      String interpolation into SQL is a BLOCKER in the skill. A compliant answer
+      uses a placeholder and passes values separately, so "$1" must appear and
+      the interpolation "${id}" cannot. Neither string can appear in the opposite
+      case, so this cannot pass vacuously.
+
+  - id: sec-03
+    name: "JWTs are verified, not decoded, and issuer claims are checked"
+    scenario: |
+      Write Express middleware `requireAuth` that authenticates a request
+      carrying a JWT in the Authorization header. Apply the security-principles
+      skill rules.
+    must_contain:
+      - "aud"
+      - "iss"
+    must_not_contain:
+      - "jwt.decode("
+    rationale: |
+      The skill requires cryptographic verification plus checks on exp, iss and
+      aud — a correctly signed token from another application is still invalid.
+      "jwt.decode(" is the exact anti-pattern named in the skill and reads
+      attacker-controlled JSON without checking a signature; it cannot appear in
+      a compliant answer.
+
+      No assertion is made on the word "verify": assertions are case-sensitive,
+      and jose's `jwtVerify` contains "Verify", so asserting "verify" would fail
+      a compliant answer. "aud" and "iss" survive either style — they appear as
+      raw claim names, and inside jose's `audience:` / `issuer:` options.
+
+  - id: sec-04
+    name: "Error responses do not leak internals"
+    scenario: |
+      Write the centralised Express error-handling middleware that returns a 500
+      response for an unexpected error. Apply the security-principles skill rules.
+    must_contain:
+      - "500"
+    must_not_contain:
+      - "err.stack"
+      - "error.stack"
+    rationale: |
+      The skill forbids stack traces, SQL fragments and internal paths crossing
+      the boundary — detail is logged server-side and the caller receives a
+      reference. Both negatives are the literal expressions used to put a stack
+      trace into a response body, and a compliant handler logs rather than
+      returns them.
+
+  - id: sec-05
+    name: "Authentication failures do not enumerate accounts"
+    scenario: |
+      Write the Express login handler's failure path for two cases: the email
+      does not exist, and the email exists but the password is wrong. Apply the
+      security-principles skill rules.
+    must_contain:
+      - "401"
+    must_not_contain:
+      - "User not found"
+      - "No account with that email"
+    rationale: |
+      The skill requires an identical response for "wrong password" and "no such
+      user", because divergent responses enumerate accounts. The negatives are
+      distinct user-facing strings that only appear when the two cases are
+      answered differently. No assertion is made on the exact generic wording,
+      since several phrasings are equally compliant.
+
+  - id: sec-06
+    name: "Secrets are read from the environment, never committed"
+    scenario: |
+      Write the configuration module that supplies the database connection
+      string and the Stripe secret key to the rest of a Node application. Apply
+      the security-principles skill rules.
+    must_contain:
+      - "process.env"
+    must_not_contain:
+      - "sk_live_"
+      - "postgres://postgres:postgres@"
+    rationale: |
+      The skill forbids any credential or connection string in source. A
+      compliant module reads from the environment, so "process.env" must appear.
+      The negatives are a literal live Stripe key prefix and a literal inline
+      credential in a connection string — both are hardcoded secrets and cannot
+      appear in a compliant answer.
