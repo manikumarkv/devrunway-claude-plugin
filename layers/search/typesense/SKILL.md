@@ -11,6 +11,9 @@ paths:
 
 Full standards in [typesense.md](typesense.md). Always-on summary:
 
+> **Scope — applies only if this project uses typesense.** This layer shares `**/search/**` with `algolia`, `elasticsearch` in `layers/search/`, so more than one may load at once and their rules conflict. If the project is not using typesense, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Collection schema:**
 - Create with `client.collections().create({ name: 'products', fields: [...] })` — always define `fields:` explicitly
 - Define fields with explicit `type` and `facet: true` where you need aggregation filters

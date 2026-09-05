@@ -11,6 +11,9 @@ paths:
 
 Full standards in [zod-validation.md](zod-validation.md). Always-on summary:
 
+> **Scope — applies only if this project uses zod.** This layer shares `**/*.schema.ts` with `joi`, `valibot`, `yup` in `layers/validation/`, so more than one may load at once and their rules conflict. If the project is not using zod, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Types:**
 - `z.infer<typeof Schema>` for all TypeScript types — never write them manually
 - `.brand()` for nominal types: `UserId`, `OrderId` etc.

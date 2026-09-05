@@ -11,6 +11,9 @@ paths:
 
 Full standards in [sqs.md](sqs.md). Always-on summary:
 
+> **Scope — applies only if this project uses sqs.** This layer shares `**/queues/**`, `**/workers/**` with `bullmq` in `layers/cache-queue/`, so more than one may load at once and their rules conflict. If the project is not using sqs, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Queue types:**
 - Standard queue: at-least-once delivery, best-effort ordering — for most async workloads
 - FIFO queue: exactly-once, strict ordering — for financial transactions, inventory updates

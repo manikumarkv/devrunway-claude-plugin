@@ -12,6 +12,9 @@ paths:
 
 Full standards in [ladle.md](ladle.md). Always-on summary:
 
+> **Scope — applies only if this project uses ladle.** This layer shares `**/*.stories.ts`, `**/*.stories.tsx` with `storybook` in `layers/component-docs/`, so more than one may load at once and their rules conflict. If the project is not using ladle, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Story format (CSF):**
 - Export a `meta` object as default with `{ title: 'Category/ComponentName' }`
 - Each named export is a story: `export const Default: Story = { args: { label: 'Click me' } }`

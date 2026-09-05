@@ -10,6 +10,9 @@ paths:
 
 Full standards in [linear.md](linear.md). Always-on summary:
 
+> **Scope — applies only if this project uses linear.** This layer shares `.mcp.json` with `gitlab`, `jira` in `layers/project-management/`, so more than one may load at once and their rules conflict. If the project is not using linear, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Issue conventions:**
 - Title: imperative verb phrase — "Add promo code support to checkout" (not "Promo code")
 - Priority: `Urgent` for blocking production, `High` for current cycle goals, `Medium` for planned, `No priority` for backlog ideas

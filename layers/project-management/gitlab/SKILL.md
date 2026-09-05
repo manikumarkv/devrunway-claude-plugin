@@ -12,6 +12,9 @@ paths:
 
 Full standards in [gitlab-issues.md](gitlab-issues.md). Always-on summary:
 
+> **Scope — applies only if this project uses gitlab.** This layer shares `.mcp.json` with `jira`, `linear` in `layers/project-management/`, so more than one may load at once and their rules conflict. If the project is not using gitlab, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Issue conventions:**
 - Title: imperative — "Add promo code to checkout" (not "promo code support")
 - Description uses the appropriate template under `.gitlab/issue_templates/` — never submit a blank issue

@@ -13,6 +13,9 @@ paths:
 
 Full standards in [aws-secrets-manager.md](aws-secrets-manager.md). Always-on summary:
 
+> **Scope — applies only if this project uses aws-secrets-manager.** This layer shares `**/*secrets*` with `vault` in `layers/secrets/`, so more than one may load at once and their rules conflict. If the project is not using aws-secrets-manager, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Retrieval:**
 - Use `SecretsManagerClient` (AWS SDK v3) with `GetSecretValueCommand({ SecretId: secretArn })`
 - Always cache secret values in memory with a TTL (default 5 min) — never call `GetSecretValue` on every request

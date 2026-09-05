@@ -11,6 +11,9 @@ paths:
 
 Full standards in [algolia.md](algolia.md). Always-on summary:
 
+> **Scope — applies only if this project uses algolia.** This layer shares `**/search/**` with `elasticsearch`, `typesense` in `layers/search/`, so more than one may load at once and their rules conflict. If the project is not using algolia, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Keys and security:**
 - Never expose the Admin API Key in the browser — server-side only
 - Use the Search API Key for client-side queries (read-only by default)

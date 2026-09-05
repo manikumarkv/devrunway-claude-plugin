@@ -11,6 +11,9 @@ paths:
 
 Full standards in [resend.md](resend.md). Always-on summary:
 
+> **Scope — applies only if this project uses resend.** This layer shares `**/email/**` with `sendgrid` in `layers/email/`, so more than one may load at once and their rules conflict. If the project is not using resend, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Setup:**
 - Instantiate once server-side: `new Resend(process.env.RESEND_API_KEY)` — never in frontend code, never per-request
 - `from` address must be a verified domain: `from: 'noreply@yourdomain.com'` format

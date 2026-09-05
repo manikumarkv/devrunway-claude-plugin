@@ -12,6 +12,9 @@ paths:
 
 Full standards in [python-fastapi.md](python-fastapi.md). Always-on summary:
 
+> **Scope — applies only if this project uses python-fastapi.** This layer shares `**/pyproject.toml`, `**/requirements*.txt` with `python-django` in `layers/backend/`, so more than one may load at once and their rules conflict. If the project is not using python-fastapi, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Routing and structure:**
 - Use `APIRouter` with `prefix="/users"` (explicit `prefix=`) and `tags`; mount routers in `main.py` with `app.include_router()`
 - Return typed response models via `response_model=` — never return raw dicts from endpoints

@@ -12,6 +12,9 @@ paths:
 
 Full standards in [local-dev.md](local-dev.md). Always-on summary:
 
+> **Scope — applies only if this project uses github-actions.** This layer shares `.github/workflows/**` with `neon-branching` in `layers/ci/`, so more than one may load at once and their rules conflict. If the project is not using github-actions, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Local stack runs via Docker Compose:**
 - PostgreSQL 16 on port 5432
 - DynamoDB Local on port 8000

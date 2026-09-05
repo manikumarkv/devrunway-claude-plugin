@@ -14,6 +14,9 @@ paths:
 
 Full standards in [vault.md](vault.md). Always-on summary:
 
+> **Scope — applies only if this project uses vault.** This layer shares `**/*secrets*` with `aws-secrets-manager` in `layers/secrets/`, so more than one may load at once and their rules conflict. If the project is not using vault, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Authentication:**
 - Use AppRole for machine-to-machine auth (CI, services) — never use root token or dev tokens in production
 - Use Kubernetes auth method for pods in Kubernetes — call `kubernetes/login` with the pod's service account token to obtain a short-lived Vault token

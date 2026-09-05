@@ -12,6 +12,9 @@ paths:
 
 Full standards in [storybook.md](storybook.md). Always-on summary:
 
+> **Scope — applies only if this project uses storybook.** This layer shares `**/*.stories.ts`, `**/*.stories.tsx` with `ladle` in `layers/component-docs/`, so more than one may load at once and their rules conflict. If the project is not using storybook, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Story format (CSF3):**
 - Use Component Story Format 3 (CSF3) — `const Story: Story = { args: { ... } }` not function components
 - Export `default` as `Meta<typeof Component>` — Storybook infers arg types from TypeScript props

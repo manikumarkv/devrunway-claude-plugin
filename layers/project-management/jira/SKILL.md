@@ -11,6 +11,9 @@ paths:
 
 Full standards in [jira.md](jira.md). Always-on summary:
 
+> **Scope — applies only if this project uses jira.** This layer shares `.mcp.json` with `gitlab`, `linear` in `layers/project-management/`, so more than one may load at once and their rules conflict. If the project is not using jira, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Issue types and fields:**
 - Epic → Story → Task/Bug — never create Stories without linking to an Epic
 - Every issue needs: Summary (≤80 chars), Description (user-story format for stories), Acceptance Criteria, Story Points, and a linked Epic

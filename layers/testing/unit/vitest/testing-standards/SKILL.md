@@ -13,6 +13,9 @@ paths:
 
 Full standards in [testing.md](testing.md). Always-on summary:
 
+> **Scope — applies only if this project uses vitest.** This layer shares `**/*.test.ts` with `jest` in `layers/testing/`, so more than one may load at once and their rules conflict. If the project is not using vitest, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Query priority (in order):**
 `getByRole(` → `getByLabelText` → `getByPlaceholderText` → `getByText` → `getByTestId` (last resort only)
 

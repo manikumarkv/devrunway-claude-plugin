@@ -13,6 +13,9 @@ paths:
 
 Full standards in [sonarqube.md](sonarqube.md). Always-on summary:
 
+> **Scope — applies only if this project uses sonarqube.** This layer shares `**/.github/workflows/*.yml` with `snyk` in `layers/code-quality/`, so more than one may load at once and their rules conflict. If the project is not using sonarqube, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Quality Gates:**
 - Never bypass or disable the quality gate — it is the merge-blocking signal
 - Default gate conditions: coverage >= 80%, duplications < 3%, no new critical/blocker issues

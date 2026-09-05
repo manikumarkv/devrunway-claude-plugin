@@ -11,6 +11,9 @@ paths:
 
 Full standards in [notion.md](notion.md). Always-on summary:
 
+> **Scope — applies only if this project uses notion.** This layer shares `.mcp.json` with `confluence` in `layers/documents/`, so more than one may load at once and their rules conflict. If the project is not using notion, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Workspace structure:**
 - One teamspace per team — Engineering, Product, Design, Operations
 - Top-level databases: `Docs`, `ADRs`, `Runbooks`, `Postmortems`, `RFCs`, `Meeting Notes`

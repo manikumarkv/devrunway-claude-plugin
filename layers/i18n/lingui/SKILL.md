@@ -13,6 +13,9 @@ paths:
 
 Full standards in [lingui.md](lingui.md). Always-on summary:
 
+> **Scope — applies only if this project uses lingui.** This layer shares `**/locales/**` with `vue-i18n` in `layers/i18n/`, so more than one may load at once and their rules conflict. If the project is not using lingui, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Macros:**
 - Import macros: `import { t } from '@lingui/macro'` and `import { Trans } from '@lingui/react'`
 - Use `t` macro for plain strings: `` t`Hello, ${name}` `` — never interpolate into translated strings manually

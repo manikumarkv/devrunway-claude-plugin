@@ -10,6 +10,9 @@ paths:
 
 Full standards in [auth0.md](auth0.md). Always-on summary:
 
+> **Scope — applies only if this project uses auth0.** This layer shares `**/auth/**` with `azure-ad`, `cognito` in `layers/auth/`, so more than one may load at once and their rules conflict. If the project is not using auth0, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Server-side verification:**
 - Always verify JWTs server-side using `jwks-rsa` + `jsonwebtoken`: call `client.getSigningKey(kid, callback)` to fetch the public key, then verify
 - Check `audience` claim — must match your API identifier, not just any Auth0 token

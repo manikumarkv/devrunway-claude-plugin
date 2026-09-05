@@ -12,6 +12,9 @@ paths:
 
 Full standards in [confluence.md](confluence.md). Always-on summary:
 
+> **Scope — applies only if this project uses confluence.** This layer shares `.mcp.json` with `notion` in `layers/documents/`, so more than one may load at once and their rules conflict. If the project is not using confluence, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Spaces and hierarchy:**
 - One space per product or team — not per project
 - Top-level pages mirror documentation type: `Engineering`, `Product`, `Runbooks`, `Decisions (ADRs)`

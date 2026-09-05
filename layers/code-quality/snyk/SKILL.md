@@ -13,6 +13,9 @@ paths:
 
 Full standards in [snyk.md](snyk.md). Always-on summary:
 
+> **Scope — applies only if this project uses snyk.** This layer shares `**/.github/workflows/*.yml` with `sonarqube` in `layers/code-quality/`, so more than one may load at once and their rules conflict. If the project is not using snyk, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **CLI Scan:**
 - Run `snyk test` for open-source deps, `snyk code test` for SAST, `snyk container test` for images
 - Use `--severity-threshold=high` in CI — fail only on high/critical by default

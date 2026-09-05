@@ -21,6 +21,9 @@ paths:
 
 Full standards in [neon.md](neon.md). Always-on summary.
 
+> **Scope — applies only if this project uses neon.** This layer shares `**/*.sql`, `**/migrations/**` with `postgres-prisma` in `layers/database/`, so more than one may load at once and their rules conflict. If the project is not using neon, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Scope:** this layer holds the enforceable rules. For API reference and setup walkthroughs use the official `neon` plugin skills. For SQL schema, index, and query rules see `database-sql`. For table and column naming see `naming-conventions`.
 
 **Connection strings — two, never one:**

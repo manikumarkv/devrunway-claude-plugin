@@ -11,6 +11,9 @@ paths:
 
 Full standards in [winston.md](winston.md). Always-on summary:
 
+> **Scope — applies only if this project uses winston.** This layer shares `**/logger*`, `**/logging/**` with `pino` in `layers/logging/`, so more than one may load at once and their rules conflict. If the project is not using winston, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Logger setup:**
 - Create one `winston.createLogger(` instance — export it as a singleton
 - Use `format.combine(` to compose multiple formatters; always include `format.json(` for production

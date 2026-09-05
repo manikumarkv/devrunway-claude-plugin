@@ -14,6 +14,9 @@ paths:
 
 Full standards in [neon-branching.md](neon-branching.md). Always-on summary.
 
+> **Scope — applies only if this project uses neon-branching.** This layer shares `.circleci/config.yml`, `.github/workflows/**`, `.gitlab-ci.yml` with `circleci`, `github-actions`, `gitlab-ci` in `layers/ci/`, so more than one may load at once and their rules conflict. If the project is not using neon-branching, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Scope:** enforceable CI rules only. For the branch-type decision tree and full CLI reference use the official `neon-postgres-branches` skill. For connection strings and migration mechanics see the `neon` layer.
 
 **Branch type:**

@@ -12,6 +12,9 @@ paths:
 
 Full standards in [bullmq.md](bullmq.md). Always-on summary:
 
+> **Scope — applies only if this project uses bullmq.** This layer shares `**/queues/**`, `**/workers/**` with `sqs` in `layers/cache-queue/`, so more than one may load at once and their rules conflict. If the project is not using bullmq, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Queue setup:**
 - One `Queue` per job type — not one giant queue for everything
 - Share the Redis connection across Queue and Worker instances — use `IORedis` with `maxRetriesPerRequest: null`

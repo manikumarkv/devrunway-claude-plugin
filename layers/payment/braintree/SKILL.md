@@ -11,6 +11,9 @@ paths:
 
 Full standards in [braintree.md](braintree.md). Always-on summary:
 
+> **Scope — applies only if this project uses braintree.** This layer shares `**/checkout/**`, `**/payment/**` with `paypal` in `layers/payment/`, so more than one may load at once and their rules conflict. If the project is not using braintree, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Flow:**
 - Server generates a `clientToken` using `gateway.clientToken.generate(` and sends it to the client
 - Client uses Drop-in UI or Hosted Fields to tokenize card — produces a `paymentMethodNonce`

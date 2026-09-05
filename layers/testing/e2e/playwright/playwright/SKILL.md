@@ -11,6 +11,9 @@ paths:
 ---
 
 Full standards in [playwright.md](playwright.md).
+> **Scope — applies only if this project uses playwright.** This layer shares `**/*.spec.ts` with `jest` in `layers/testing/`, so more than one may load at once and their rules conflict. If the project is not using playwright, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 MCP + prompt runner guide in [playwright-mcp.md](playwright-mcp.md).
 
 **Running tests via prompts — quick reference:**
