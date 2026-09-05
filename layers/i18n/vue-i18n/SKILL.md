@@ -12,6 +12,9 @@ paths:
 
 Full standards in [vue-i18n.md](vue-i18n.md). Always-on summary:
 
+> **Scope — applies only if this project uses vue-i18n.** This layer shares `**/locales/**` with `lingui` in `layers/i18n/`, so more than one may load at once and their rules conflict. If the project is not using vue-i18n, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Composition API:**
 - Use `const { t } = useI18n(` inside `<script setup>` — destructure `{ t, locale, n, d }` as needed
 - Call `t('key')` for simple strings; `t('key', { name })` for interpolation; `t('key', count)` for plurals

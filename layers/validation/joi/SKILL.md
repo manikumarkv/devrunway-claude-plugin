@@ -12,6 +12,9 @@ paths:
 
 Full standards in [joi.md](joi.md). Always-on summary:
 
+> **Scope — applies only if this project uses joi.** This layer shares `**/*.schema.js`, `**/*.schema.ts`, `**/schemas/**` with `valibot`, `yup`, `zod` in `layers/validation/`, so more than one may load at once and their rules conflict. If the project is not using joi, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Schema structure:**
 - Define schemas in dedicated `*.schema.ts` files, co-located with the feature or route
 - Export both the schema and the inferred TypeScript type using `ExtractJoiSchema` or manual `type T = { ... }` derived from the schema

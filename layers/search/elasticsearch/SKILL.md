@@ -11,6 +11,9 @@ paths:
 
 Full standards in [elasticsearch.md](elasticsearch.md). Always-on summary:
 
+> **Scope — applies only if this project uses elasticsearch.** This layer shares `**/search/**` with `algolia`, `typesense` in `layers/search/`, so more than one may load at once and their rules conflict. If the project is not using elasticsearch, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Client setup:**
 - Use the official `@elastic/elasticsearch` client — never HTTP calls directly
 - Create a singleton client; the client manages connection pooling internally

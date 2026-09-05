@@ -11,6 +11,9 @@ paths:
 
 Full standards in [sendgrid.md](sendgrid.md). Always-on summary:
 
+> **Scope — applies only if this project uses sendgrid.** This layer shares `**/email/**` with `resend` in `layers/email/`, so more than one may load at once and their rules conflict. If the project is not using sendgrid, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Setup:**
 - Load the API key before use: `sgMail.setApiKey(process.env.SENDGRID_API_KEY)`
 

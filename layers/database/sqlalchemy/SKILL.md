@@ -13,6 +13,9 @@ paths:
 
 Full standards in [sqlalchemy.md](sqlalchemy.md). Always-on summary:
 
+> **Scope — applies only if this project uses sqlalchemy.** This layer shares `**/models/**`, `**/repositories/**` with `dynamodb`, `mongodb` in `layers/database/`, so more than one may load at once and their rules conflict. If the project is not using sqlalchemy, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Models:**
 - Use `DeclarativeBase` (SQLAlchemy 2.0 style) — not the legacy `declarative_base()`
 - Define `__tablename__` explicitly; use snake_case matching the SQL table name

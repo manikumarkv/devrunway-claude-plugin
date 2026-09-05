@@ -13,6 +13,9 @@ paths:
 
 Full standards in [mongodb.md](mongodb.md). Always-on summary:
 
+> **Scope — applies only if this project uses mongodb.** This layer shares `**/models/**` with `sqlalchemy` in `layers/database/`, so more than one may load at once and their rules conflict. If the project is not using mongodb, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Schema design:**
 - Embed documents when they are always accessed together and the embedded array is bounded (< a few hundred items)
 - Reference (store `_id`) when documents are large, frequently updated independently, or shared across collections

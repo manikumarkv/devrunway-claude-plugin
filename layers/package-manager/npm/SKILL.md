@@ -12,6 +12,9 @@ paths:
 
 Full standards in [npm.md](npm.md). Always-on summary:
 
+> **Scope — applies only if this project uses npm.** This layer shares `.npmrc` with `pnpm` in `layers/package-manager/`, so more than one may load at once and their rules conflict. If the project is not using npm, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **package.json:**
 - `engines` field is required — declare the minimum Node.js version your code needs
 - `files` field controls what gets published — be explicit; never rely on `.npmignore`

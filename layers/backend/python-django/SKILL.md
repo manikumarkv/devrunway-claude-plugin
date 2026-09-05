@@ -12,6 +12,9 @@ paths:
 
 Full standards in [python-django.md](python-django.md). Always-on summary:
 
+> **Scope — applies only if this project uses python-django.** This layer shares `**/pyproject.toml`, `**/requirements*.txt` with `python-fastapi` in `layers/backend/`, so more than one may load at once and their rules conflict. If the project is not using python-django, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Project structure:**
 - Split settings into `settings/base.py`, `settings/local.py`, `settings/production.py`
 - One app per domain concept — never put all models in a single `models.py` monolith

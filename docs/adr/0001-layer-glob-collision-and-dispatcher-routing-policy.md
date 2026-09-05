@@ -1,6 +1,6 @@
 # ADR 0001: Layer Glob Collision and Dispatcher Routing Policy
 
-**Date:** 2026-09-03
+**Date:** 2026-09-03 · *measurements re-taken 2026-09-04 against `main` at 153 layers*
 **Status:** Accepted
 **Author:** Mani
 **Related:** PR [#1](https://github.com/manikumarkv/devrunway-claude-plugin/pull/1) · blocks `layers/storage/neon-object-storage` and `layers/auth/neon-auth`
@@ -26,9 +26,13 @@ Two distinct failure modes follow. They are often conflated and require differen
 | `src/services/order.service.ts` | 19 | 5 |
 | `src/components/LoginForm.tsx` | 15 | 5 |
 
-Roughly 70–75% of matching layers are discarded every time. The cause is catch-all globs: **25 of 131 routable layers** claim one, with 16 claiming `**/*.ts` and 13 claiming `**/*.tsx`. A Vault layer and an Ant Design layer bid for a slot on an upload handler purely because the file ends in `.ts`.
+Roughly 70–75% of matching layers are discarded every time. The cause is catch-all globs: **23 of 144 routable layers** claim one, with 16 claiming `**/*.ts` and 13 claiming `**/*.tsx`. A Vault layer and an Ant Design layer bid for a slot on an upload handler purely because the file ends in `.ts`.
 
 **2. Contradiction.** Mutually exclusive technologies within one category match the same globs. `**/upload*` is claimed by `cloudinary`, `s3-storage` and `auth/cognito/security`; `**/auth/**` by `auth0`, `azure-ad` and `cognito/security-standards`. When two load together the model receives conflicting rules — on presigned URLs, on key handling, on token verification — with nothing to arbitrate. Crowding wastes slots; contradiction actively produces wrong guidance.
+
+Measured across the whole tree, **45 globs are claimed by two or more sibling layers in the same category**, involving **65 layers**. `**/*.schema.ts` is claimed by four validation layers; `**/search/**` by three; `**/auth/**` by three. This is not a Neon problem — Neon is one instance of it.
+
+Of those 65 layers, 49 already carry a vendor-identifying glob, so specificity ranking can favour the right one when a vendor-named file is present. **16 have no vendor signal at all** — for those the collision is not resolvable by globs in principle, because the file convention is library-agnostic. `**/*.schema.ts` is where validation schemas live whether the project uses zod, joi, yup or valibot.
 
 This blocks `neon-object-storage` and `neon-auth`, whose natural globs are already owned by competitors.
 
@@ -36,7 +40,9 @@ This blocks `neon-object-storage` and `neon-auth`, whose natural globs are alrea
 
 A two-part policy.
 
-**Vendor-scoped globs, plus a scope statement.** Layers for a technology that competes with a sibling in the same category claim vendor-specific globs (`**/neon-storage*`, `**/buckets/**`) rather than generic ones, and open their `SKILL.md` with an explicit scope line naming the technology they apply to. Applied to the Neon layers now.
+**Vendor-scoped globs, plus a scope statement.** Layers for a technology that competes with a sibling in the same category claim vendor-specific globs (`**/neon-storage*`, `**/buckets/**`) *in addition to* the shared ones, and open their `SKILL.md` with an explicit scope line naming the technology they apply to and the siblings they collide with.
+
+Shared globs are **added to, never removed**. Stripping `**/*.schema.ts` from three of four validation layers would pick a winner arbitrarily; stripping it from all four means no validation layer loads on a schema file at all — silent non-loading, the same invisible failure class as the `-maxdepth` bug. The scope line is therefore the load-bearing part of this decision: when several competing layers do load, each one states the condition under which it applies, so the reader can discard the ones that do not.
 
 **Catch-all globs are not permitted.** `CONTRIBUTING.md` gains a rule prohibiting `**/*.ts`-class patterns, and the 25 existing offenders are narrowed to directory- or filename-scoped patterns.
 

@@ -11,6 +11,9 @@ paths:
 
 Full standards in [pusher.md](pusher.md). Always-on summary:
 
+> **Scope — applies only if this project uses pusher.** This layer shares `**/channels/**`, `**/realtime/**` with `ably` in `layers/realtime/`, so more than one may load at once and their rules conflict. If the project is not using pusher, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Channel types:**
 - Public channels: `channel-name` — no auth, visible to all
 - Private channels: `private-<name>` — requires server auth endpoint

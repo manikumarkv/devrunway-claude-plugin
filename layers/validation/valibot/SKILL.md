@@ -11,6 +11,9 @@ paths:
 
 Full standards in [valibot.md](valibot.md). Always-on summary:
 
+> **Scope — applies only if this project uses valibot.** This layer shares `**/*.schema.ts`, `**/schemas/**` with `joi`, `yup`, `zod` in `layers/validation/`, so more than one may load at once and their rules conflict. If the project is not using valibot, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Schema definition:**
 - Use `v.object({ ... })` for objects, `v.string()`, `v.number()`, `v.boolean()` for primitives
 - Infer TypeScript types with `v.InferOutput<typeof schema>` — never hand-write the type separately

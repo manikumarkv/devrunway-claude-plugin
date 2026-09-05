@@ -11,6 +11,9 @@ paths:
 
 Full standards in [ably.md](ably.md). Always-on summary:
 
+> **Scope — applies only if this project uses ably.** This layer shares `**/channels/**`, `**/realtime/**` with `pusher` in `layers/realtime/`, so more than one may load at once and their rules conflict. If the project is not using ably, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Authentication:**
 - Always use token-request auth for browser clients — never embed the API key in frontend code
 - Server endpoint returns a signed `TokenRequest`; client calls `ably.auth.requestToken()`

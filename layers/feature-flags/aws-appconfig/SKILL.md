@@ -14,6 +14,9 @@ paths:
 
 Full standards in [aws-appconfig.md](aws-appconfig.md). Always-on summary:
 
+> **Scope — applies only if this project uses aws-appconfig.** This layer shares `**/*feature-flag*` with `flagsmith` in `layers/feature-flags/`, so more than one may load at once and their rules conflict. If the project is not using aws-appconfig, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Configuration Structure:**
 - Use a dedicated AppConfig Application per service, Environment per stage (dev/staging/prod)
 - Store feature flags as a JSON freeform configuration profile — keep the schema flat

@@ -10,6 +10,9 @@ paths:
 
 Full standards in [circleci.md](circleci.md). Always-on summary:
 
+> **Scope — applies only if this project uses circleci.** This layer shares `.circleci/config.yml` with `neon-branching` in `layers/ci/`, so more than one may load at once and their rules conflict. If the project is not using circleci, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Config structure:**
 - Use `version: 2.1` — enables orbs, commands, and executors
 - Define reusable `executors` for consistent runtime environments

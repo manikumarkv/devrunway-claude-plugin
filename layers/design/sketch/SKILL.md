@@ -12,6 +12,9 @@ paths:
 
 Full standards in [sketch.md](sketch.md). Always-on summary:
 
+> **Scope — applies only if this project uses sketch.** This layer shares `**/design/**`, `**/tokens/**` with `adobe-xd` in `layers/design/`, so more than one may load at once and their rules conflict. If the project is not using sketch, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Symbols:**
 - All reusable UI elements must be Symbols, not duplicated layers
 - Name symbols with `/` hierarchy: `Buttons/Primary/Default`, `Forms/Input/Error`

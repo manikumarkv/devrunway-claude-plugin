@@ -11,6 +11,9 @@ paths:
 
 Full standards in [zustand-state.md](zustand-state.md). Always-on summary:
 
+> **Scope — applies only if this project uses zustand.** This layer shares `**/*.store.ts` with `pinia` in `layers/state/`, so more than one may load at once and their rules conflict. If the project is not using zustand, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Store structure:**
 - One store per domain: `useAuthStore`, `useCartStore`, `useUIStore` — not one mega store
 - File: `src/store/auth.store.ts` — export the hook directly

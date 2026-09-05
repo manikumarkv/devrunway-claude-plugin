@@ -15,6 +15,9 @@ paths:
 
 Full standards in [azure.md](azure.md). Always-on summary:
 
+> **Scope — applies only if this project uses azure.** This layer shares `**/*.tf`, `**/terraform/**` with `gcp` in `layers/cloud/`, so more than one may load at once and their rules conflict. If the project is not using azure, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Resource Groups:**
 - One resource group per environment per application — `{app}-{env}-rg` naming
 - Tag every resource: `Environment`, `Application`, `CostCenter`, `Owner`

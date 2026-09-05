@@ -12,6 +12,9 @@ paths:
 
 Full standards in [jotai.md](jotai.md). Always-on summary:
 
+> **Scope — applies only if this project uses jotai.** This layer shares `**/store/**` with `redux-toolkit` in `layers/state/`, so more than one may load at once and their rules conflict. If the project is not using jotai, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Atom definition:**
 - Define atoms in dedicated `atoms/` directories, co-located with their feature
 - Always use named exports: `export const selectedOrderIdAtom = atom(null)`

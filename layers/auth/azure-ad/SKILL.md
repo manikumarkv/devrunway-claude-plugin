@@ -14,6 +14,9 @@ paths:
 
 Full standards in [azure-ad.md](azure-ad.md). Always-on summary:
 
+> **Scope — applies only if this project uses azure-ad.** This layer shares `**/auth/**` with `auth0`, `cognito` in `layers/auth/`, so more than one may load at once and their rules conflict. If the project is not using azure-ad, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **MSAL Setup:**
 - Use `@azure/msal-browser` for SPAs, `@azure/msal-node` for confidential clients
 - Store `clientId` and `tenantId` in env vars — never in source

@@ -11,6 +11,9 @@ paths:
   - "**/*.route.*"
 ---
 
+> **Scope — applies only if this project uses cognito.** This layer shares `**/auth/**` with `auth0`, `azure-ad` in `layers/auth/`, so more than one may load at once and their rules conflict. If the project is not using cognito, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 ## Authentication & Authorization
 - All protected routes use `authMiddleware` — Cognito JWT cryptographically verified with `CognitoJwtVerifier` from `aws-jwt-verify`: `await verifier.verify(token)` — never decoded-only
 - Authorization by Cognito `groups` claim via `requireGroup('Admin')` — never by username or email

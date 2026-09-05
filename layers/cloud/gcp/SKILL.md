@@ -14,6 +14,9 @@ paths:
 
 Full standards in [gcp.md](gcp.md). Always-on summary:
 
+> **Scope — applies only if this project uses gcp.** This layer shares `**/*.tf`, `**/terraform/**` with `azure` in `layers/cloud/`, so more than one may load at once and their rules conflict. If the project is not using gcp, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Cloud Run:**
 - Deploy from container image in Artifact Registry — never from local Docker
 - Set `--min-instances=1` for latency-sensitive services to avoid cold starts

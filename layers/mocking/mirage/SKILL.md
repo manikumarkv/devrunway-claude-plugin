@@ -11,6 +11,9 @@ paths:
 
 Full standards in [mirage.md](mirage.md). Always-on summary:
 
+> **Scope — applies only if this project uses mirage.** This layer shares `**/__mocks__/**` with `json-server` in `layers/mocking/`, so more than one may load at once and their rules conflict. If the project is not using mirage, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Server setup:**
 - Call `createServer(` with `models:`, `factories:`, and a `routes(` function — this is the full Mirage setup
 - Create Mirage server only in `development` and `test` environments — never in production

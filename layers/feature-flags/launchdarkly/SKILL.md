@@ -12,6 +12,9 @@ paths:
 
 Full standards in [launchdarkly.md](launchdarkly.md). Always-on summary:
 
+> **Scope — applies only if this project uses launchdarkly.** This layer shares `**/flags/**` with `posthog` in `layers/feature-flags/`, so more than one may load at once and their rules conflict. If the project is not using launchdarkly, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **SDK setup:**
 - Server-side SDK: initialise once per process; await `client.waitForInitialization()` before serving requests
 - Client-side SDK: use the React SDK (`launchdarkly-react-client-sdk`) — it handles streaming updates and context

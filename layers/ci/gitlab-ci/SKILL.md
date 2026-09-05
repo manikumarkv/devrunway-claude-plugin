@@ -10,6 +10,9 @@ paths:
 
 Full standards in [gitlab-ci.md](gitlab-ci.md). Always-on summary:
 
+> **Scope — applies only if this project uses gitlab-ci.** This layer shares `.gitlab-ci.yml` with `neon-branching` in `layers/ci/`, so more than one may load at once and their rules conflict. If the project is not using gitlab-ci, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Pipeline structure:**
 - Define `stages` explicitly — order matters; jobs in the same stage run in parallel
 - Standard stages: `validate` → `test` → `build` → `deploy`

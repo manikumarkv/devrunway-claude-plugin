@@ -12,6 +12,9 @@ paths:
 
 Full standards in [yup.md](yup.md). Always-on summary:
 
+> **Scope — applies only if this project uses yup.** This layer shares `**/*.schema.js`, `**/*.schema.ts`, `**/schemas/**` with `joi`, `valibot`, `zod` in `layers/validation/`, so more than one may load at once and their rules conflict. If the project is not using yup, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Schema structure:**
 - Define at module level: `const schema = yup.object(shape)` — never inside a React component (recreated on every render)
 - Use `yup.InferType<typeof schema>` for TypeScript types — never hand-write the type separately

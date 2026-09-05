@@ -11,6 +11,9 @@ paths:
 
 Full standards in [posthog.md](posthog.md). Always-on summary:
 
+> **Scope — applies only if this project uses posthog.** This layer shares `**/flags/**` with `launchdarkly` in `layers/feature-flags/`, so more than one may load at once and their rules conflict. If the project is not using posthog, ignore this layer.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **SDK setup:**
 - Server-side: use `posthog-node` — initialise once, call `shutdown()` on process exit to flush events
 - Client-side: use `posthog-js` or the React provider — call `posthog.identify()` after login
