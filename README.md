@@ -139,6 +139,7 @@ setup/         ← /setup wizard
 | `/product-plan` | Break user stories into epics and milestones |
 | `/dev-design` | Design architecture before touching code |
 | `/dev-code` | Step-by-step implementation with checkpoints |
+| `/cognito-auth` | Scaffold an AWS Cognito auth flow — `frontend`, `backend`, or `fullstack` |
 | `/dev-review` | Full code review via `code-reviewer` agent |
 | `/security-review` | OWASP + secrets audit via `security-reviewer` agent |
 | `/pr` | Create PR with description, checklist, linked issues |
@@ -160,7 +161,7 @@ Once layers are installed, skills auto-load based on the files you touch — no 
 | MSW | `msw-mocking` |
 | shadcn/ui | `shadcn-ui` |
 | Tailwind | `tailwind-css` |
-| Cognito | `cognito-auth`, `security-standards` |
+| Cognito | `security-standards` |
 
 ---
 

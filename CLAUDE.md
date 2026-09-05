@@ -52,7 +52,7 @@ Skills in `layers/` load automatically based on your `stack.json` and the files 
 | MSW | `msw-mocking` |
 | Pino | `logging-standards` |
 | Prisma | `database-sql` |
-| Cognito | `cognito-auth`, `security-standards` |
+| Cognito | `security-standards` |
 
 Universal skills active for **all** stacks:
 - `typescript-patterns` — strict TS, generics, type narrowing
@@ -60,6 +60,16 @@ Universal skills active for **all** stacks:
 - `api-conventions` — response envelopes, pagination, versioning
 - `security-principles` — OWASP Top 10, input validation, secrets hygiene
 - `naming-conventions` — database, payload, env var, and test naming; boundary names as contracts
+
+### Layer skills that are commands, not background layers
+
+Not everything under `layers/` auto-loads. Nine layer skills are `user-invocable: true` with **no `paths:`** — you invoke them by name and `stack-dispatcher` never routes to them (it reports them as `Unroutable`). Do not list these in the auto-load table above:
+
+```
+/cognito-auth   ← scaffold an AWS Cognito auth flow (frontend | backend | fullstack)
+/scaffold       ← scaffold a React feature
+/deploy  /validate  /logs  /feature-flag  /synthetic  /test-load  /test-smoke
+```
 
 ---
 
