@@ -1,0 +1,166 @@
+skill: flutter-session
+skill_files:
+  - layers/auth/flutter-session/SKILL.md
+  - layers/auth/flutter-session/flutter-session.md
+version: 1
+
+cases:
+  - id: flutter-session-01
+    name: "Session state has a third state for 'storage not read yet', so cold start cannot flash sign-in"
+    scenario: |
+      Write `lib/features/auth/domain/session_state.dart` and the session notifier in
+      `lib/features/auth/application/session_notifier.dart` for an app that keeps the user
+      signed in between launches. On a cold start the notifier reads the stored credentials
+      asynchronously and the router must not send a signed-in user to the sign-in screen
+      while that read is still in flight. Show the state type and the notifier only — not
+      the router, not the storage implementation. Use the flutter-session skill rules.
+    must_contain:
+      - "sealed class"
+      - "SessionUnknown"
+      - "SessionActive"
+      - "SessionNone"
+    must_not_contain:
+      - "bool isLoggedIn"
+      - "enum SessionState"
+    rationale: |
+      The default answer is a two-state boolean, or an AsyncValue<User?> whose null means
+      both "no session" and "not read yet". Reading the Keychain is asynchronous, so a flag
+      initialised to false is actively lying for the first few hundred milliseconds of every
+      launch — the guard redirects to sign-in, the read lands, the guard redirects back, and
+      every signed-in user sees a flash of the sign-in screen on every cold start.
+      SessionUnknown is the value that lets the guard hold on the splash instead.
+
+  - id: flutter-session-02
+    name: "401 refresh is single-flight and replays each request exactly once"
+    scenario: |
+      Write `lib/core/network/auth_interceptor.dart`. The API returns 401 when the access
+      token has expired; the client exchanges the refresh token at `POST /auth/refresh` and
+      re-sends the original request. Six requests can be in flight at once and all six can
+      fail together when the token expires. If the refresh itself is rejected the user must
+      be signed out. A `TokenStore` already exists with `read`, `readAccessToken`, `save`
+      and `clear`. Use the flutter-session skill rules.
+    must_contain:
+      - "QueuedInterceptor"
+      - "extra["
+      - "handler.resolve("
+      - "refreshDio.fetch"
+    must_not_contain:
+      - "(InterceptorsWrapper"
+    rationale: |
+      Three distinct bugs are being prevented and fixing one does not fix the others. A
+      non-queued interceptor lets all six 401s fire their own refresh; the first rotates the
+      token and the other five present a dead one, so the backend revokes the family and the
+      user is signed out for having a fast connection. Replaying without the extra[] flag
+      loops forever when the replay also 401s. Refreshing or replaying through the main Dio
+      re-enters the queue that is still blocked on the refresh and deadlocks.
+
+  - id: flutter-session-03
+    name: "Sign-out tears down every user-scoped store and cache, not just the token"
+    scenario: |
+      Write the `signOut()` method on the session notifier for an app used on shared tablets
+      in a classroom, where a second user signs in immediately after the first signs out.
+      The app has a `TokenStore`, a biometric secret store, a local database exposing
+      `clearUserScoped()`, an HTTP response cache, cached network avatars, and an analytics
+      SDK. Use the flutter-session skill rules.
+    must_contain:
+      - "clearUserScoped("
+      - "imageCache.clear()"
+      - "clearLiveImages()"
+      - "SessionNone"
+    must_not_contain:
+      - "ref.invalidate("
+    rationale: |
+      The token is the smallest part of what identifies the user on the device. Clearing only
+      it leaves user A's rows in the local database, their JSON in the response cache, and
+      their avatar in the image cache — which renders in user B's app bar, because
+      imageCache.clear() alone does not drop images a live widget still references.
+      A hand-maintained ref.invalidate list is the other failure: it is correct the day it is
+      written and wrong the first time someone adds a provider without updating it, and the
+      symptom is user B seeing user A's data in a screen nobody thought to check.
+
+  - id: flutter-session-04
+    name: "Biometric unlock releases a stored secret and declares its platform prerequisites"
+    scenario: |
+      Add Face ID / fingerprint unlock so a returning user can re-enter the app without
+      retyping their password. Write the availability check, the unlock call, and how the
+      credential it releases is stored — plus the iOS and Android platform declarations that
+      must be in place before the first unlock call ships. Use the flutter-session skill
+      rules.
+    must_contain:
+      - "NSFaceIDUsageDescription"
+      - "USE_BIOMETRIC"
+      - "FlutterFragmentActivity"
+      - "isDeviceSupported()"
+      - "getAvailableBiometrics()"
+      - "localizedReason"
+      - "biometricOnly: false"
+      - "biometryCurrentSet"
+      - "setInvalidatedByBiometricEnrollment"
+    must_not_contain:
+      - "biometricOnly: true"
+      - "biometryAny"
+    rationale: |
+      A bool returned by local_auth comes from the app's own process, so a patched binary or
+      a hooked method returns true and there is no server round trip anywhere to notice — the
+      prompt has to unwrap a real credential for the security property to exist, and that
+      property comes from the OS access-control policy, not the bool. Binding to biometryAny
+      instead of the current enrolment set lets an attacker with the passcode enrol their own
+      fingerprint and unlock. Shipping without NSFaceIDUsageDescription is a hard crash on
+      the first Face ID call, invisible on a Touch-ID-only test device; without
+      FlutterFragmentActivity the Android prompt throws, because BiometricPrompt requires a
+      FragmentActivity. biometricOnly: true strands a user with a wet finger or a temporary
+      lockout with no path back into their account.
+
+  - id: flutter-session-05
+    name: "Resume revalidates only after a real background gap, and never navigates"
+    scenario: |
+      A token can be revoked server-side while the app is backgrounded — a password change or
+      a "sign out everywhere" from another device. Write
+      `lib/core/lifecycle/session_lifecycle_observer.dart` so a returning user gets a clean
+      re-authentication instead of a 401 on their next tap, without firing a request every
+      time they glance at a notification. Use the flutter-session skill rules.
+    must_contain:
+      - "didChangeAppLifecycleState"
+      - "AppLifecycleState.paused"
+      - "AppLifecycleState.resumed"
+      - "Duration(minutes:"
+    must_not_contain:
+      - "Timer.periodic("
+      - "context.go("
+    rationale: |
+      Both failure modes are real. Never revalidating means a device resumed after two days
+      holds a token the server rejected yesterday, so the user's next tap is an error instead
+      of a re-auth. Revalidating on every resumed event means a request per app switch, per
+      notification banner, per share sheet — a spinner on a screen the user was already
+      looking at. The timestamp captured on paused and compared against a threshold is what
+      separates them. A polling timer is the other wrong answer: it burns battery and still
+      misses the revocation that happened while the process was suspended. And routing is
+      go-router's job reacting to session state — a lifecycle callback has no reliable
+      BuildContext to navigate with anyway.
+
+  - id: flutter-session-06
+    name: "Entitlement comes from the server validating the receipt, never from the client"
+    scenario: |
+      The app sells a premium subscription. Write the purchase controller: start the purchase,
+      handle the store's purchase updates, and unlock premium for the user. A backend endpoint
+      `POST /billing/verify` exists that checks a receipt with Apple or Google and returns
+      whether the entitlement was granted. Include the restore path. Use the flutter-session
+      skill rules.
+    must_contain:
+      - "purchaseStream"
+      - "serverVerificationData"
+      - "completePurchase("
+      - "restorePurchases("
+    must_not_contain:
+      - "setBool("
+      - "SharedPreferences"
+    rationale: |
+      PurchaseStatus.purchased is a claim made inside the client, and there are jailbreak
+      tweaks whose entire purpose is returning it — the receipt has to reach a server that
+      holds the credentials to check it. The completion ordering is the other half: complete
+      before the server accepted and a rejected purchase is lost, because the store now
+      considers the goods delivered and will not replay it; never complete and iOS
+      re-delivers the transaction on every launch while Play auto-refunds after three days,
+      so the user paid, got the feature, then silently lost both. A locally persisted premium
+      flag is a one-line bypass, does not follow the user to a second device, and never
+      notices a refund or a lapsed subscription.

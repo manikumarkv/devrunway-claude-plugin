@@ -1,0 +1,116 @@
+skill: riverpod
+skill_files:
+  - layers/state/riverpod/SKILL.md
+  - layers/state/riverpod/riverpod.md
+version: 1
+
+cases:
+  - id: riverpod-01
+    name: "A list provider uses @riverpod codegen and cancels its request on dispose"
+    scenario: |
+      Write the Riverpod provider that loads the list of courses for a school
+      from a repository backed by Dio, for a screen the user can leave while the
+      request is still in flight. Show the provider file only, not the widget.
+      Use the riverpod skill rules.
+    must_contain:
+      - "@riverpod"
+      - "ref.onDispose"
+      - "CancelToken"
+    must_not_contain:
+      - "StateProvider"
+      - "StateNotifier"
+      - "legacy.dart"
+    rationale: |
+      StateProvider and StateNotifier are the Riverpod 2 shapes a model reaches
+      for by default; in Riverpod 3 they are behind flutter_riverpod/legacy.dart
+      and have no place to hang a method or compose with ref.onDispose. Without
+      the CancelToken registered in ref.onDispose, leaving the screen mid-request
+      leaves the socket open and resolves into a disposed provider.
+
+  - id: riverpod-02
+    name: "Pagination is cursor-based and a failed page keeps the loaded pages"
+    scenario: |
+      Write the Riverpod controller for an infinite-scroll feed of posts. It
+      loads the first page, exposes a loadMore() the list calls as the user
+      scrolls, and must keep the posts already on screen visible if one page
+      request fails so the user can retry it. Use the riverpod skill rules.
+    must_contain:
+      - "Paged"
+      - "nextCursor"
+      - "pageError"
+      - "isLoadingMore"
+    must_not_contain:
+      - "offset"
+      - "page:"
+    rationale: |
+      The default wrong answer is AsyncValue<List<Post>> paged by page number or
+      offset. Offset pagination duplicates and skips rows whenever the underlying
+      list changes mid-scroll, and putting a page failure into the outer
+      AsyncError replaces the value — every post already loaded disappears
+      because page four timed out. Paged<T> holds items and pageError side by
+      side precisely so that cannot happen.
+
+  - id: riverpod-03
+    name: "An action controller uses AsyncValue.guard, not a hand-rolled flag triple"
+    scenario: |
+      Write the Riverpod controller for the "enrol in a course" button. It calls
+      the enrolment repository, exposes progress and failure to the screen, and
+      refreshes the user's course list on success. Use the riverpod skill rules.
+    must_contain:
+      - "AsyncValue.guard"
+      - "AsyncLoading"
+      - "ref.mounted"
+    must_not_contain:
+      # `bool isLoading` alone is a PREFIX of `bool isLoadingMore`, which this
+      # layer's own Paged<T> shape mandates — so it fails correct code the
+      # moment a file holds both a paged state and a guarded action.
+      # The terminators below cannot match the `More` variant.
+      - "bool isLoading;"
+      - "bool isLoading ="
+      - "try {"
+    rationale: |
+      A hand-written try/catch that sets isLoading, data and error as three
+      fields has eight combinations, six of them illegal, and drops the stack
+      trace that Crashlytics needs. AsyncValue.guard captures the error and its
+      stack trace into a single AsyncValue with exactly one valid state.
+
+  - id: riverpod-04
+    name: "A socket-backed provider ties the connection to the provider lifetime"
+    scenario: |
+      Write the Riverpod provider that exposes the live list of messages in a
+      chat room, backed by a websocket channel that must be closed when the user
+      leaves the room. Use the riverpod skill rules.
+    must_contain:
+      - "ref.onDispose"
+      - "@riverpod"
+      - "async*"
+    must_not_contain:
+      - "StateProvider"
+      - "StateNotifierProvider"
+    rationale: |
+      A StreamSubscription opened with .listen inside a provider body outlives
+      the provider unless the handle is kept and cancelled; an async* provider
+      that yields the stream is cancelled automatically on dispose, and
+      ref.onDispose(channel.close) is what actually releases the connection. A
+      room left open drains battery and, on iOS, becomes a silent half-open
+      socket.
+
+  - id: riverpod-05
+    name: "Provider dependencies arrive through ref, never as singletons"
+    scenario: |
+      Write the Riverpod provider that loads the signed-in user's profile. It
+      needs the current user id from the session and an HTTP-backed profile
+      repository, and it must be testable without any real network or Firebase.
+      Use the riverpod skill rules.
+    must_contain:
+      - "@riverpod"
+      - "ref.watch("
+    must_not_contain:
+      - ".instance"
+      - "Dio()"
+    rationale: |
+      FirebaseAuth.instance or a fresh Dio() inside a provider body hard-codes
+      the collaborator, so the only way to test the provider is to stand up the
+      real thing. Taking every dependency from ref is what makes
+      overrideWithValue in a ProviderContainer possible — the indirection is the
+      test seam, not ceremony.

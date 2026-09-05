@@ -1,0 +1,134 @@
+skill: flutter-local
+skill_files:
+  - layers/storage/flutter-local/SKILL.md
+  - layers/storage/flutter-local/flutter-local.md
+version: 1
+
+cases:
+  - id: flutter-local-01
+    name: "An auth refresh token goes to secure storage with device-bound accessibility"
+    scenario: |
+      Write `lib/core/storage/token_store.dart`: the store that persists the signed-in
+      user's refresh token so the app can restore the session on a cold start, and clears
+      it on sign-out. Include the platform options the store is configured with. Do not
+      write the session controller or the HTTP client. Use the flutter-local skill rules.
+    must_contain:
+      - "FlutterSecureStorage"
+      - "first_unlock_this_device"
+      - "encryptedSharedPreferences: true"
+      # Declaring the options is not applying them. Without these two, an answer
+      # that defines the option constants and then calls read/write/delete
+      # without them passes every other assertion while writing the token with
+      # the plugin's defaults — iCloud-syncing and restorable onto another
+      # device, which is the exact harm this case exists to prevent.
+      - "iOptions:"
+      - "aOptions:"
+    must_not_contain:
+      - "SharedPreferences.getInstance("
+      - "prefs.setString("
+    rationale: |
+      The default answer persists the token with SharedPreferences, which is a cleartext
+      XML file on Android and a plist on iOS — readable on any rooted or restored device.
+      Reaching for secure storage is only half the rule: the plugin's default Keychain
+      accessibility syncs the item to iCloud and to device transfer, so a refresh token
+      restored onto a second phone is a session nobody authorised.
+      `first_unlock_this_device` is the token that proves the backup-exclusion half was
+      applied; `encryptedSharedPreferences: true` proves the Android half was.
+
+  - id: flutter-local-02
+    name: "The database key is generated once into the keystore, never compiled in"
+    scenario: |
+      Write `lib/core/storage/app_database.dart` plus whatever helper it needs to open the
+      app's local SQLite database encrypted with SQLCipher. The app stores enrolment
+      records, which contain the user's name, so the file must be encrypted at rest. Show
+      how the encryption key is obtained on first launch and on every launch after. Use the
+      flutter-local skill rules.
+    must_contain:
+      - "FlutterSecureStorage"
+      - "Random.secure()"
+      - "PRAGMA key"
+    must_not_contain:
+      - "String.fromEnvironment("
+      - "SharedPreferences.getInstance("
+    rationale: |
+      The default answer hardcodes a passphrase, or reads one from a --dart-define, which
+      is the same thing: `String.fromEnvironment` is resolved at compile time and sits in
+      the binary, so one extraction yields the key for every install and encryption-at-rest
+      becomes obfuscation. `Random.secure()` proves the key is per-install and
+      cryptographically generated; `FlutterSecureStorage` proves it is kept in the platform
+      keystore rather than beside the database it protects; `PRAGMA key` proves it is
+      actually applied to the connection.
+
+  - id: flutter-local-03
+    name: "A cache store has a TTL, a size cap, and per-user rows"
+    scenario: |
+      Write `lib/core/cache/program_cache_store.dart`: the store that backs the offline
+      copy of the programs list. It writes a fetched list, reads it back, and must not grow
+      without bound on a device where the user browses hundreds of programs. The device is
+      shared between family members with separate accounts. The caching decorator that
+      calls this store already exists — write only the store and its table. Use the
+      flutter-local skill rules.
+    must_contain:
+      - "expiresAt"
+      - "userId"
+      - "maxEntries"
+      - "isStale"
+    must_not_contain:
+      - "SharedPreferences.getInstance("
+      - "prefs.setString("
+    rationale: |
+      A TTL alone bounds how old an entry is, not how many there are: a user who browses
+      two hundred programs inside the TTL window has two hundred live rows and nothing ever
+      deletes them, so `maxEntries` is the assertion that separates a bounded store from an
+      unbounded one. `userId` is what stops the next account on a shared device seeing the
+      previous account's list during exactly the window a cache exists to fill. `isStale` is
+      what keeps the store reporting freshness instead of deciding for the caller — a store
+      that returns null for an expired entry turns every offline-capable screen into an
+      online-only one.
+
+  - id: flutter-local-04
+    name: "A migration runs from the oldest installed version, not only from the previous one"
+    scenario: |
+      The app's drift database is at schema version 2. Version 3 adds a `userId` column to
+      the cache table and an index on it. Releases 1 and 2 are both still installed on real
+      devices. Write the updated `lib/core/storage/app_database.dart` migration strategy and
+      the test that proves it works. Use the flutter-local skill rules.
+    must_contain:
+      - "schemaVersion => 3"
+      - "MigrationStrategy"
+      - "from < 2"
+      - "from < 3"
+    must_not_contain:
+      - "from == 2"
+      - "deleteDatabase("
+    rationale: |
+      Users skip releases. A migration written as `if (from == 2)` runs only for installs
+      that happen to be on the immediately previous version and silently does nothing for
+      everyone still on v1, who then hit a missing column on the first query after
+      updating — a crash that never reproduces in development because the developer's
+      device was always on v2. Sequential `if (from < N)` steps compose, so a v1 install
+      runs every step in order. `deleteDatabase` is the other default escape hatch: data
+      loss labelled as a migration.
+
+  - id: flutter-local-05
+    name: "Stores are reached through providers, never through a static instance"
+    scenario: |
+      Wire the app's local storage into the composition root: the secure storage client,
+      the encrypted database, and the token store, so that a widget test can substitute an
+      in-memory database and a fake token store without touching the platform keystore.
+      Write the wiring file only. Use the flutter-local skill rules.
+    must_contain:
+      - "ref.onDispose"
+      - "overrideWith"
+    must_not_contain:
+      - "AppDatabase.instance"
+      - "Store.instance"
+      - "static AppDatabase"
+    rationale: |
+      `AppDatabase.instance` cannot be overridden, so any widget test that touches a screen
+      touching a store reaches the real file and the real Keystore. The singleton shape also
+      hides lazy init: a nullable handle with `_box?.put(...)` drops every write issued
+      before `init()` completes, and only on a cold start on a slow device. Constructing the
+      store inside a provider puts the async gap in the provider, so consumers await a
+      finished store; `ref.onDispose` releases the file handle; `overrideWith` is the seam
+      the test uses.

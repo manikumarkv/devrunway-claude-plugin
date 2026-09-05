@@ -1,0 +1,141 @@
+skill: flutter-observability
+skill_files:
+  - layers/logging/flutter-observability/SKILL.md
+  - layers/logging/flutter-observability/flutter-observability.md
+version: 1
+
+cases:
+  - id: flutter-observability-01
+    name: "A push registration is logged through the facade, with the token and query string redacted"
+    scenario: |
+      The app has just received an FCM registration token from the device and POSTed it to
+      `/v1/devices?userId=<id>&locale=en-GB`. Write two things in
+      `lib/core/observability/`: the logging facade's redaction step, and the
+      device-registration function that logs the outcome of that call, including which
+      endpoint was hit and how long it took. The crash reporter and the sinks already
+      exist — do not write them. Use the flutter-observability skill rules.
+    must_contain:
+      - "AppLogger"
+      - "redactUri("
+      - "fields:"
+    must_not_contain:
+      - "$token"
+      - "debugPrint("
+      - "print("
+    rationale: |
+      The default answer interpolates the token and the full URI into the message —
+      `debugPrint('registered $token at $uri')`. That is a release-build leak twice over:
+      `debugPrint` is not compiled out and writes to logcat and the iOS unified log in
+      release, and a message built by interpolation has the secret inside the string before
+      any redaction can run. The query string is the part that carries the user id and the
+      email, so the endpoint must go through `redactUri`, and the variable parts must arrive
+      as `fields:` where the facade's `redact` can mask them for every sink at once.
+
+  - id: flutter-observability-02
+    name: "Bootstrap installs all three global error channels, and the platform handler returns true"
+    scenario: |
+      Write `lib/main.dart` for an app that must capture every uncaught error and send it to
+      the crash reporter: errors thrown inside widget build and layout, uncaught async
+      errors from unawaited futures, and errors thrown during initialisation before the
+      first frame. A `CrashReporter`, an `AppEnvironment.load()` and a `buildLogger(env)`
+      already exist. Use the flutter-observability skill rules.
+    must_contain:
+      - "FlutterError.onError"
+      - "PlatformDispatcher.instance.onError"
+      - "runZonedGuarded"
+      - "WidgetsFlutterBinding.ensureInitialized()"
+      - "return true;"
+    must_not_contain:
+      - "return false;"
+      - "debugPrint("
+    rationale: |
+      Almost every bootstrap installs `FlutterError.onError` and stops, which loses the
+      largest production crash class — the unawaited future — and loses initialisation
+      failures entirely, so a crash before `runApp` presents as "the app just doesn't
+      start". `PlatformDispatcher.instance.onError` must return `true`: returning `false`
+      falls through to the platform default, duplicating the report and, on some paths,
+      terminating the process you thought you had contained. The binding has to be
+      initialised inside the guarded zone or the zone receives nothing at all.
+
+  - id: flutter-observability-03
+    name: "Analytics events are a sealed catalogue with snake_case names and no personal data"
+    scenario: |
+      A learner has just enrolled in a course, arriving either from search or from the
+      catalogue. Define the analytics event for that, and wire up automatic screen-view
+      tracking for the course detail page. The session exposes the learner's email address,
+      display name and an opaque user id; the events are sent to a third-party analytics
+      SDK. Write only the event catalogue and the observer — not the analytics service
+      implementation. Use the flutter-observability skill rules.
+    must_contain:
+      - "sealed class AnalyticsEvent"
+      - "extends AnalyticsEvent"
+      - "String get name"
+      - "course_enrolled"
+      - "NavigatorObserver"
+    must_not_contain:
+      - "'email'"
+      - "displayName"
+      - "logEvent('"
+    rationale: |
+      The default answer is `analytics.logEvent('CourseEnrolled', {'email': user.email})` at
+      the call site. Three separate failures: a free-form name is typo-able and drifts
+      between the two places that emit "the same" event, so a dashboard breaks silently; the
+      email is personal data shipped to a third party, copied into every downstream export
+      and outside the deletion path built for the app's own database; and a screen view
+      emitted from `initState` misses pops and tab switches and double-counts a re-pushed
+      page. A sealed catalogue makes a rename a compile error and the collected property set
+      a reviewable file.
+
+  - id: flutter-observability-04
+    name: "Consent gates collection — pre-consent events are dropped, never queued"
+    scenario: |
+      The app must not collect analytics until the user has answered the privacy prompt,
+      which appears a few seconds after launch. Write the analytics service that enforces
+      this: what happens to an event raised while the prompt is still on screen, what
+      happens when the user accepts, and what happens when the user later goes into settings
+      and withdraws consent. Use the flutter-observability skill rules.
+    must_contain:
+      - "setAnalyticsCollectionEnabled"
+      - "ConsentStatus.granted"
+      - "resetAnalyticsData"
+    must_not_contain:
+      - "_pending"
+      - "_queue"
+      - "flush("
+    rationale: |
+      The intuitive design buffers events from launch and flushes them once consent is
+      granted. That is the wrong reading of the only sentence that matters: collection is
+      the regulated act, so an event held in memory awaiting an answer has already been
+      collected without permission — and if the user declines, you built the record anyway.
+      The buffer also grows unbounded on a user who never answers. The SDK's own collection
+      must be off (`setAnalyticsCollectionEnabled(false)`) until consent is granted, because
+      `session_start` and the app-instance id are generated by the SDK and never pass
+      through the app's `log` method.
+
+  - id: flutter-observability-05
+    name: "Flags are typed with safe defaults and the minimum-version gate fails open"
+    scenario: |
+      Declare the app's feature-flag catalogue — a flag that routes checkout through a new
+      payment sheet, and a minimum supported app version — and write the function the splash
+      screen calls to decide whether to show a blocking "please update" screen, a dismissible
+      update prompt, or nothing. A `FlagStore` already exists exposing `T value<T>(Flag<T>)`
+      and `bool get hasFetched`; do not write the store or the remote-config setup. Consider
+      a cold first launch with no connectivity. Use the flutter-observability skill rules.
+    must_contain:
+      - "Flag<bool>"
+      - "defaultValue:"
+      - "removeBy:"
+      - "hasFetched"
+      - "UpdateRequirement.none"
+    must_not_contain:
+      - "getBool("
+      - "FirebaseRemoteConfig.instance"
+    rationale: |
+      Two defaults decide whether this feature is safe. A flag whose compiled-in default is
+      the new path means an offline first launch runs the riskiest code in the app, and a
+      version gate that blocks whenever it cannot confirm the minimum turns a five-minute
+      config-service blip into a total outage that every user has to reinstall their way out
+      of — the fix needs the network the user does not have. `hasFetched` guarding an early
+      `UpdateRequirement.none` is the fail-open. Reading `getBool('checkout_v2')` straight
+      from the SDK loses the type, the default, the owner and the removal date, and a
+      misspelled key returns `false` forever while looking exactly like a working flag.

@@ -1,0 +1,208 @@
+skill: flutter-release
+skill_files:
+  - layers/ci/flutter-release/SKILL.md
+  - layers/ci/flutter-release/flutter-release.md
+version: 1
+
+cases:
+  - id: flutter-release-01
+    name: "A release build step drives both flavor switches from one input and ships symbols with the obfuscated binary"
+    scenario: |
+      Write the GitHub Actions job `release-android` in `.github/workflows/release.yml`
+      that builds the production Android App Bundle. The app has three flavors —
+      `dev`, `staging`, `prod` — configured as Gradle product flavors, and its Dart code
+      reads its API base URL and identity pool id from compile-time environment values.
+      The team must still be able to read a stack trace from this build when a crash
+      arrives from a user two months from now, and the binary must not be trivially
+      reverse-engineerable. Assume `flutter pub get` and the env file have already run in
+      earlier steps. Write the workflow YAML only — no Dart, no Gradle.
+      Use the flutter-release skill rules.
+    must_contain:
+      - "--flavor prod"
+      - "--dart-define=FLAVOR=prod"
+      - "--obfuscate"
+      - "--split-debug-info="
+      - "path: build/symbols"
+    must_not_contain:
+      - "runs-on: ubuntu-latest"
+      - "runs-on: macos-latest"
+    rationale: |
+      This is the case the layer exists for. `--flavor` and `--dart-define=FLAVOR=` are two
+      independent switches that read like one option written twice: `--flavor` picks the
+      Gradle product flavor (application id, icon, signing, google-services.json) and
+      `--dart-define=FLAVOR=` picks the Dart-side config. The default answer passes
+      `--flavor prod` alone, which produces a correctly signed, correctly named, correctly
+      identified production binary that talks to the dev API with the dev identity pool —
+      nothing about the artefact looks wrong, so it ships. `--dart-define=FLAVOR=prod` is
+      therefore the discriminating token: it is absent from the default answer and present
+      in every correct one. The second half of the case is the obfuscation pair:
+      `--obfuscate` without uploading the `--split-debug-info` output trades a readable
+      binary for permanently unreadable crash reports, which is strictly worse than not
+      obfuscating, so the symbol directory must leave the job that produced it.
+
+  - id: flutter-release-02
+    name: "The Dart flavor is resolved with no fallback and a missing define fails the build"
+    scenario: |
+      Write `lib/core/env/app_flavor.dart` and the bootstrap fragment in `lib/main.dart`
+      that resolves the app's flavor. The flavor is one of `dev`, `staging`, `prod` and is
+      supplied to the compiler by the build command. Bootstrap must make the resolved
+      flavor and the API host visible to whoever triages a crash from this build: a
+      `CrashReporter` with `Future<void> setCustomKey(String key, String value)` and an
+      `AppLogger` are already injected — do not write them. Consider what must happen when
+      someone runs a release build and the value is not supplied at all.
+      Use the flutter-release skill rules.
+    must_contain:
+      - "String.fromEnvironment("
+      - "FLAVOR"
+      - "isEmpty"
+      - "throw "
+      - "setCustomKey("
+    must_not_contain:
+      - "defaultValue:"
+    rationale: |
+      `String.fromEnvironment` returns the empty string for a missing define — it does not
+      throw, does not warn, and is resolved at compile time, so there is no runtime signal
+      that anything was missing. The idiomatic Dart answer supplies a fallback, and that
+      single named argument is the whole bug: a release built without the define compiles
+      cleanly, boots cleanly, and runs as whatever the fallback said, wearing the
+      production app id and icon. `defaultValue:` is the token of that default wrong
+      answer and appears nowhere in a correct implementation; `throw` is the token of the
+      correct one. The crash keys are the last line of defence for the case both switches
+      were passed and agreed but the env file itself was wrong.
+
+  - id: flutter-release-03
+    name: "The PR gate makes format, analysis, tests and resolution actually fail"
+    scenario: |
+      Write `.github/workflows/pr.yml` — the required status checks for every pull request
+      on a Flutter app. The repo has a carefully tuned `analysis_options.yaml` and a
+      committed `pubspec.lock`, and the team has been burned by green PRs that turned out
+      to contain lint violations, unformatted files, and a transitive dependency bump
+      nobody reviewed. The gate must finish quickly enough that people watch it, and the
+      team's CI budget is already strained. Write the workflow YAML only.
+      Use the flutter-release skill rules.
+    must_contain:
+      - "--set-exit-if-changed"
+      - "--fatal-infos"
+      - "--fatal-warnings"
+      - "flutter test --coverage"
+      - "--enforce-lockfile"
+    must_not_contain:
+      - "runs-on: ubuntu-latest"
+      - "runs-on: macos"
+    rationale: |
+      Each of the three commands has a default form that reports rather than fails.
+      `flutter analyze` with no flags exits 0 on info-severity diagnostics, and most lints
+      — including most of `flutter_lints` — report at info, so a strict
+      `analysis_options.yaml` is decorative without `--fatal-infos`. `dart format .`
+      rewrites the checkout and exits 0, so on a throwaway CI runner it always passes.
+      `flutter pub get` will resolve past `pubspec.lock` and rewrite it in place, so CI
+      tests a dependency set nobody reviewed. The `runs-on` assertions cover the two cost
+      rules that keep the gate usable: a floating runner alias changes the JDK, Xcode and
+      Android SDK under an unchanged commit, undoing every version pin in the repo, and a
+      macOS runner minute costs roughly ten Linux minutes, so an iOS build belongs on the
+      merge workflow rather than the gate.
+
+  - id: flutter-release-04
+    name: "CI asserts its own inputs before it builds, and cannot be waved through"
+    scenario: |
+      A Flutter app's staging build needs a `.env_staging` file that CI writes from a
+      repository secret, and it uses `build_runner` to generate `*.g.dart` and
+      `*.freezed.dart` files that are committed to the repo. Twice now a release has gone
+      out pointed at nothing because the secret had been rotated and not updated, and once
+      because a model change was merged without regenerating. Both times the symptom was a
+      confusing failure in an unrelated file several minutes into the pipeline. Write the
+      workflow steps that write `.env_staging`, verify it, and verify the generated code —
+      so that each failure stops the run immediately and names what is wrong.
+      Write the workflow YAML only. Use the flutter-release skill rules.
+    must_contain:
+      - "base64 -d"
+      - "-s .env_staging"
+      - "git diff --exit-code"
+    must_not_contain:
+      - "continue-on-error: true"
+      - "|| true"
+    rationale: |
+      A missing secret never presents as "missing secret". It presents as an empty file,
+      which presents as an empty compile-time constant, which presents as a null-check
+      failure in an unrelated widget — or as a successful build of an app pointed at
+      nothing. `[ -s .env_staging ]` is the entire fix and converts a twenty-minute bisect
+      into a one-line error at second thirty. `git diff --exit-code` is the equivalent for
+      codegen: without it, stale generated code that still happens to compile reaches main,
+      and a hand-edited generated file silently disappears for whoever next runs the
+      generator. `base64 -d` is how a multiline or binary secret survives the shell at all,
+      and is also what keeps the value off a command line. `continue-on-error` and
+      `|| true` are the two ways a team neutralises an assertion step while leaving it in
+      the file, which is worse than deleting it because a red X in the log teaches people
+      to stop reading logs.
+
+  - id: flutter-release-05
+    name: "analysis_options.yaml promotes the correctness lints to error and excludes only generated code"
+    scenario: |
+      Write `analysis_options.yaml` for a new Flutter app. The app uses freezed and
+      json_serializable for its models, parses JSON from a server it does not control,
+      builds widgets that call back into `BuildContext` after awaiting a network request,
+      and routes all logging through an injected facade. The gate runs
+      `flutter analyze --fatal-infos --fatal-warnings`, and the team wants the same
+      failures to show up in the IDE rather than only in CI.
+      Use the flutter-release skill rules.
+    must_contain:
+      - "strict-casts: true"
+      - "strict-inference: true"
+      - "strict-raw-types: true"
+      - "use_build_context_synchronously: error"
+      - "avoid_print: error"
+      - "always_use_package_imports: true"
+      - "prefer_const_constructors: true"
+      - "invalid_annotation_target: ignore"
+    must_not_contain:
+      # the enabled form, not the bare name — a correct answer may name the rule in a
+      # comment explaining why it is absent, and that must not fail the case
+      - "prefer_relative_imports: true"
+    rationale: |
+      This layer owns the canonical `analysis_options.yaml`; `language/dart-models`,
+      `frontend/flutter-ui` and `logging/flutter-observability` each depend on a slice of
+      it, so a file that omits one of them silently disables a rule another layer's review
+      assumes is enforced. Severity is the part that is easy to get wrong: a lint listed
+      under `linter.rules` reports at its default severity, which for both
+      `use_build_context_synchronously` and `avoid_print` is not error, so the developer
+      sees nothing in the IDE and finds out in CI eight hours later. `always_use_package_imports`
+      and `prefer_relative_imports` are mutually exclusive — enabling both makes every
+      import in the project violate one of them, and the usual reaction is to disable the
+      analyzer rather than pick. `invalid_annotation_target: ignore` is not a style choice:
+      freezed's own generated pattern trips it, so without it the file can never be clean.
+
+  - id: flutter-release-06
+    name: "Gradle flavors install side by side and the supported Android range is a reviewable diff"
+    scenario: |
+      An Android Flutter app has three flavors — `dev`, `staging`, `prod`. QA installs the
+      staging build from the Play internal track on the same handset they use for the
+      production app, and has repeatedly filed bugs against the wrong build because the two
+      are indistinguishable once installed. Separately, a Flutter upgrade last quarter
+      changed which handsets the app supported and nobody noticed until support tickets
+      arrived; the team now wants any change to the supported Android range to appear in a
+      pull request diff. The app supports Android 7.0 (API 24) and up, and targets API 35.
+      Write the `android` block of `android/app/build.gradle.kts` and the `<application>`
+      element of `android/app/src/main/AndroidManifest.xml`.
+      Use the flutter-release skill rules.
+    must_contain:
+      - "applicationIdSuffix"
+      - ".staging"
+      - "minSdk = 24"
+      - "targetSdk = 35"
+      - "compileSdk = 3"
+      - "@string/app_name"
+    must_not_contain:
+      - "= flutter.minSdkVersion"
+      - "= flutter.targetSdkVersion"
+    rationale: |
+      Without an `applicationIdSuffix` there is one application id, so installing the QA
+      build replaces production on the device — the tester loses their production session
+      and local data, and cannot compare the two builds at all. Giving each flavor its own
+      name additionally requires the manifest to reference `@string/app_name` rather than a
+      literal label, because a literal in the shared manifest silently wins over every
+      per-flavor `resValue` and all three flavors end up named alike. The API levels are
+      the second rule: `flutter.minSdkVersion` and friends are supplied by whichever
+      Flutter SDK runs the build, so a one-line `.fvmrc` bump can drop every device below a
+      new floor out of the store listing, or opt the app into a year of platform behaviour
+      changes, with no diff anyone can review. Explicit integers make that a reviewable
+      change.

@@ -1,0 +1,194 @@
+skill: flutter-l10n
+skill_files:
+  - layers/i18n/flutter-l10n/SKILL.md
+  - layers/i18n/flutter-l10n/flutter-l10n.md
+version: 1
+
+cases:
+  - id: flutter-l10n-01
+    name: "ARB entries carry @-metadata, ICU plural and select, and typed placeholders"
+    scenario: |
+      Add entries to the template ARB catalogue `lib/l10n/app_en.arb` for the programs
+      screen. Four strings are needed: the app bar title `programsTitle` ("Programs"); a
+      summary line `studentsEnrolled` that reports how many students have enrolled and must
+      read correctly for zero, one and many; a status banner `enrolmentStatus` that says
+      something different when the viewer is enrolled, waitlisted, or enrolment is closed;
+      and a deadline line `enrolmentClosesOn` showing the date enrolment closes. The
+      catalogue goes to an external translation vendor who sees only this file. Output the
+      ARB JSON only — no Dart. Use the flutter-l10n skill rules.
+    must_contain:
+      - '"@programsTitle"'
+      - '"@studentsEnrolled"'
+      - '"@enrolmentStatus"'
+      - '"@enrolmentClosesOn"'
+      - '"description"'
+      - '"placeholders"'
+      - "plural,"
+      - "select,"
+      - '"num"'
+      - '"DateTime"'
+      - '"format"'
+    must_not_contain:
+      - "DateFormat("
+      - "yyyy"
+      - "$count"
+    rationale: |
+      Four rules meet in one file. `@programsTitle` is the discriminating token: a model will
+      almost always attach metadata to the plural message, and almost always omit it from the
+      one-word title — which is exactly the key a translator most needs context for, because
+      "Programs" alone is a noun in some languages and a verb in others.
+      `required-resource-attributes: true` exists to make that omission a build failure. The
+      count must be ICU `plural` rather than a bare `{count}` placeholder, and the status must
+      be ICU `select` rather than three keys the caller picks between with a `switch`. The
+      date must be a typed `DateTime` placeholder with `format`, not a `String` placeholder
+      that some Dart caller has already run `DateFormat('dd/MM/yyyy')` over — once a date is
+      pre-formatted into a string, it is frozen in whatever locale the caller happened to be
+      in, and the translator can do nothing about it. `$count` catches Dart interpolation
+      leaking into ICU braces, which produces a literal `$count` on screen.
+
+  - id: flutter-l10n-02
+    name: "A widget reads every user-facing string from l10n and formats nothing itself"
+    scenario: |
+      Write `lib/features/programs/presentation/widgets/enrolment_summary.dart`: a small
+      widget shown under a program title. It displays, in one column, the section heading,
+      a line stating how many students are enrolled, a status banner, and a line giving the
+      enrolment deadline. The generated `AppLocalizations` already exposes `programsTitle`,
+      `studentsEnrolled(num count)`, `enrolmentStatus(String status)` and
+      `enrolmentClosesOn(DateTime date)` — use them, do not define them. The widget's
+      constructor takes `count` (`int`), `status` (`String`) and `closesAt` (`DateTime`).
+      The whole block is inset from the leading edge of its parent. The app ships in English
+      and Arabic. Write only this widget file. Use the flutter-l10n skill rules.
+    must_contain:
+      - "AppLocalizations.of(context)"
+      - ".programsTitle"
+      - "studentsEnrolled("
+      - "enrolmentStatus("
+      - "enrolmentClosesOn("
+      - "EdgeInsetsDirectional"
+    must_not_contain:
+      - "Text('"
+      - 'Text("'
+      - "DateFormat("
+      - "EdgeInsets.only("
+      - "EdgeInsets.fromLTRB("
+    rationale: |
+      This is the call-site half of case 01, and the default answer fails it in three
+      independent ways. The heading is short and obvious, so it gets typed in as a literal —
+      the single most common way a codebase ends up half-localized, and the reason the
+      hardcoded-string lint has to fail the build rather than warn. `.programsTitle` is the
+      assertion that catches that whatever the line breaks look like; the `Text('` pair
+      catches the same mistake anywhere else in the file. The count gets rendered
+      as an interpolated string beside a static noun, which cannot be translated into any
+      language whose word order or plural categories differ. And the deadline gets run
+      through a `DateFormat` in the widget, which both duplicates the formatting the ARB
+      `format:` option already performs at the active locale and pins it to one calendar
+      convention. `EdgeInsetsDirectional` is asserted because an inset from "the leading
+      edge" is a different physical side in Arabic; the absolute form is what a model writes
+      by default and what a locale audit later has to find by hand.
+
+  - id: flutter-l10n-03
+    name: "The toolchain config makes a missing description, a missing translation, and a hardcoded literal fail CI"
+    scenario: |
+      A Flutter app keeps its ARB files in `lib/l10n` with the template `app_en.arb` and
+      generates a class called `AppLocalizations`. Write the three configuration artefacts
+      that stop localization regressions from merging: `l10n.yaml`, the localization-related
+      part of `analysis_options.yaml`, and the steps of the GitHub Actions job that runs
+      them. Three things must fail the pipeline: a new key added without a translator
+      description, a key with no translation in a shipped locale, and a user-facing string
+      typed directly into a widget. The team also wants CI to exercise the UI with
+      over-length pseudo-translated strings so that text overflow is caught before any real
+      locale is commissioned. Output the YAML only. Use the flutter-l10n skill rules.
+    must_contain:
+      - "arb-dir: lib/l10n"
+      - "template-arb-file: app_en.arb"
+      - "required-resource-attributes: true"
+      - "untranslated-messages-file"
+      - "custom_lint:"
+      - "dart run custom_lint"
+      - "en_XA"
+    must_not_contain:
+      - "continue-on-error: true"
+    rationale: |
+      Every clause here is enforcement rather than configuration, and the default answer
+      supplies only `arb-dir`, `template-arb-file` and `output-localization-file` — a
+      generator config with no opinions, under which all three regressions merge silently.
+      `required-resource-attributes: true` is the only mechanical guarantee that a translator
+      description exists; `untranslated-messages-file` plus a step that fails on a non-empty
+      file is the only guarantee a locale is complete. The subtle one is `dart run
+      custom_lint` as its own step: analyzer plugins are not executed by `flutter analyze`,
+      so a pipeline that installs the hardcoded-string rule and then only runs
+      `flutter analyze` reports a clean tree while every literal passes — the check looks
+      present and does nothing. `continue-on-error: true` is the same failure written
+      honestly.
+
+  - id: flutter-l10n-04
+    name: "The locale override is a nullable persisted preference that drives formats, direction and the API"
+    scenario: |
+      Write `lib/features/settings/application/locale_controller.dart` and the `MaterialApp`
+      wiring in `lib/app.dart`. Until the user chooses otherwise the app follows the device
+      language. In settings the user can pick a language explicitly, and can go back to
+      following the device; whichever they choose survives a restart. Changing the language
+      must also change the way dates and numbers are rendered by a nightly background export
+      that has no `BuildContext`, must change the reading direction of the interface, and
+      must change the language of the program descriptions the server returns. A
+      `keyValueStoreProvider` (get/set/remove by string key) and a configured `dioProvider`
+      are available. Use the flutter-l10n skill rules.
+    must_contain:
+      - "Locale?"
+      - "remove("
+      - "Intl.defaultLocale"
+      - "Accept-Language"
+      - "AppLocalizations.localizationsDelegates"
+      - "AppLocalizations.supportedLocales"
+    must_not_contain:
+      - "TextDirection.rtl"
+      - "TextDirection.ltr"
+    rationale: |
+      Four consequences hang off one preference and the default answer implements one of
+      them. Storing a non-nullable `Locale` (or a `String` language code defaulting to `en`)
+      makes "follow the device" unreachable once the user has touched the setting even
+      once — a stored `en` is indistinguishable from never having chosen. `remove(` is the
+      token for the reset path: "follow the device" is expressed by deleting the stored key,
+      not by writing a sentinel. `Intl.defaultLocale`
+      is what makes the context-free export format correctly; without it the background job
+      silently keeps the device's original locale. `Accept-Language` is the boundary rule:
+      server-supplied program descriptions do not change language because `MaterialApp.locale`
+      did, so a localized shell wraps untranslated content. And direction is the trap the
+      `must_not_contain` guards — the correct implementation sets no direction at all, because
+      `AppLocalizations.localizationsDelegates` carries `GlobalWidgetsLocalizations`, which
+      derives direction from the locale. Any hand-set direction is either redundant or a bug
+      that pins the app to one, and hand-listing only `AppLocalizations.delegate` is what
+      leaves an English, always-LTR Material frame around translated strings.
+
+  - id: flutter-l10n-05
+    name: "An RTL golden is pumped under the real locale with the real delegates"
+    scenario: |
+      Write `test/goldens/program_card_ar_golden_test.dart`. The team is about to commission
+      an Arabic translation and wants proof that the existing `ProgramCard` widget survives
+      it — mirrored layout, Arabic strings, and Arabic date rendering — before any
+      translation is paid for. `ProgramCard` takes a `program` and an `onTap`; a
+      `fakeProgram` fixture already exists in `test/fixtures/program_fixtures.dart`. The
+      generated `AppLocalizations` is available and `app_ar.arb` is already in the
+      catalogue. Write only the test file, covering the Arabic case. Use the flutter-l10n
+      skill rules.
+    must_contain:
+      - "Locale('ar'"
+      - "AppLocalizations.localizationsDelegates"
+      - "AppLocalizations.supportedLocales"
+      - "matchesGoldenFile("
+    must_not_contain:
+      - "Directionality("
+      - "Locale('en')"
+      - "TextDirection.ltr"
+    rationale: |
+      The default answer wraps the widget in a `Directionality` override and calls it an RTL
+      test — which is why that constructor is the forbidden token here. It proves mirroring
+      and nothing else: the strings in the
+      snapshot are still English, so it cannot show that an Arabic label overflows its chip,
+      that the font has no glyph coverage, or that the date still renders in a Gregorian
+      Latin-numeral pattern. Pumping under `Locale('ar')` with the generated delegates
+      exercises the real resolution path — `AppLocalizations`, the Global delegates that
+      supply direction and Material's own strings, and the locale that `intl` formats
+      against. `AppLocalizations.supportedLocales` matters because a locale absent from that
+      list resolves back to the first supported one, and the test then quietly asserts an
+      English golden while claiming to be Arabic — passing forever and proving nothing.

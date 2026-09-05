@@ -1,0 +1,122 @@
+skill: dart-models
+skill_files:
+  - layers/language/dart-models/SKILL.md
+  - layers/language/dart-models/dart-models.md
+version: 1
+
+cases:
+  - id: dart-models-01
+    name: "Models are generated with freezed + json_serializable, never hand-parsed"
+    scenario: |
+      Create the domain model `lib/domain/models/program.dart` for a Program
+      with an id, a name, a status, and a start date that may be absent.
+      It is parsed from the API's JSON response. Use the dart-models skill rules.
+    must_contain:
+      - "@freezed"
+      - "part 'program.freezed.dart'"
+      - "part 'program.g.dart'"
+      - "_$ProgramFromJson"
+    must_not_contain:
+      - "as String"
+      - "json['name']"
+    rationale: |
+      A hand-written fromJson drifts from the class the moment a field is added,
+      and the drift is silent — the new field parses as null and surfaces screens
+      later. The `as String` cast on network `dynamic` is an assertion about a
+      system the app does not control, so it becomes a runtime crash on the first
+      schema change. Freezed also supplies value equality, which is what stops
+      Riverpod rebuilding the subtree on every byte-identical refetch.
+
+  - id: dart-models-02
+    name: "Closed sets are enums with @JsonValue and an unknown fallback"
+    scenario: |
+      The API returns a `status` string for a Program, currently one of
+      "draft", "active" or "archived". Product has confirmed more statuses are
+      coming. Model the status type and the Program field that holds it, and
+      show how a call site checks whether a program is open for enrolment.
+      Use the dart-models skill rules.
+    must_contain:
+      - "enum"
+      - "@JsonValue"
+      - "unknown"
+      - "unknownEnumValue"
+    must_not_contain:
+      - "== 'active'"
+      - "String status"
+    rationale: |
+      Without an `unknown` member and `@JsonKey(unknownEnumValue:)`,
+      json_serializable throws when the server adds a fourth status — losing the
+      entire response, not just that one field. A bare `String status` pushes the
+      comparison to every call site, where a typo is a silent `false` instead of
+      a compile error, and where nothing forces you to revisit the call sites when
+      a status is added.
+
+  - id: dart-models-03
+    name: "An awkward wire shape gets a DTO that maps to the domain model"
+    scenario: |
+      The enrolments endpoint returns objects shaped like
+      `{ "_id": "...", "program_id": "...", "seats_remaining": null,
+      "enrolled_at": "2026-03-01T09:00:00Z" }`. The app's domain model needs a
+      non-nullable seat count. Write the wire-facing type in `lib/data/dto/` and
+      the domain model it produces. Use the dart-models skill rules.
+    must_contain:
+      - "@JsonKey"
+      - "name: '_id'"
+      - "toDomain"
+      - "DateTime"
+    must_not_contain:
+      - "json['_id']"
+      - "as String"
+    rationale: |
+      `_id` and snake_case keys are a naming mismatch, and a nullable-on-the-wire
+      field that the domain requires is a shape mismatch — the second is what
+      justifies a DTO. Defaulting `seats_remaining` inside `toDomain()` keeps the
+      null at the boundary instead of letting it propagate to a widget with no
+      context to handle it. `toDomain()` belongs on the DTO because `domain/`
+      must not import `data/`.
+
+  - id: dart-models-04
+    name: "Dates parse to UTC via a converter; derived values are getters"
+    scenario: |
+      Create the domain model `lib/domain/models/session.dart` for a Session
+      with an id and a `startsAt` timestamp that the API sends as an ISO 8601
+      string. The model must expose whether the session is still ahead of now,
+      as `isUpcoming`. Write only the model and any converter it needs.
+      Use the dart-models skill rules.
+    must_contain:
+      - "JsonConverter"
+      - "toUtc()"
+      - "bool get isUpcoming"
+    must_not_contain:
+      - "bool isUpcoming,"
+      - "toLocal()"
+    rationale: |
+      `DateTime.parse` returns a local DateTime unless the string ends in `Z`, so
+      without an explicit `.toUtc()` two devices in different zones disagree about
+      whether the same instant has passed. Converting to local time inside the
+      model spreads that bug everywhere; `.toLocal()` belongs only at the render
+      site. A stored `isUpcoming` field is correct only at construction — the
+      first `copyWith(startsAt:)` leaves it stale with no warning.
+
+  - id: dart-models-05
+    name: "strict-casts is configured and domain models import no Flutter"
+    scenario: |
+      Set up `analysis_options.yaml` for a Flutter app whose models are
+      generated with freezed and json_serializable, and add the domain model
+      `lib/domain/models/user_profile.dart` holding an id, a display name, and
+      an avatar URL that may be absent. Use the dart-models skill rules.
+    must_contain:
+      - "strict-casts: true"
+      - "invalid_annotation_target"
+      - "@freezed"
+    must_not_contain:
+      - "package:flutter/material.dart"
+      - "as String"
+    rationale: |
+      `strict-casts: true` is what makes "no unchecked casts on server JSON"
+      enforceable — without it the analyzer accepts the implicit cast and the
+      rule survives only as long as reviewers are paying attention.
+      `invalid_annotation_target: ignore` is required because freezed places
+      `@JsonKey` on factory parameters. A Flutter import in `domain/` binds the
+      data layer to the widget layer: the model can no longer be unit-tested
+      without a Flutter binding, nor reused from a background isolate.

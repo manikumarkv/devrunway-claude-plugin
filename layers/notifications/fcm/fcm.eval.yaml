@@ -1,0 +1,211 @@
+skill: fcm
+skill_files:
+  - layers/notifications/fcm/SKILL.md
+  - layers/notifications/fcm/fcm.md
+version: 1
+
+cases:
+  - id: fcm-01
+    name: "All three delivery states are wired, and the background entry point is top-level"
+    scenario: |
+      Wire Firebase Cloud Messaging into a Flutter app so a message is handled whether it
+      arrives while the user is looking at the app, while the app is in the background, or
+      while the app is not running at all. Write `lib/main.dart`'s messaging setup and
+      `lib/features/notifications/application/push_service.dart`. A `_handleTap(RemoteMessage)`
+      method and a `_showForeground(RemoteMessage)` method already exist on the service and do
+      not need bodies. The background work is a single call to `_appendToOutbox(message)`,
+      which you should also leave unimplemented. Use the fcm skill rules.
+    must_contain:
+      - "@pragma('vm:entry-point')"
+      - "FirebaseMessaging.onBackgroundMessage("
+      - "FirebaseMessaging.onMessage.listen("
+      - "onMessageOpenedApp"
+      - "getInitialMessage("
+      - "Firebase.initializeApp("
+    must_not_contain:
+      - "instance.onBackgroundMessage"
+    rationale: |
+      The default answer wires `onMessage`, sees a notification arrive on the emulator with
+      the app open, and stops. Nothing then happens when a user taps a notification from the
+      background (`onMessageOpenedApp`) or from a cold start (`getInitialMessage`), and the
+      terminated case is invisible in development because a debug build attached to the IDE is
+      never actually terminated. `@pragma('vm:entry-point')` is the other half: without it the
+      tree shaker drops the background handler from release builds only, so background
+      delivery works all the way through QA on debug builds and does nothing in production.
+      The handler also has to call `Firebase.initializeApp` itself, because it runs in a fresh
+      isolate that never executed `main()`. `instance.onBackgroundMessage` is the autocomplete
+      trap — the registration is a static on the class, and every neighbouring member of this
+      API is an instance member.
+
+  - id: fcm-02
+    name: "A tap resolves a route location through the router, from a cold start and while signed out"
+    scenario: |
+      Tapping a push notification about a new message must open `/programs/42/messages`. It
+      has to work when the app was not running at the moment the notification arrived, and
+      when the user is signed out — after they sign in they should land on that screen rather
+      than the home screen. The route table already redirects signed-out users to sign-in and
+      remembers where they were going; a top-level `router` object is available. Write the JSON
+      the server sends and the notification-tap handling on the client. Use the fcm skill rules.
+    must_contain:
+      - "data['route']"
+      - "startsWith('/')"
+      - "router.go("
+      - "getInitialMessage("
+    must_not_contain:
+      - "data['screen']"
+      - "MaterialPageRoute"
+    rationale: |
+      The default payload names a screen and an id, and the default handler switches on that
+      name and pushes the widget imperatively. That is a second copy of the route table,
+      written by the server team and maintained by hand: it drifts on the first rename, the
+      pushed screen has no URL so it cannot be restored after process death, and — the reason
+      this case exists — it bypasses the router's redirect entirely, so a notification tapped
+      while signed out opens an authenticated screen. Handing a validated location to
+      `router.go` reuses the redirect, which is what makes the signed-out tap continue to the
+      target after sign-in. `startsWith('/')` matters because anything holding a server key can
+      put a value in that field. `getInitialMessage` is what makes the cold-start half work at
+      all; `onMessageOpenedApp` alone covers only the case where the process was still alive.
+
+      Calibration note: the summary in `SKILL.md` states the validate-then-`go` line almost
+      verbatim, so three of the four positive patterns here are recall and this case is
+      primarily a regression guard against that line being weakened. `getInitialMessage(` is
+      the one the model has to derive — nothing in that line says the terminated state exists.
+
+  - id: fcm-03
+    name: "The push token is registered per user and destroyed on sign-out"
+    scenario: |
+      The app runs on shared classroom tablets, where a second user signs in immediately after
+      the first signs out. Write `lib/features/notifications/application/push_token_registrar.dart`:
+      how the device's token reaches the backend when a user signs in, what happens when FCM
+      rotates the token, and what runs during sign-out. A `PushApi` exists with
+      `Future<void> registerDevice(String token)` and `Future<void> unregisterDevice(String token)`.
+      A `sessionProvider` exposes a `SessionState` whose signed-in case is `SessionActive`.
+      Use the fcm skill rules.
+    must_contain:
+      - "getToken("
+      - "onTokenRefresh"
+      - "registerDevice("
+      - "unregisterDevice("
+      - "deleteToken("
+      - "SessionActive"
+    must_not_contain:
+      - "subscribeToTopic("
+    rationale: |
+      Registration is the obvious half and the one every implementation has. The sign-out half
+      is what this case is guarding: a device token that outlives a session is addressed to a
+      device while the backend has it filed against a user, so the next person to sign in on
+      that tablet receives the previous user's notifications with title and body rendered on
+      the lock screen. Both calls are needed and they do different things — unregistering
+      server-side alone leaves a live token that anything still holding it can deliver to, and
+      `deleteToken()` alone leaves a dead row the backend keeps sending to. The `SessionActive`
+      check inside the refresh listener is the derived part: a token that rotates while nobody
+      is signed in, or just after a sign-out, must not be attributed to the previous user.
+      Subscribing the device to a per-user topic is the shortcut that looks like it solves
+      targeting — it is invisible to the backend, cannot be revoked server-side, and survives
+      sign-out unless the device happens to be online to run the unsubscribe.
+
+  - id: fcm-04
+    name: "Permission is requested in context, with the Android 13 declaration and a real denied path"
+    scenario: |
+      The app currently calls `requestPermission()` from `main()` on first launch, and a large
+      share of users decline. Product has added a "Session reminders" toggle to the settings
+      screen. Rewrite the permission flow so it hangs off that toggle instead, handles a user
+      who has already refused, and works on both platforms including Android 13 and later.
+      `AppSettings.openAppSettings()` from the `app_settings` package is available. Show the
+      permission service, the toggle's `onChanged` handler, and the Android manifest line.
+      Use the fcm skill rules.
+    must_contain:
+      - "requestPermission("
+      - "AuthorizationStatus.authorized"
+      - "AuthorizationStatus.provisional"
+      - "AuthorizationStatus.denied"
+      - "openAppSettings("
+      - "POST_NOTIFICATIONS"
+    rationale: |
+      iOS shows the system prompt once per install. Asking on first launch spends that one
+      shot on a user who has no idea what this app would notify them about, and the only
+      recovery is a trip to Settings that almost nobody makes — so the prompt belongs at the
+      moment the user has just asked for the thing that needs it. The Android 13 manifest
+      declaration is the second trap:
+      without `POST_NOTIFICATIONS` the request returns denied with no dialog and no error, on
+      a device that would have granted it, and the symptom reads as a device difference rather
+      than an OS version difference. `provisional` and the denied branch are the two states a
+      naive flow collapses into "not authorized": provisional means delivery is working
+      quietly and the token should be registered, and denied means there is no second prompt,
+      so the only honest affordance is an explanation and a link into OS settings.
+
+      This case deliberately has no `must_not_contain`. "Never on first launch" is an absence,
+      and the scenario already relocates the call, so any negative token here would measure
+      obedience to the prompt rather than the rule. The four states and the manifest line are
+      exactly what a launch-time flow omits, and they are assertable; the placement is not.
+
+  - id: fcm-05
+    name: "Changing a channel's behaviour ships a new channel and deletes the old one"
+    scenario: |
+      Version 1.4 shipped an Android notification channel with the id `weekly_digest`, named
+      "Weekly digest", at default importance and with no sound. For version 1.5 the digest must
+      arrive as a heads-up notification with the custom sound `digest_tone`. Write the channel
+      registration that runs at app start in 1.5, using `flutter_local_notifications`. Users
+      upgrading from 1.4 must not end up with two entries called "Weekly digest" in the OS
+      notification settings screen. Use the fcm skill rules.
+    must_contain:
+      - "createNotificationChannel("
+      - "deleteNotificationChannel("
+      - "Importance.high"
+      - "RawResourceAndroidNotificationSound("
+    must_not_contain:
+      - "'weekly_digest',"
+    rationale: |
+      Android 8 moved notification behaviour onto the channel and gave the user the last word
+      on it. Calling `createNotificationChannel` again with the same id and a higher importance
+      is not an error and not a warning — the system matches on the id, sees a channel it
+      already has, and discards everything else in the object. The code reads correctly, the
+      build passes, and the digest is still silent. Deleting the id and recreating it does not
+      help either: Android deliberately retains a deleted channel's settings and restores them
+      on recreation, so that an app cannot launder away a user's decision to silence it. The
+      only way to change behaviour is a channel with a new id, plus deletion of the superseded
+      one so the settings screen does not show two identical rows. The forbidden token is the
+      old id used as a constructor's first positional argument — `'weekly_digest',` with the
+      trailing comma appears only when a new channel object is being built on the old id, and
+      not in the legitimate `deleteNotificationChannel('weekly_digest')` call, which has no
+      comma after it.
+
+      Triage note if this case ever fails on a correct answer: the one way `'weekly_digest',`
+      can appear legitimately is `dart format` wrapping the delete call across lines and
+      adding a trailing comma. That needs a receiver chain long enough to exceed 80 columns,
+      which the resolved-`android`-local shape in the standards does not produce. If it
+      happens, anchor the pattern to the constructor instead of relaxing it — the rule being
+      guarded is "the new channel does not reuse the old id", and nothing else proves it.
+
+  - id: fcm-06
+    name: "Background sync declares constraints, is idempotent, and is not a timer"
+    scenario: |
+      The home screen shows a progress summary. Product wants it refreshed roughly hourly in
+      the background so it looks current when the app is opened. Write
+      `lib/features/notifications/application/background_sync.dart`: the registration and the
+      task callback, using `workmanager`. A `SyncClient` exists with
+      `Future<void> pullSummary({String? since})`, where `since` is a server cursor and calling
+      it twice with the same cursor writes the same rows. Also state, in one sentence in a
+      comment, what the home screen must still do regardless of whether the task ran. Use the
+      fcm skill rules.
+    must_contain:
+      - "@pragma('vm:entry-point')"
+      - "registerPeriodicTask("
+      - "Constraints("
+      - "NetworkType.connected"
+      - "Future.value(true)"
+    must_not_contain:
+      - "Timer.periodic("
+    rationale: |
+      "Refresh it every hour in the background" is a request the platform cannot honour, and
+      the default answer accepts it literally. A `Timer` is the first shape reached for and it
+      is not background work at all: it lives in the app's isolate and stops the moment the
+      process is suspended, which is immediately after the user leaves the app — so it works
+      flawlessly on a device sitting in front of you with the app open, which is exactly why
+      it survives review. Constraints are the difference between the OS scheduling the task
+      when it can succeed and waking it to fail on a device with no network; a task that runs
+      and fails still spent the battery. The `since` cursor is the idempotency handle, and it
+      is needed because the OS retries on failure and may run a task twice — `Future.value(true)`
+      versus `false` is how the callback tells it which. `@pragma('vm:entry-point')` applies to
+      the workmanager dispatcher for the same tree-shaking reason it applies to the FCM
+      background handler.
