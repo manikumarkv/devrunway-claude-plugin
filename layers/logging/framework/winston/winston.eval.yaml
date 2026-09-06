@@ -44,3 +44,38 @@ cases:
     rationale: |
       Multiple transports let you send logs to different destinations
       based on environment. Hardcoded single transport limits flexibility.
+
+  - id: winston-04
+    name: "Winston argument order — message first, metadata second"
+    scenario: |
+      Write an order service function that, on success, logs the business event
+      "Order created" through the singleton Winston logger with the userId and
+      orderId attached as structured metadata, and on failure logs the caught
+      error at error level with the same identifiers.
+      Use the winston-logging skill rules.
+    must_contain:
+      - "logger.info("
+      - "orderId"
+    must_not_contain:
+      - ".info({"
+      - ".error({"
+      - ".warn({"
+    rationale: |
+      Winston's leveled methods are typed (message: string, ...meta: any[]) —
+      verified against winston@3.19.0's index.d.ts and by running it. Pino's
+      order is the reverse, and passing the metadata object first makes Winston
+      set `message` to that object and discard the string that follows, so the
+      event name never reaches the log and no query on it can match.
+
+      The must_not_contain literals guard the property (a leveled method whose
+      FIRST argument opens an object literal) rather than one spelling, so they
+      catch every metadata-first variant: logger.info({ userId, orderId }, '...'),
+      logger.error({ err, userId }, '...'), requestLogger.info({ requestId }, '...')
+      and logger.warn({ attempts }, '...'). Correct code — logger.info('Order
+      created', { userId, orderId }) — contains none of them, and neither does
+      winston.createLogger({ or logger.child({.
+
+      Deliberate exception: Winston also accepts a single LogEntry object,
+      logger.info({ message: 'x', userId }), which these guards would reject.
+      The layer mandates message-first everywhere, so that form is out of scope
+      here and is not a compliant answer under these standards.
