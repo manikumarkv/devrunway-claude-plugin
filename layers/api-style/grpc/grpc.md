@@ -29,16 +29,17 @@ message GetUserResponse {
 }
 
 message User {
+  // Never reuse a deleted field number or name. `reserved` is a statement
+  // inside the message body — protoc rejects it at file scope.
+  reserved 5;
+  reserved "phone";
+
   string id = 1;
   string email = 2;
   string name = 3;
   google.protobuf.Timestamp created_at = 4;
-  // field 5 was "phone" — now reserved
+  // field 5 was "phone" — removed, reserved above
 }
-
-// Never reuse field numbers
-reserved 5;
-reserved "phone";
 
 message CreateUserRequest {
   string email = 1;
@@ -222,7 +223,8 @@ client.getUser({ user_id: "abc-123" }, { deadline }, (err: Error, response: any)
 | Reusing a deleted field number | Mark removed fields with `reserved 5; reserved "phone";` — never reassign numbers |
 | Returning `UNKNOWN` for domain errors | Map domain conditions to specific codes: `NOT_FOUND`, `INVALID_ARGUMENT`, `ALREADY_EXISTS`, etc. |
 | Not setting a client deadline | Always pass `timeout=` (Python) or `{ deadline }` (Node.js) on every stub call |
-| Sharing one channel across goroutines/threads unsafely | Create one channel per logical consumer/publisher; channels are not concurrency-safe in amqplib |
+| Placing `reserved` outside the message body | `reserved` is a statement inside `message { ... }` (or `enum { ... }`) — at file scope protoc fails with "Expected top-level statement" |
+| Creating a new channel per RPC | A gRPC channel is expensive and safe to share — create one per target and reuse it for the process's stubs |
 | Committing generated protobuf files | Add `gen/` to `.gitignore`; regenerate in CI with `buf generate` |
 | Skipping `buf lint` and `buf breaking` in CI | Run both checks on every PR to catch style violations and breaking schema changes early |
 | Using insecure channels in production | Use `grpc.ssl_channel_credentials()` / `grpc.credentials.createSsl()` — never `insecure_channel` outside local dev |
