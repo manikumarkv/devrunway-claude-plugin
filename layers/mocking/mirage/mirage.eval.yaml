@@ -40,3 +40,34 @@ cases:
     rationale: |
       passthrough lets non-mocked routes reach the real network.
       Without it, all unhandled requests return 404 from Mirage.
+
+  - id: mirage-04
+    name: "Factory traits registered with the trait() helper"
+    scenario: |
+      Write the Mirage factory for an Order model whose default status is
+      pending, with named variant states for shipped, delivered and cancelled
+      orders, and seed five shipped orders.
+      Use the mirage-mocking skill rules.
+    must_contain:
+      - "Factory.extend("
+      - "trait("
+      - "createList("
+    must_not_contain:
+      - "withTrait"
+      - "traits: {"
+    rationale: |
+      Verified by running miragejs@0.1.48 in jsdom: `trait` is a named export of
+      the package and is the only way to register a variant. Every other
+      spelling — a `withTrait` map, a FactoryBot-style `traits: {}` map, or a
+      bare nested attribute object — throws the identical
+      "'shipped' trait is not registered in 'order' factory" from create /
+      createList, and because seeds() runs at server start that failure takes
+      down the dev server on boot.
+
+      The must_contain "trait(" is what discriminates, and it guards the
+      property rather than one syntax: none of the three broken spellings
+      contains it, because none of them wraps the override in the helper.
+      "withTrait" and "traits: {" are belt-and-braces on the two named wrong
+      keys. Neither literal appears anywhere in the layer's own text — the
+      Common mistakes row describes the anti-pattern without spelling it, so a
+      generation reproducing the layer's guidance cannot trip the guard.

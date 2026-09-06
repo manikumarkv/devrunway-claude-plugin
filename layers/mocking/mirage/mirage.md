@@ -14,7 +14,7 @@ npm install --save-dev miragejs @faker-js/faker
 
 ```typescript
 // src/mocks/server.ts
-import { createServer, Model, Factory, belongsTo, hasMany, Response } from 'miragejs'
+import { createServer, Model, Factory, trait, belongsTo, hasMany, Response } from 'miragejs'
 import { faker } from '@faker-js/faker'
 
 export function startMirageServer({ environment = 'development' } = {}) {
@@ -35,6 +35,8 @@ export function startMirageServer({ environment = 'development' } = {}) {
         name:  () => faker.person.fullName(),
         email: () => faker.internet.email(),
         role:  'user',
+
+        admin: trait({ role: 'admin' }),
       }),
 
       product: Factory.extend({
@@ -43,12 +45,8 @@ export function startMirageServer({ environment = 'development' } = {}) {
         price:   () => parseFloat(faker.commerce.price({ min: 5, max: 500 })),
         inStock: () => faker.datatype.boolean(0.8),
 
-        // Trait — override defaults for a specific state
-        withTrait: {
-          outOfStock: {
-            inStock: false,
-          },
-        },
+        // Trait — a named override, registered by wrapping it in trait()
+        outOfStock: trait({ inStock: false }),
       }),
 
       order: Factory.extend({
@@ -56,11 +54,9 @@ export function startMirageServer({ environment = 'development' } = {}) {
         status:    'pending',
         createdAt: () => faker.date.recent({ days: 30 }).toISOString(),
 
-        withTrait: {
-          shipped:   { status: 'shipped' },
-          delivered: { status: 'delivered' },
-          cancelled: { status: 'cancelled' },
-        },
+        shipped:   trait({ status: 'shipped' }),
+        delivered: trait({ status: 'delivered' }),
+        cancelled: trait({ status: 'cancelled' }),
       }),
     },
 
@@ -68,9 +64,9 @@ export function startMirageServer({ environment = 'development' } = {}) {
       // Called in development — not in 'test' environment
       const category = server.create('category', { name: 'Electronics' })
       server.createList('product', 20, { category })
-      const user = server.create('user', { role: 'admin' } as any)
-      server.create('order', { user, status: 'pending' } as any)
-      server.createList('order', 5, 'shipped' as any)
+      const user = server.create('user', 'admin')
+      server.create('order', { user, status: 'pending' })
+      server.createList('order', 5, 'shipped')
     },
 
     namespace: '/api',
@@ -118,6 +114,38 @@ export function startMirageServer({ environment = 'development' } = {}) {
   })
 }
 ```
+
+---
+
+## Traits — named variant states
+
+A trait is a **named** override registered on the factory by wrapping an attribute
+object in the `trait()` helper imported from `miragejs`. The trait's name is the key
+it is assigned to; `create` / `createList` take those names as positional string
+arguments, before any attribute overrides.
+
+```typescript
+import { Factory, trait } from 'miragejs'
+
+const orderFactory = Factory.extend({
+  status:    'pending',
+  createdAt: () => faker.date.recent({ days: 30 }).toISOString(),
+
+  shipped:   trait({ status: 'shipped' }),
+  delivered: trait({ status: 'delivered' }),
+  cancelled: trait({ status: 'cancelled' }),
+})
+
+server.create('order', 'shipped')                       // one shipped order
+server.createList('order', 5, 'shipped')                // five shipped orders
+server.create('order', 'shipped', { userId: user.id })  // trait names first, attrs last
+```
+
+Attribute objects nested inside a factory do **not** register a trait, whatever key
+they sit under — only `trait()` does. Mirage looks traits up by name at `create` time
+and throws `'shipped' trait is not registered in 'order' factory` when it finds a
+plain object instead. Because `seeds()` runs at server start, that failure takes down
+the dev server on boot rather than surfacing in one test.
 
 ---
 
@@ -183,7 +211,7 @@ it('renders a list of pending orders', async () => {
   const server = getServer()
 
   // Create test data per-test — never rely on seeds() in tests
-  server.createList('order', 3, { status: 'pending' } as any)
+  server.createList('order', 3, { status: 'pending' })
 
   render(<OrderList />)
 
@@ -223,7 +251,7 @@ export const WithOrders: Story = {
   decorators: [
     (Story) => {
       const server = startMirageServer({ environment: 'test' })
-      server.createList('order', 5, 'shipped' as any)
+      server.createList('order', 5, 'shipped')
 
       // Return cleanup via useEffect pattern via Storybook addon
       return <Story />
@@ -243,3 +271,4 @@ export const WithOrders: Story = {
 | Hardcoded IDs in factories | Use `faker.string.uuid()` — hardcoded IDs collide between `createList` calls |
 | Accessing `server.db` directly in components | Route handlers use `schema` — `server.db` is for test assertions only |
 | Using seeds() data in tests | `seeds()` only runs in `development` environment — create your own data in each test |
+| Nesting variant states in a plain attribute object instead of wrapping each in `trait()` | Only `trait()` registers a trait — anything else throws `'<name>' trait is not registered` from `create`/`createList`, and from `seeds()` that kills the dev server on boot |
