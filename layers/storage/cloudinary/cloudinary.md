@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = await cloudinary.uploader.upload(base64, {
-      folder: `users/${session.userId}/avatars`,
+      folder,
       public_id: publicId,
       resource_type: "image",
       overwrite: false,

@@ -56,8 +56,10 @@ cases:
       - "fetchBaseQuery("
       - "credentials:"
     must_not_contain:
-      - "localStorage.getItem("
-      - "sessionStorage.getItem("
+      - "localStorage."
+      - "localStorage["
+      - "sessionStorage."
+      - "sessionStorage["
     rationale: |
       The layer modelled `localStorage.getItem('auth_token')` in the canonical
       baseQuery — the one place every request in the app passes through, so the
@@ -75,6 +77,18 @@ cases:
       cross-origin variant that keeps a bearer token in a module variable and
       refreshes it from an httpOnly cookie.
 
-      Neither guard's literal appears in the layer's guidance — the rule is
-      written as "browser storage (`localStorage`, `sessionStorage`)", so an
-      answer reproducing the warning cannot trip the assertion.
+      The guards used to be `localStorage.getItem(` and
+      `sessionStorage.getItem(`, which named one accessor. `getItem` is not the
+      only way in: `window.localStorage['auth_token']` is the same read and
+      matches neither. That case only failed today because the storage answer
+      also omits `credentials:`; an answer that read the token by bracket and
+      sent `credentials: 'include'` anyway — belt and braces, and a very natural
+      thing to write — would have scored 4/4 while keeping the token exactly
+      where an XSS can reach it. The guards are now the object plus its two
+      access forms, so `getItem`, `setItem`, `removeItem`, `.token` and
+      `['auth_token']` are all covered.
+
+      No guard's literal appears in the layer's guidance — the rule is written
+      as "browser storage (`localStorage`, `sessionStorage`)", each in backticks
+      and followed by a comma or a space, never by a `.` or a `[` — so an answer
+      reproducing the warning cannot trip the assertion.

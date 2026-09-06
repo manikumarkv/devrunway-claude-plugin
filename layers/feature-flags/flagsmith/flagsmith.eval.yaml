@@ -52,24 +52,54 @@ cases:
   - id: flagsmith-03
     name: "Identity traits for targeted evaluation, without PII"
     scenario: |
-      Write the browser-side code that identifies the signed-in user to
-      Flagsmith with the traits their segments target, and evaluates a flag for
-      them. Use the flagsmith-flags skill rules.
+      The Flagsmith browser client is already initialised. Write the code that
+      runs when a user signs in: identify them to Flagsmith with the traits
+      their segments target, then read a flag for them.
+      Use the flagsmith-flags skill rules.
     must_contain:
-      - "identity"
-      - "traits:"
+      - "flagsmith.identify("
+      - "plan"
     must_not_contain:
-      - "user.email"
+      - "email:"
+      - ".email"
+      - "Email"
+      - "phone:"
+      - ".phone"
+      - "Phone"
     rationale: |
       Identity-based evaluation applies targeting rules per user; anonymous
       evaluation returns defaults regardless of segment.
 
-      `traits:` now appears in the detail file as well as the summary — the
-      browser init spelled it as a shorthand property, so an answer following the
-      detail file could not match the assertion it was scored on.
+      The positives asked for the wrong spelling of the thing the scenario
+      demands. The layer has two ways to attach an identity: the `init()`
+      options object, which carries `identity:` and `traits:`, and the
+      post-authentication call, which is `flagsmith.identify(user.id, {...})` —
+      the detail file's own canonical snippet, under its "Traits and Segment
+      Targeting" heading. `identify` does not contain `identity`, and `traits:`
+      appears only on the init path, so the exact code the layer teaches for the
+      exact moment the scenario names scored 0/2. The scenario now pins the
+      moment — the client is already initialised, the user has just signed in —
+      and the assertion is the call that moment takes. `plan` is the trait the
+      layer models on both paths, and it is what a defective answer that
+      identifies with no traits at all is missing.
 
       The guard is the half that was missing: traits are stored in Flagsmith and
       shown in its dashboard, so an answer that passes the user's email address
       as a trait ships PII to a third party the layer explicitly forbids sending
       it to. A compliant answer sends an opaque id and a tier, and never
       references the email at all.
+
+      `user.email` was the only guard, and it keyed on the caller's choice of
+      variable name: `email: currentUser.emailAddress, phone: currentUser.phoneNumber`
+      is the same leak and scored 3/3. The guards now name the PII itself in
+      both positions it can appear — as a trait key (`email:`, `phone:`) and as
+      the property being read (`.email`, which also covers `.emailAddress`;
+      `.phone`, which also covers `.phoneNumber`) — plus the camelCase forms
+      (`Email`, `Phone`) that catch `userEmail:` and `contactPhone:`. The layer's
+      compliant traits are `plan`, `country` and `account_age_days`, none of
+      which match.
+
+      None of the six literals appears in the layer's guidance: it writes the
+      prohibition as "an email address" and "a phone number" in prose, never as
+      a key or a property access, so an answer that reproduces the warning
+      cannot trip a guard.
