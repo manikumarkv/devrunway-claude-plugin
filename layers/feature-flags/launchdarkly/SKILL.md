@@ -18,6 +18,7 @@ Full standards in [launchdarkly.md](launchdarkly.md). Always-on summary:
 **SDK setup:**
 - Server-side SDK: initialise once per process; await `client.waitForInitialization()` before serving requests
 - Client-side SDK: use the React SDK (`launchdarkly-react-client-sdk`) — it handles streaming updates and context
+- Set `useCamelCaseFlagKeys: false` in the provider's `reactOptions`. The React SDK camelCases flag keys by default, so `useFlags()` would expose `'new-checkout-flow'` as `newCheckoutFlow` and a lookup by the kebab-case `FLAGS` constant silently reads `undefined`
 - Never use the server SDK in the browser — it exposes your SDK key and all flag configurations
 
 **Flag naming:**
@@ -36,8 +37,10 @@ Full standards in [launchdarkly.md](launchdarkly.md). Always-on summary:
 - Add a description and tags to every flag — "who owns this?", "what does it control?"
 
 **Testing:**
-- Use `TestData(` as the data source for unit tests — it controls flag values without calling the real LaunchDarkly API
-- Expose a `getFlag(key)` helper in your app so tests can override via DI, not global state
+- Build a real client on a `TestData(` source for unit tests: `new TestData()` from `@launchdarkly/node-server-sdk/integrations`, wired in with `updateProcessor: td.getFactory()`. It controls flag values in-process without calling the real LaunchDarkly API, and still exercises targeting, defaults and key handling
+- Never replace the LaunchDarkly module with a test double — a module double only asserts your code called a function whose return value you wrote, and drifts from the SDK on every upgrade without failing
+- Expose a `getFlag(key)` helper and a `setLDClient(` seam in your app so tests inject the TestData-backed client, not global state
+- `TestData` is server-side only. Test a React component by rendering it inside the React SDK's own context (`defaultReactOptions.reactContext`) with the flag values the test needs
 
 **Never:**
 - Hardcode flag keys as raw strings in multiple places — export from a central `flags.ts` constants file
