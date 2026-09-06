@@ -37,6 +37,21 @@ Full standards in [dotnet.md](dotnet.md). Always-on summary:
 - Never store secrets in `appsettings.json` committed to source control
 - Use Azure Key Vault or AWS Secrets Manager in production
 
+**API responses — one envelope, defined by `api-conventions`:**
+- Every JSON body is `{ success, data | error, meta }` — build it with
+  `ApiResponse<T>.Ok(data, ctx)` / `ApiResponse<T>.Fail(code, message, ctx)`.
+  `204 No Content` is the only response without a body
+- Errors carry a stable `Code` string the client can branch on — `NOT_FOUND`,
+  `VALIDATION_ERROR`, `INTERNAL_ERROR`. The HTTP status is on the status line and is
+  never duplicated in the body
+- Never send the exception's message, `ToString()` or stack to the client. Log the
+  exception object (`logger.LogError(ex, "...")`) and return a fixed message with a
+  stable code — exception text leaks table names, connection strings and file paths
+- Mount every route group versioned: `app.MapGroup("/api/v1/users")`. An unversioned
+  group breaks every client the day the shape changes
+- Choose the envelope **or** RFC 7807 problem documents — never both in one API. This
+  layer uses the envelope, so the RFC 7807 result helpers are not used
+
 **Never:**
 - Avoid fire-and-forget methods — use `async Task<T>` return types; only event handlers may use void return
 - Catch `Exception` and swallow — always log and rethrow or return a typed error

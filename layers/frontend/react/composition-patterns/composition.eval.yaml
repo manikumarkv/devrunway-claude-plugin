@@ -18,15 +18,29 @@ cases:
       Passing content through deeply nested props creates tight coupling.
 
   - id: comp-02
-    name: "forwardRef for exposing DOM refs to parents"
+    name: "forwardRef onto the shadcn primitive, not a raw element"
     scenario: |
       Write a reusable React TextInput component that allows parent components
       to access the underlying input element. Use the composition-patterns skill rules.
     must_contain:
       - "forwardRef("
+      - "@/components/ui/"
+    must_not_contain:
+      - "<input"
+      - "<button"
     rationale: |
-      forwardRef forwards refs to the underlying DOM element.
-      This is needed for focus management, form libraries, and animations.
+      forwardRef forwards refs to the underlying element — needed for focus
+      management, form libraries, and animations. Rejects a component that takes a
+      custom `inputRef` prop instead (form libraries pass `ref`, so they never reach
+      the element), and a plain `function TextInput(props)` that drops the ref.
+
+      Cross-layer: react-standards claims `**/*.tsx` and this layer claims
+      `**/components/**`, so both load on the same file, and react-standards forbids
+      building an input or button from scratch. The ref must therefore be forwarded
+      onto the shadcn primitive imported from `@/components/ui/`. The two
+      must_not_contain literals are written without a trailing space so a multi-line
+      JSX tag (`<input\n  type="text"`) cannot evade them. Neither literal appears in
+      this layer's skill_files.
 
   - id: comp-03
     name: "Context for shared state in compound components"

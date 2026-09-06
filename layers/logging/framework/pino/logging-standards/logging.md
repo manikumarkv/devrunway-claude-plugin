@@ -280,15 +280,21 @@ Handled automatically by `pino-http`. Do not add extra `logger.info` calls for r
 
 ### 2 — Authentication events
 
+**The masked-email field is named `maskedEmail`, always, everywhere.** It is a shorthand
+key — the masked value is never filed under `email`, `userEmail` or any other name. The
+CloudWatch brute-force query below groups by `maskedEmail`, so a line written under a
+different key is invisible to it: the query returns nothing and the alert never fires.
+Logging the raw address under `email` is separately forbidden — see § What NEVER to log.
+
 ```ts
 // Sign-in success
 logger.info({ userId, action: 'auth.signIn', method: 'password' }, 'User signed in')
 
 // Sign-in failure — warn, not error (expected; user may have mistyped password)
-logger.warn({ email: maskedEmail, action: 'auth.signIn', reason: 'invalid_password', attempt }, 'Sign-in failed')
+logger.warn({ maskedEmail, action: 'auth.signIn', reason: 'invalid_password', attempt }, 'Sign-in failed')
 
 // Account locked after too many attempts
-logger.warn({ email: maskedEmail, action: 'auth.accountLocked', lockedUntil }, 'Account locked')
+logger.warn({ maskedEmail, action: 'auth.accountLocked', lockedUntil }, 'Account locked')
 
 // Token refresh
 logger.debug({ userId, action: 'auth.tokenRefresh' }, 'Token refreshed')
@@ -764,6 +770,8 @@ fields @timestamp, method, url, durationMs, statusCode, requestId
 | limit 50
 
 # Auth failures — detect brute-force attempts
+# Groups by maskedEmail. Every auth log line must file the masked address under that
+# exact key (§2) or it is invisible here and this alert silently never fires.
 fields @timestamp, maskedEmail, action, reason, attempt
 | filter action like "auth." and level = "warn"
 | stats count() as failures by maskedEmail

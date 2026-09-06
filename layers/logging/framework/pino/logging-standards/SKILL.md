@@ -74,6 +74,12 @@ logger.error({ action: 'stripe.charge', orderId, durationMs, err }, 'Stripe char
 logger.warn({ action: 'auth.signIn', maskedEmail, reason: 'bad_credentials', attempt }, 'Sign-in failed')
 ```
 
+**Field names are a contract with the queries.** The masked address is always the
+shorthand key `maskedEmail` — never filed under `email`, `userEmail` or anything else.
+The CloudWatch brute-force query in [logging.md § CloudWatch Insights queries](logging.md)
+groups by `maskedEmail`; a line written under any other key never reaches it, so the
+query returns nothing and the alert silently never fires.
+
 **Key setup:**
 - `src/lib/logger.ts` — Pino singleton with `redact` for all sensitive paths
 - `pino-http` middleware — auto request/response logs; mount before all other middleware

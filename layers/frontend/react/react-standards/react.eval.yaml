@@ -67,8 +67,19 @@ cases:
     must_contain:
       - "@/components/ui/"
     must_not_contain:
-      - "<input "
-      - "<button "
+      - "<input"
+      - "<button"
     rationale: |
       shadcn/ui components must be used instead of raw HTML form elements
-      to ensure consistent design system usage.
+      to ensure consistent design system usage. Rejects a form built from
+      `<input type="text">` + `<button type="submit">`, and — because the literals
+      carry no trailing space — also rejects the same form written with each
+      attribute on its own line (`<input\n  type="text"`), which the previous
+      `"<input "` spelling let through.
+
+      Deliberate exception to the "must_not_contain literal absent from skill_files"
+      check: react.md keeps exactly one raw `<button>`, inside the "never build
+      primitives from scratch" counter-example, flagged in a comment as the only raw
+      form element in the document. It is the demonstration of the anti-pattern this
+      case guards, so it stays; every incidental raw element elsewhere in react.md
+      was converted to the shadcn primitive.

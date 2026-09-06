@@ -50,16 +50,17 @@ export function cn(...inputs: ClassValue[]) {
 
 ```tsx
 // ❌ — string concatenation breaks Tailwind merge
-<button className={`bg-blue-500 ${disabled ? 'opacity-50' : ''}`} />
+<Button className={`bg-blue-500 ${disabled ? 'opacity-50' : ''}`} />
 
 // ✅ — cn() resolves conflicts and trims duplicates
-<button className={cn('bg-blue-500', disabled && 'opacity-50 cursor-not-allowed')} />
+<Button className={cn('bg-blue-500', disabled && 'opacity-50 cursor-not-allowed')} />
 ```
 
 ### Using shadcn components
 
 ```tsx
-// ❌ — never build primitives from scratch
+// ❌ — never build primitives from scratch. This is the ONLY place in this document that
+//      writes a raw HTML form element, and it is here to be recognised and rejected.
 function Button({ children, onClick }) {
   return <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={onClick}>{children}</button>
 }
@@ -779,14 +780,14 @@ function Component() {
 // ❌ — typing blocks UI
 function Search() {
   const [query, setQuery] = useState('')
-  return <input onChange={e => setQuery(e.target.value)} />
+  return <Input onChange={e => setQuery(e.target.value)} />
 }
 
 // ✅ — urgent: update input; deferred: run expensive work
 function Search() {
   const [query, setQuery] = useState('')
   const [isPending, startTransition] = useTransition()
-  return <input onChange={e => startTransition(() => setQuery(e.target.value))} />
+  return <Input onChange={e => startTransition(() => setQuery(e.target.value))} />
 }
 ```
 
@@ -944,9 +945,9 @@ async function openEmojiPicker() {
 function HeavyButton() {
   const preload = () => import('./HeavyModal')  // start loading on hover
   return (
-    <button onMouseEnter={preload} onClick={() => setOpen(true)}>
+    <Button onMouseEnter={preload} onClick={() => setOpen(true)}>
       Open
-    </button>
+    </Button>
   )
 }
 ```

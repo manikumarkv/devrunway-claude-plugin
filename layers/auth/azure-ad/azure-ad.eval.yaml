@@ -45,3 +45,28 @@ cases:
     rationale: |
       Audience validation ensures the token was issued for this specific API.
       Without it, a token issued for another app could be used here.
+
+  - id: azad-04
+    name: "Token rejection uses the api-conventions envelope, not library error text"
+    scenario: |
+      Write the Express middleware response for a request whose Azure AD token is
+      missing or fails verification. Use the azure-ad-auth skill rules.
+    must_contain:
+      - "success: false"
+      - "code:"
+    must_not_contain:
+      - ".message"
+    rationale: |
+      Cross-layer guard against `api-conventions` and `security-principles`. This
+      layer returned `res.status(401).json({ error: "Missing token" })` — a bare body
+      the client cannot branch on, in a layer whose own Related-skills line claims
+      `api-conventions`.
+
+      Discriminates: the shipped bare body scores 0 (neither `success: false` nor
+      `code:`). Second spelling, `res.status(401).json({ message: 'Invalid token' })`,
+      also scores 0. Third, `res.sendStatus(401)` — which a `res.status(401)` guard
+      would have missed entirely — scores 0 too, since it carries no envelope.
+      `.message` is written receiver-free so it catches `err.message`, `e.message`
+      and `error.message` alike; the layer requires the error object to be handed to
+      the logger, so compliant code never dereferences it. The literal does not
+      appear in this layer's skill_files.

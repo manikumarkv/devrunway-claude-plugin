@@ -42,3 +42,35 @@ cases:
     rationale: |
       signOut() calls Cognito to invalidate the session globally.
       Just clearing local storage leaves server-side sessions active.
+
+  - id: cauth-04
+    name: "LoginForm fields have real labels, not placeholder + aria-label"
+    scenario: |
+      Write the Cognito LoginForm component with email and password fields and
+      an error message for a failed sign-in. Use the cognito-auth skill rules.
+    must_contain:
+      - "<label"
+      - "htmlFor="
+      - "aria-describedby"
+    must_not_contain:
+      - "placeholder="
+      - "aria-label="
+    rationale: |
+      Cross-layer guard. The universal `accessibility` skill is always on, and
+      a11y-01 requires `<label` and forbids `placeholder=`. This layer used to ship a
+      LoginForm built from `placeholder="Email"` + `aria-label="Email"` with no label
+      element, so code scaffolded from it failed the accessibility suite on the most
+      screen-read form in the product.
+
+      Discriminates: the shipped placeholder + aria-label form scores 0 (no `<label`,
+      contains both forbidden literals). The second spelling — labels present but the
+      password field still carrying `placeholder="••••••••"` as a hint — also scores 0
+      on `placeholder=`. A form with labels but an unlinked `<p className="error">`
+      scores 0 on `aria-describedby`.
+
+      `htmlFor=` is required rather than accepting the wrapping-label form that
+      accessibility.md also permits, because this scaffold gives both fields ids for
+      `aria-describedby` regardless, and the SKILL.md text states the explicit
+      association as this layer's rule. The prose above the code block writes
+      `placeholder` and `aria-label` without a trailing `=`, so neither
+      must_not_contain literal appears in skill_files.
