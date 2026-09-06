@@ -83,3 +83,19 @@ For each skill being fixed:
 4. Apply it with Edit
 5. Re-run those specific cases to confirm they now pass
 6. Commit: `chore(eval): fix <skill-name> — <what was missing>`
+
+**Fix the guidance, not the assertion.** Weakening a guard to reach green is how
+`payment/braintree` reached 3/3 while teaching a webhook handler that acknowledged
+before verifying its signature.
+
+**Green is not the goal — discrimination is.** Before calling a case fixed, score
+it against both a correct implementation and the incorrect one it targets: it must
+score 1 on the first and 0 on the second. Then write that same defect a **second
+idiomatic way** and score it again. A guard on `req.json()` misses
+`await request.json()`; a guard on `console.log(result` misses
+`logger.info("...", { result })`. You will naturally probe the spelling you had in
+mind, which is the blind spot that made the guard narrow — so vary it deliberately.
+
+See **Eval files** in `CONTRIBUTING.md` for the full checklist, including the
+landmine check (a `must_not_contain` the layer's own prose quotes fires on
+compliant output).
