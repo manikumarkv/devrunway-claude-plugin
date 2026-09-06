@@ -32,13 +32,13 @@ Full standards in [neon.md](neon.md). Always-on summary.
 - PgBouncer transaction mode drops session state. Running a migration through the pooled URL fails intermittently rather than cleanly — hardest possible failure to diagnose.
 
 **Driver selection:**
-- `@neondatabase/serverless` `neon()` — HTTP, one-shot queries, edge/serverless. **No transactions.**
-- `@neondatabase/serverless` `Pool` — WebSocket, when you need a real transaction in serverless
+- `@neondatabase/serverless` `neon()` — HTTP, one-shot queries, edge/serverless. Each call is its own transaction; a **fixed batch** can still be atomic via `sql.transaction([...])`. **No interactive transaction** — nothing that reads a value and then decides what to write
+- `@neondatabase/serverless` `Pool` — WebSocket, when you need an interactive transaction in serverless
 - `pg` — long-lived Node servers
 
 **Client lifecycle — inverted from a traditional server:**
 - Long-lived Node process: one `Pool` per process, module singleton, never per request
-- Serverless/edge: create per invocation. Do **not** cache a WebSocket `Pool` in a module global across invocations
+- Serverless/edge: create per invocation. Do **not** cache a WebSocket `Pool` in a module global across invocations — that applies to the transactional `Pool` too. Construct it inside the handler and `await pool.end()` in the same invocation (`ctx.waitUntil(pool.end())` on Cloudflare Workers)
 
 **Scale-to-zero:** idle compute suspends after ~5 min (configurable); the first query after suspend pays a cold start of a few hundred ms. Never set a statement or connect timeout below ~1s on a scale-to-zero branch, and never add a keep-warm ping without a documented latency requirement — it bills continuous compute to avoid a cost you probably don't have.
 
