@@ -46,3 +46,57 @@ cases:
     rationale: |
       .Result blocks the thread and can cause deadlocks. async void
       exceptions are unhandled. async Task<T> is always correct.
+
+  - id: dotnet-04
+    name: "Exception middleware returns the envelope, never exception text"
+    scenario: |
+      Write the .NET exception-handling middleware that turns a NotFoundException
+      into a 404 response and any other exception into a 500 response.
+      Use the dotnet-standards skill rules.
+    must_contain:
+      - "ApiResponse"
+      - "INTERNAL_ERROR"
+    must_not_contain:
+      - ".Message"
+      - ".StackTrace"
+    rationale: |
+      Cross-layer guard against `api-conventions` and `error-handling`, both of which
+      are contradicted by a bare `new { error = ex.Message }` body: it leaks internals
+      (table names, connection strings, file paths appear in EF Core and IO exception
+      text) and gives the client no stable code to branch on.
+
+      `.Message` and `.StackTrace` are written receiver-free on purpose. The first
+      spelling of the defect is `new { error = ex.Message }`; the second, which a
+      `"ex.Message"` guard would miss, is `catch (Exception e)` with
+      `new { error = new { code = "INTERNAL_ERROR", message = e.Message } }` — correct
+      envelope, still leaking. A third, `ProblemDetails { Detail = exception.ToString() }`,
+      is caught by the missing `ApiResponse`. This does not fail correct code: the
+      layer requires the exception *object* to be passed to the logger
+      (`logger.LogError(ex, "...")`), so a compliant handler never dereferences it.
+      Neither literal appears in this layer's skill_files.
+
+  - id: dotnet-05
+    name: "Endpoints return the envelope on versioned routes"
+    scenario: |
+      Write the .NET minimal API endpoint group for users — list, get by id, create
+      with validation, delete — including how the group is mounted in Program.cs.
+      Use the dotnet-standards skill rules.
+    must_contain:
+      - "/api/v1/"
+      - "ApiResponse<"
+    must_not_contain:
+      - "ValidationProblem"
+    rationale: |
+      `api-conventions` mandates one response envelope and versioned routes from day
+      one. This layer previously mounted `MapGroup` unversioned and returned bare
+      resources, so a .NET service built to it violated both.
+
+      Discriminates on each property independently: the previously shipped group
+      (unversioned mount, `TypedResults.Ok(await service.GetAllAsync())`,
+      `TypedResults.ValidationProblem(...)`) scores 0 on all three. The second
+      spelling — versioned route but bare bodies, `MapGroup("/api/v1/users")` with
+      `TypedResults.Ok(users)` — scores 0 on `ApiResponse<`. The reverse, envelope on
+      an unversioned mount, scores 0 on `/api/v1/`. `ValidationProblem` catches the
+      RFC 7807 shape competing with the envelope in the same API; the SKILL.md and
+      detail file describe that rule as "RFC 7807 problem documents" so the literal
+      does not appear in skill_files.

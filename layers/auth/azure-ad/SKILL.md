@@ -42,6 +42,10 @@ Full standards in [azure-ad.md](azure-ad.md). Always-on summary:
 - Pass the Bearer token in `Authorization` header — never in query params
 - Tokens expire; always handle `401` by refreshing, not by logging out
 
+**Rejecting a request — use the `api-conventions` envelope:**
+- `res.status(401).json({ success: false, error: { code: 'INVALID_TOKEN', message: 'Invalid or expired token' } })` — never a bare `{ error: '...' }` body
+- Never return the JWT library's error text to the caller: it names the issuer, the expected audience and the key id. Log the error object and return a stable `code`
+
 **Never:**
 - Store access tokens in `localStorage` — use `sessionStorage` or in-memory
 - Skip audience validation on the API — any Entra-issued token would pass issuer check alone

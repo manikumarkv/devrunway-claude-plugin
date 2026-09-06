@@ -160,9 +160,18 @@ function getKey(header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) {
   });
 }
 
+// Rejections use the one response envelope from `api-conventions`:
+// { success, error: { code, message } }. The client branches on `code`; the
+// JWT library's own error text never reaches it — it names the issuer, the
+// expected audience and the key id, which is reconnaissance for an attacker.
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace("Bearer ", "");
-  if (!token) return res.status(401).json({ error: "Missing token" });
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      error: { code: "MISSING_TOKEN", message: "Authorization header required" },
+    });
+  }
 
   jwt.verify(
     token,
@@ -173,7 +182,13 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
       algorithms: ["RS256"],
     },
     (err, payload) => {
-      if (err) return res.status(401).json({ error: "Invalid token" });
+      if (err) {
+        logger.warn({ err, action: "auth.verifyToken" }, "Token verification failed");
+        return res.status(401).json({
+          success: false,
+          error: { code: "INVALID_TOKEN", message: "Invalid or expired token" },
+        });
+      }
       (req as any).user = payload;
       next();
     },
@@ -215,8 +230,15 @@ async def require_auth(credentials = Depends(bearer)):
             issuer=ISSUER,
         )
         return payload
-    except JWTError as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    except JWTError:
+        # Never put the JWTError text in `detail` — it is returned to the caller and
+        # names the issuer, audience and key id. Log it; return a stable code.
+        logger.warning("auth.verifyToken failed", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"success": False,
+                    "error": {"code": "INVALID_TOKEN", "message": "Invalid or expired token"}},
+        )
 ```
 
 ## Checklist
@@ -227,6 +249,8 @@ async def require_auth(credentials = Depends(bearer)):
 - [ ] API validates `issuer`, `audience`, `algorithms`, and expiry
 - [ ] B2C configs include `knownAuthorities`
 - [ ] `Authorization: Bearer` header used — no tokens in query params
+- [ ] Rejections return the `{ success: false, error: { code, message } }` envelope
+- [ ] No JWT library error text in the response body — log it, return a stable code
 
 ## Common mistakes
 
