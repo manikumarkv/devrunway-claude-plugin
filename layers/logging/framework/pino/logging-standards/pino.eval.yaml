@@ -61,3 +61,36 @@ cases:
     rationale: |
       External calls must log durationMs and action for performance monitoring
       and debugging slow dependencies.
+
+  - id: pino-05
+    name: "Masked address filed under the maskedEmail key the alert query groups by"
+    scenario: |
+      Write the code that logs a failed sign-in for a known email address, including
+      the reason and the attempt number, so the CloudWatch brute-force detection query
+      can count failures per address. Use the logging-standards skill rules.
+    must_contain:
+      - "maskedEmail"
+      - "logger.warn("
+    must_not_contain:
+      - ": maskedEmail"
+    rationale: |
+      This layer's own CloudWatch brute-force query groups by `maskedEmail`, but §2 of
+      logging.md emitted `{ email: maskedEmail, ... }` — the value was right and the key
+      was wrong, so the shipped alert query matched none of the lines the shipped
+      emitters wrote and silently never fired. Field names are part of the contract
+      with the query, not a local naming choice.
+
+      `must_contain: "maskedEmail"` alone does not discriminate: `{ userEmail:
+      maskedEmail }` contains the literal as a *value* and still breaks the query.
+      So the guard is written against the property — `": maskedEmail"` fires on any
+      spelling that files the masked address under some other key, catching both the
+      defect that shipped (`email: maskedEmail`) and the second spelling
+      (`userEmail: maskedEmail`), which a `"email: maskedEmail"` guard would miss.
+      It rejects the one benign spelling `{ maskedEmail: maskedEmail }`; that is
+      accepted, because the layer writes the shorthand everywhere and redundant
+      explicit keys are lint errors under object-shorthand rules.
+
+      `password` is deliberately NOT asserted here even though pino-02 forbids it:
+      the layer's own correct line writes `reason: 'invalid_password'`, so that guard
+      fails correct code. Neither must_contain literal is missing from skill_files and
+      `": maskedEmail"` does not appear in them.
