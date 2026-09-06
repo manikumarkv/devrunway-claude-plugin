@@ -20,7 +20,10 @@ Full standards in [cloudwatch-logging.md](cloudwatch-logging.md). Always-on summ
 **Required fields in every log line:** `timestamp`, `level`, `service`, `requestId`, `message`
 
 **Sending logs via SDK:**
-- Use `PutLogEventsCommand` with the correct `sequenceToken` from the previous `PutLogEvents` response — missing the token causes `InvalidSequenceTokenException`
+- Prefer not to. Write structured JSON to stdout and let the platform ship it — the Lambda runtime, the ECS `awslogs` driver or the CloudWatch agent. Calling `PutLogEvents` from application code puts your log pipeline in the request path
+- When you do call it directly, use `PutLogEventsCommand` with **no** `sequenceToken`. AWS removed the sequencing requirement in 2023: the parameter is ignored, `InvalidSequenceTokenException` and `DataAlreadyAcceptedException` are never returned, and parallel `PutLogEvents` calls on one stream are supported — so no shared token state and no retry-on-token path
+- What the API still enforces: events in a batch sorted ascending by `timestamp`, at most 10,000 events, each ≤ 1 MB, spanning ≤ 24 hours
+- Create the stream once with `CreateLogStreamCommand`; recover from `ResourceNotFoundException`, not from a token error
 
 **Essential Insights queries:**
 - Errors: `fields @timestamp, @message | filter level = "error" | sort @timestamp desc | limit 100`

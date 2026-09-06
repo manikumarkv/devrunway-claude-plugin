@@ -17,16 +17,52 @@ cases:
       by service and environment in CloudWatch Insights.
 
   - id: cw-02
-    name: "PutLogEvents with sequence token for ordering"
+    name: "PutLogEvents carries no sequence token"
     scenario: |
-      Write the CloudWatch log event sender with correct sequence handling.
+      Write a function that sends a batch of log events to a CloudWatch log
+      stream with the AWS SDK v3.
       Use the cloudwatch-logging skill rules.
     must_contain:
       - "PutLogEventsCommand"
-      - "sequenceToken"
+      - "logEvents"
+    must_not_contain:
+      - "sequenceToken:"
+      - "sequenceToken,"
+      - "sequenceToken }"
+      - "sequenceToken}"
+      - "nextSequenceToken"
+      - "expectedSequenceToken"
     rationale: |
-      CloudWatch requires a sequence token to order log events correctly.
-      Missing the token causes InvalidSequenceTokenException errors.
+      Verified against the installed @aws-sdk/client-cloudwatch-logs@3.1127.0
+      typings. PutLogEventsRequest.sequenceToken: "The sequenceToken parameter
+      is now ignored in PutLogEvents actions. PutLogEvents actions are now
+      accepted and never return InvalidSequenceTokenException or
+      DataAlreadyAcceptedException even if the sequence token is not valid."
+      PutLogEventsResponse.nextSequenceToken: "This field has been deprecated
+      ... You can use parallel PutLogEvents actions on the same log stream and
+      you do not need to wait for the response of a previous PutLogEvents
+      action." So the token, the shared mutable global that carried it, and the
+      InvalidSequenceTokenException retry path are all dead code built on an API
+      AWS removed in 2023 — and the global serialises writes the service accepts
+      in parallel.
+
+      The old case asserted must_contain "sequenceToken", so it was green only
+      while the layer taught the removed API.
+
+      The four must_not_contain literals guard the property — a sequence token
+      being threaded through the call — rather than one spelling. "sequenceToken:"
+      catches it passed explicitly in the command input or held in a typed
+      variable; "sequenceToken," catches the comma-terminated shorthand property,
+      which is how Prettier formats a multi-line object, and the variable passed
+      positionally; "sequenceToken }" and "sequenceToken}" catch the inline
+      shorthand at the end of an object literal, the spelling that touches
+      neither a colon nor a comma; "nextSequenceToken" catches it read back off
+      the response; and "expectedSequenceToken" catches the retry path that pulls
+      it out of the rejected call, the one spelling that names no request field
+      at all.
+      None of the four appears in the layer's own text: the guidance names the
+      parameter only in prose, never with a colon or comma after it, and refers
+      to the response field by description rather than by name.
 
   - id: cw-03
     name: "Metric filters defined for alerting"
