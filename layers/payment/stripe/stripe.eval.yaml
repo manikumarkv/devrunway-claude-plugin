@@ -50,8 +50,9 @@ cases:
       - "pi-${order"
       - "order.totalCents"
     must_not_contain:
-      - "${Date.now()}"
+      - "Date.now()"
       - "randomUUID"
+      - "randomBytes"
       - "Math.random("
     rationale: |
       The previous version of this case asserted only the token
@@ -61,9 +62,19 @@ cases:
       property was absent.
 
       Determinism is the whole property, so it is what gets asserted. The three
-      `must_not_contain` entries are the three ways to destroy it — a clock, a
-      UUID, a random number — and each one is exactly the construction that
-      turns a retried timeout into a second charge. `pi-${order` requires the
+      `must_not_contain` entries are the ways to destroy it — a clock, a UUID,
+      random bytes — and each is exactly the construction that turns a retried
+      timeout into a second charge. They guard the *source*, not one syntax for
+      interpolating it: an earlier revision guarded `${Date.now()}` and was
+      evaded by `const ts = Date.now()` followed by `pi-${order.id}-${ts}`,
+      which is the same non-deterministic key with a variable in the way.
+
+      Note the deliberate difference from pp-05, which guards the interpolated
+      `${Date.now()}` instead. That layer reads the clock legitimately when
+      caching its OAuth token, so the bare form would fail a compliant answer.
+      This scenario creates one PaymentIntent and has no legitimate reason to
+      read a clock at all, and `Date.now()` appears nowhere in this layer's
+      guidance, so the stricter guard cannot fire on compliant output. `pi-${order` requires the
       key to be derived from the order's identity, which is the only input that
       is stable across attempts and distinct between orders; it matches whether
       the answer writes `pi-${order.id}` or `pi-${orderId}`.
