@@ -2,6 +2,12 @@
 
 Source: Vercel Engineering agent-skills — composition-patterns
 
+> **React version and UI primitives are owned by `react-standards`.** It pins the stack
+> (currently React 18) and mandates shadcn/ui for every input, button, dialog, select, table
+> and badge. Every example below is written for that pin and imports primitives from
+> `@/components/ui/`. § React 19 APIs at the end is reference material for the day the pin
+> moves — not guidance to follow today.
+
 ---
 
 ## Component Architecture — CRITICAL
@@ -60,6 +66,9 @@ function Composer({ value, onChange, onSubmit, isSubmitting, error }) {
 }
 
 // ✅ — compound components share context
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+
 interface ComposerContextValue {
   value: string
   onChange: (value: string) => void
@@ -71,7 +80,7 @@ interface ComposerContextValue {
 const ComposerContext = createContext<ComposerContextValue | null>(null)
 
 function useComposer() {
-  const ctx = use(ComposerContext)  // React 19
+  const ctx = useContext(ComposerContext)
   if (!ctx) throw new Error('Must be used within Composer')
   return ctx
 }
@@ -80,7 +89,7 @@ function ComposerInput() {
   const { value, onChange, error } = useComposer()
   return (
     <>
-      <textarea value={value} onChange={e => onChange(e.target.value)} />
+      <Textarea value={value} onChange={e => onChange(e.target.value)} />
       {error && <span>{error}</span>}
     </>
   )
@@ -88,7 +97,7 @@ function ComposerInput() {
 
 function ComposerFooter() {
   const { onSubmit, isSubmitting } = useComposer()
-  return <button onClick={onSubmit} disabled={isSubmitting}>Send</button>
+  return <Button onClick={onSubmit} disabled={isSubmitting}>Send</Button>
 }
 
 function ComposerProvider({ children }: { children: React.ReactNode }) {
@@ -104,9 +113,9 @@ function ComposerProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ComposerContext value={{ value, onChange: setValue, onSubmit, isSubmitting, error }}>
+    <ComposerContext.Provider value={{ value, onChange: setValue, onSubmit, isSubmitting, error }}>
       {children}
-    </ComposerContext>
+    </ComposerContext.Provider>
   )
 }
 
@@ -205,7 +214,7 @@ UI components consume the interface. The provider is the only place that knows h
 function ComposerInput() {
   const { state, actions } = useComposer()
   return (
-    <textarea
+    <Textarea
       value={state.value}
       onChange={e => actions.setValue(e.target.value)}
     />
@@ -217,7 +226,7 @@ function NewMessageProvider({ children }: { children: React.ReactNode }) {
   const [value, setValue] = useState('')
   const submit = async () => { await sendMessage(value); setValue('') }
   // ...provides ComposerContextValue
-  return <ComposerContext value={...}>{children}</ComposerContext>
+  return <ComposerContext.Provider value={...}>{children}</ComposerContext.Provider>
 }
 
 // Provider B: globally synced state (e.g. editing a draft)
@@ -225,7 +234,7 @@ function DraftProvider({ draftId, children }: { draftId: string; children: React
   const draft = useDraft(draftId)  // synced to server
   const submit = async () => publishDraft(draftId)
   // ...same interface, different implementation
-  return <ComposerContext value={...}>{children}</ComposerContext>
+  return <ComposerContext.Provider value={...}>{children}</ComposerContext.Provider>
 }
 
 // Same UI, different providers — no UI changes needed
@@ -258,8 +267,8 @@ function Composer({ renderInput, renderFooter }: {
 
 // Usage is awkward
 <Composer
-  renderInput={(value, onChange) => <textarea value={value} onChange={e => onChange(e.target.value)} />}
-  renderFooter={(onSubmit) => <button onClick={onSubmit}>Send</button>}
+  renderInput={(value, onChange) => <Textarea value={value} onChange={e => onChange(e.target.value)} />}
+  renderFooter={(onSubmit) => <Button onClick={onSubmit}>Send</Button>}
 />
 
 // ✅ — children + compound components: natural, readable
@@ -317,61 +326,108 @@ Each variant:
 
 ---
 
-## React 19 APIs
+## Forwarding refs
 
-### No `forwardRef` — accept `ref` as a regular prop
+A parent needs the underlying element for focus management, form libraries (React Hook Form
+registers a ref) and animation. On the pinned React 18 that means `forwardRef(`.
+
+Forward onto the **shadcn primitive**, never onto a hand-rolled element — `react-standards`
+forbids building an input, button, dialog, select, table or badge from scratch, and a raw
+element here would drift from the design system and lose its focus and invalid states.
 
 ```tsx
-// ❌ React 18 — forwardRef wrapper
-const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, ...props }, ref) => (
-    <label>
-      {label}
-      <input ref={ref} {...props} />
-    </label>
+// ❌ — hand-rolled element: no design-system styling, no shadcn a11y wiring
+const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
+  ({ label, ...props }, ref) => <>{label}<HandRolledField ref={ref} {...props} /></>
+)
+
+// ❌ — a custom `inputRef` prop instead of a forwarded ref: form libraries and
+//      focus helpers pass `ref`, so they cannot reach the element at all
+function TextInput({ inputRef, label, ...props }: TextInputProps) {
+  return <Input ref={inputRef} {...props} />
+}
+
+// ✅ — forwardRef onto the shadcn primitive
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+interface TextInputProps extends React.ComponentPropsWithoutRef<typeof Input> {
+  id: string
+  label: string
+}
+
+const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
+  ({ id, label, ...props }, ref) => (
+    <div className="grid gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} ref={ref} {...props} />
+    </div>
+  )
+)
+TextInput.displayName = 'TextInput'
+```
+
+---
+
+## React 19 APIs — reference only
+
+**These are not the stack.** `react-standards` pins React 18 and is the single place the
+version is stated. Do not write any of the right-hand column until that pin is changed;
+this section exists so the migration is already written down when it is.
+
+### Ref as a plain prop (replaces `forwardRef`)
+
+```tsx
+// React 18 — this stack
+const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
+  ({ id, label, ...props }, ref) => (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} ref={ref} {...props} />
+    </div>
   )
 )
 
-// ✅ React 19 — ref is just a prop
-function Input({ label, ref, ...props }: InputProps & { ref?: React.Ref<HTMLInputElement> }) {
+// React 19 — only once react-standards pins React 19
+function TextInput({ id, label, ref, ...props }: TextInputProps & { ref?: React.Ref<HTMLInputElement> }) {
   return (
-    <label>
-      {label}
-      <input ref={ref} {...props} />
-    </label>
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} ref={ref} {...props} />
+    </div>
   )
 }
 ```
 
-### `use(Context)` instead of `useContext()`
+### `use(Context)` (replaces `useContext()`)
 
 ```tsx
-// ❌ React 18
+// React 18 — this stack
 function ComposerInput() {
   const ctx = useContext(ComposerContext)
   // ...
 }
 
-// ✅ React 19 — use() works inside conditionals and loops too
+// React 19 — only once react-standards pins React 19
 function ComposerInput() {
   const ctx = use(ComposerContext)
   // ...
 }
 
-// Bonus: use() works conditionally (useContext does not)
+// Why React 19 wants it: use() is legal after an early return, useContext is not
 function MaybeComposer({ show }: { show: boolean }) {
   if (!show) return null
-  const ctx = use(ComposerContext)  // valid — after early return
-  return <textarea value={ctx.state.value} />
+  const ctx = use(ComposerContext)
+  return <Textarea value={ctx.state.value} readOnly />
 }
 ```
 
-### Context provider syntax — no `.Provider` needed
+### Context provider syntax
 
 ```tsx
-// ❌ React 18
+// React 18 — this stack
 return <ComposerContext.Provider value={...}>{children}</ComposerContext.Provider>
 
-// ✅ React 19
+// React 19 — only once react-standards pins React 19
 return <ComposerContext value={...}>{children}</ComposerContext>
 ```

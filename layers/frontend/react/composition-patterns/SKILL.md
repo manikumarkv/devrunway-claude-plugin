@@ -11,13 +11,36 @@ paths:
 
 Full patterns in [patterns.md](patterns.md). Always-on summary:
 
+> **Scope — composition only.** This layer shares `**/components/**` with `react-standards`
+> (which claims `**/*.tsx`), so both load on the same file. `react-standards` is authoritative
+> for the React version, the UI primitive library (shadcn/ui) and forms; this layer is
+> authoritative for how components are composed out of those primitives. Where the two overlap,
+> follow `react-standards`.
+> See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
+
 **Architecture rules:**
 - No boolean prop proliferation — use explicit component variants instead
 - Complex components → compound components sharing context, not prop drilling
 - Children-based composition over `renderX` render props — accept `children: React.ReactNode` for flexible slot-based layouts
 
-**Forwarding refs (React < 19):**
-- Use `forwardRef(` to expose DOM elements to parent components: `const Input = forwardRef<HTMLInputElement, Props>((props, ref) => ...)` 
+**Forwarding refs:**
+- Use `forwardRef(` to expose the underlying element to parent components
+- Forward onto the shadcn primitive, never onto a hand-rolled HTML element — `react-standards`
+  forbids building an input, button, dialog, select, table or badge from scratch:
+  ```tsx
+  import { Input } from '@/components/ui/input'
+  import { Label } from '@/components/ui/label'
+
+  const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
+    ({ id, label, ...props }, ref) => (
+      <div>
+        <Label htmlFor={id}>{label}</Label>
+        <Input id={id} ref={ref} {...props} />
+      </div>
+    )
+  )
+  TextInput.displayName = 'TextInput'
+  ```
 - Required for focus management, form libraries, and animation
 
 **Context and compound components:**
@@ -28,9 +51,13 @@ Full patterns in [patterns.md](patterns.md). Always-on summary:
 - UI components consume the interface — never coupled to useState/Zustand/etc.
 - Swap the provider, keep the UI
 
-**React 19:**
-- No `forwardRef` — accept `ref` as a regular prop
-- `use(Context)` instead of `useContext()`
+**React version — stated once, by `react-standards`:**
+- The React version is pinned in the `react-standards` Stack line (currently **React 18**).
+  This layer does not restate it and must not contradict it
+- So write the React 18 APIs: `forwardRef(`, `useContext(`, `<Context.Provider value={…}>`
+- The React 19 equivalents (`ref` as a plain prop, `use(Context)`, `<Context value={…}>`) are
+  documented in [patterns.md § React 19 APIs](patterns.md) **for reference only** — do not use
+  them unless the `react-standards` Stack line is changed to React 19 first
 
 
 **Related skills — apply together:**
