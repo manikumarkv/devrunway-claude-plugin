@@ -150,6 +150,19 @@ export const api = {
 ```
 
 **`src/features/auth/components/LoginForm/LoginForm.tsx`**
+
+The login form is the first screen every user meets and the one most often
+screen-read, so it follows the universal `accessibility` skill exactly:
+
+- Every field has a real `<label>` associated with `htmlFor` + `id`. A `placeholder`
+  is not a label — it disappears the moment the user types, and it is the single most
+  common accessibility defect in auth forms
+- No `aria-label` on the fields: it would duplicate the visible label text, which the
+  `accessibility` skill forbids
+- The submit error is rendered with `role="alert"` **and** linked to both fields with
+  `aria-describedby`, so a screen reader announces it when either field is focused
+- `autoComplete` set so password managers can fill the form
+
 ```tsx
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
@@ -174,11 +187,38 @@ export function LoginForm() {
     }
   }
 
+  const errorId = 'login-error';
+  const describedBy = error ? errorId : undefined;
+
   return (
-    <form onSubmit={handleSubmit}>
-      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" required aria-label="Email" />
-      <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" required aria-label="Password" />
-      {error && <p role="alert">{error}</p>}
+    <form onSubmit={handleSubmit} noValidate>
+      <label htmlFor="login-email">Email</label>
+      <input
+        id="login-email"
+        type="email"
+        autoComplete="username"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        required
+        aria-required="true"
+        aria-invalid={!!error}
+        aria-describedby={describedBy}
+      />
+
+      <label htmlFor="login-password">Password</label>
+      <input
+        id="login-password"
+        type="password"
+        autoComplete="current-password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+        required
+        aria-required="true"
+        aria-invalid={!!error}
+        aria-describedby={describedBy}
+      />
+
+      {error && <p id={errorId} role="alert">{error}</p>}
       <button type="submit" disabled={isLoading}>{isLoading ? 'Signing in…' : 'Sign In'}</button>
     </form>
   );
