@@ -6,37 +6,100 @@ version: 1
 
 cases:
   - id: flagsmith-01
-    name: "Server-side client not browser client for SSR"
+    name: "Server component uses the server SDK and the server key"
     scenario: |
-      Write the Flagsmith setup for a Next.js server component.
+      Write the Flagsmith setup a Next.js server component uses to decide
+      whether the signed-in user sees the new checkout flow. Server side only —
+      do not include the browser provider or any client-side initialisation.
       Use the flagsmith-flags skill rules.
     must_contain:
-      - "flagsmith.getValue("
+      - "flagsmith-nodejs"
+      - "environmentKey"
+      - "getIdentityFlags("
+    must_not_contain:
       - "environmentID"
+      - "flagsmith.getValue("
     rationale: |
-      Server-side Flagsmith evaluation uses the environment key server-only.
-      Browser client SDK keys exposed in client code leak to users.
+      This case demanded `environmentID` — the browser SDK's key option, which
+      takes the public client-side key — inside a server component, and
+      `flagsmith.getValue(`, which is a browser method the server SDK does not
+      have. It required the exact leak its own rationale forbids, and an answer
+      could only pass it by being wrong.
+
+      The three positives are the server shape, and a browser-SDK answer has none
+      of them: the package, the option that takes the server key, and the
+      per-user evaluation call. The two guards are the browser shape, and the
+      layer now states as a rule that neither belongs in server code — so an
+      answer containing them is non-compliant, not merely differently written.
 
   - id: flagsmith-02
     name: "hasFeature checked before getValue"
     scenario: |
-      Write code that safely reads a Flagsmith flag value.
+      Write the browser-side code that safely reads a Flagsmith value flag.
       Use the flagsmith-flags skill rules.
     must_contain:
       - "flagsmith.hasFeature("
       - "flagsmith.getValue("
     rationale: |
-      hasFeature confirms the flag exists before getValue reads it.
-      Calling getValue on a non-existent flag returns null/undefined.
+      hasFeature confirms the flag exists before getValue reads it. Reading a
+      flag that does not exist — a typo, one not created yet, one deleted —
+      returns null, and rendering "null" is worse than rendering nothing.
+
+      Both methods used to appear only in the summary. The detail file now
+      carries the browser read, so the case tests guidance layer-consultant
+      actually loads, and the scenario names the side these methods exist on.
 
   - id: flagsmith-03
-    name: "Identity traits for targeted flag evaluation"
+    name: "Identity traits for targeted evaluation, without PII"
     scenario: |
-      Write the code to evaluate a Flagsmith flag for a specific user segment.
+      The Flagsmith browser client is already initialised. Write the code that
+      runs when a user signs in: identify them to Flagsmith with the traits
+      their segments target, then read a flag for them.
       Use the flagsmith-flags skill rules.
     must_contain:
-      - "identity"
-      - "traits:"
+      - "flagsmith.identify("
+      - "plan"
+    must_not_contain:
+      - "email:"
+      - ".email"
+      - "Email"
+      - "phone:"
+      - ".phone"
+      - "Phone"
     rationale: |
-      Identity-based evaluation applies targeting rules per user.
-      Anonymous evaluation returns default values regardless of user segment.
+      Identity-based evaluation applies targeting rules per user; anonymous
+      evaluation returns defaults regardless of segment.
+
+      The positives asked for the wrong spelling of the thing the scenario
+      demands. The layer has two ways to attach an identity: the `init()`
+      options object, which carries `identity:` and `traits:`, and the
+      post-authentication call, which is `flagsmith.identify(user.id, {...})` —
+      the detail file's own canonical snippet, under its "Traits and Segment
+      Targeting" heading. `identify` does not contain `identity`, and `traits:`
+      appears only on the init path, so the exact code the layer teaches for the
+      exact moment the scenario names scored 0/2. The scenario now pins the
+      moment — the client is already initialised, the user has just signed in —
+      and the assertion is the call that moment takes. `plan` is the trait the
+      layer models on both paths, and it is what a defective answer that
+      identifies with no traits at all is missing.
+
+      The guard is the half that was missing: traits are stored in Flagsmith and
+      shown in its dashboard, so an answer that passes the user's email address
+      as a trait ships PII to a third party the layer explicitly forbids sending
+      it to. A compliant answer sends an opaque id and a tier, and never
+      references the email at all.
+
+      `user.email` was the only guard, and it keyed on the caller's choice of
+      variable name: `email: currentUser.emailAddress, phone: currentUser.phoneNumber`
+      is the same leak and scored 3/3. The guards now name the PII itself in
+      both positions it can appear — as a trait key (`email:`, `phone:`) and as
+      the property being read (`.email`, which also covers `.emailAddress`;
+      `.phone`, which also covers `.phoneNumber`) — plus the camelCase forms
+      (`Email`, `Phone`) that catch `userEmail:` and `contactPhone:`. The layer's
+      compliant traits are `plan`, `country` and `account_age_days`, none of
+      which match.
+
+      None of the six literals appears in the layer's guidance: it writes the
+      prohibition as "an email address" and "a phone number" in prose, never as
+      a key or a property access, so an answer that reproduces the warning
+      cannot trip a guard.

@@ -6,23 +6,38 @@ version: 1
 
 cases:
   - id: cld-01
-    name: "Upload via server-generated signed params"
+    name: "Upload signed server-side; the browser never holds the secret"
     scenario: |
       Write the server endpoint that signs Cloudinary upload parameters and
-      the client that uses them. Use the cloudinary-storage skill rules.
+      the browser code that uses them. Use the cloudinary-storage skill rules.
     must_contain:
       - "cloudinary.utils.api_sign_request("
-      - "signature"
+      - "timestamp"
     must_not_contain:
-      - "CLOUDINARY_API_SECRET"
+      - "NEXT_PUBLIC_CLOUDINARY_API_SECRET"
+      - "VITE_CLOUDINARY_API_SECRET"
     rationale: |
-      Cloudinary API secret must never reach the browser. Server signs
-      upload params; client uses the signature for direct upload.
+      The api_secret signs on the server; the browser gets a signature and the
+      timestamp it was signed with, and nothing it could sign with itself.
+
+      `timestamp` is asserted because a signature without the matching timestamp
+      is unusable — Cloudinary recomputes the digest over the exact parameters
+      sent, so an answer that returns only the signature ships a flow that 401s
+      on every upload.
+
+      The old guard on `CLOUDINARY_API_SECRET` was inverted: it forbade the
+      required second argument of the very call this case demands, so the only
+      way to pass it was to omit the secret from `api_sign_request`. The leak
+      that actually matters is a browser-visible copy, which is what the
+      `NEXT_PUBLIC_`/`VITE_` spellings name. An answer that hands the raw secret
+      to the client to sign there scores 0; a correct server-side
+      `process.env.CLOUDINARY_API_SECRET` scores 1.
 
   - id: cld-02
-    name: "Transformations at delivery URL not pre-stored variants"
+    name: "Delivery URL carries the transformation, not a pre-stored variant"
     scenario: |
-      Write the code to display a product image at 400x400 with WebP format.
+      Write the server-side helper that returns the delivery URL for a product
+      image at 400x400 in WebP. Server code only — not the React component.
       Use the cloudinary-storage skill rules.
     must_contain:
       - "cloudinary.url("
@@ -31,14 +46,112 @@ cases:
       Cloudinary generates transformations on-demand via URL parameters.
       Pre-storing resized variants wastes storage and misses responsive sizes.
 
+      The layer mandates **two** display paths, and the scenario used to name
+      neither: `cloudinary.url(...)` on the server, and `@cloudinary/react`'s
+      `<AdvancedImage>` driven by an `@cloudinary/url-gen` builder in JSX. An
+      answer that took the React path — which the detail file teaches in full —
+      scored 0/2 on assertions that only describe the server path. Substring
+      assertions cannot express "either of these", so the scenario names the one
+      it scores.
+
+      The pair still discriminates on the axis the case exists for: an answer
+      that pre-stores resized variants, or concatenates `w_400,h_400` into a URL
+      string, contains neither literal.
+
   - id: cld-03
-    name: "Organized folder structure and public_id"
+    name: "Profile photo lands in a per-user namespace"
     scenario: |
-      Write the Cloudinary upload call for a user profile photo.
+      Write the Cloudinary upload for a user profile photo: the helper that
+      turns the authenticated identity into the folder and public id, and the
+      upload call that uses it.
       Use the cloudinary-storage skill rules.
     must_contain:
-      - "folder:"
+      - "users/"
       - "public_id:"
+    must_not_contain:
+      - "overwrite: true"
     rationale: |
-      Organized folder structure and meaningful public_ids make assets
-      findable in the Cloudinary dashboard and enable bulk operations.
+      Organized folder structure and meaningful public_ids make assets findable
+      and enable bulk operations.
+
+      `users/` is the added half: it rejects a flat namespace such as
+      `folder: "avatars", public_id: file.name`, where two users uploading
+      `photo.jpg` resolve to the same asset. `overwrite: true` rejects the
+      in-place replacement that turns any public_id collision — accidental or
+      chosen — into the destruction of somebody else's image.
+
+      The assertion was `userId`, which the layer's own `assetPath` helper does
+      not contain: `UploadTarget` names the identity `ownerId`, so an answer
+      reproducing the guidance verbatim scored 0 on the one assertion that
+      carries the case. `users/` is the prefix both spellings build —
+      `users/${target.ownerId}/${target.kind}` in the helper and
+      `users/${session.userId}/avatars` in the route — so it tests the per-user
+      namespace itself rather than the caller's choice of variable name.
+
+      The scenario asks for the derivation as well as the call, because an
+      answer that only imports the helper puts the namespace in a file it did
+      not write, and the assertion would then be scoring where code was pasted.
+
+      `folder:` was dropped from the positives: `folder` is a legal JavaScript
+      identifier, so `const { folder } = assetPath(...)` followed by
+      `upload(src, { folder, public_id: publicId })` is an ordinary compliant
+      answer with no `folder:` in it. It also rejected nothing on its own — a
+      flat `folder: "avatars"` satisfies it. `users/` tests the property it was
+      standing in for, and `public_id:` still rejects an upload that lets
+      Cloudinary assign the id.
+
+      The detail file's multipart route also destructured `folder` from
+      `assetPath` and then re-built the same path inline, contradicting the
+      helper's own "callers never build one"; it now passes the derived value.
+
+  - id: cld-04
+    name: "Signed upload path derived from the session, not the request"
+    scenario: |
+      A signed-in user uploads a profile photo straight from the browser to
+      Cloudinary. Write the signature endpoint, and say what the browser is
+      allowed to choose about where the file lands.
+      Use the cloudinary-storage skill rules.
+    must_contain:
+      - "cloudinary.utils.api_sign_request("
+      - "session.userId"
+    must_not_contain:
+      - "folder ??"
+      - "folder ||"
+      - "req.json()"
+      - "request.json()"
+      - "req.body"
+      - "request.body"
+      - "body.folder"
+      - "searchParams.get("
+    rationale: |
+      This is the auth bypass the layer shipped. Cloudinary honours exactly the
+      parameters that were signed, so signing a caller-supplied `folder` or
+      `public_id` hands any signed-in user a valid authorisation to write to
+      another user's path.
+
+      The positives alone do not discriminate — the broken version referenced
+      `session.userId` too, as the right-hand side of a `??`. The guards do the
+      work, and each names a spelling of "the destination came from the caller".
+
+      The first three guards were written for one imagined spelling and the
+      idiomatic Next.js one walked through all of them:
+      `const { folder, publicId } = await request.json()` is not `req.json()`,
+      destructuring produces no `body.folder`, and there is no `??` anywhere.
+      That version scored 5/5 while shipping the bypass. The guards now name the
+      request object in both spellings the App Router and Express use, and both
+      routes a destination can arrive on:
+
+      - `folder ??` and `folder ||` reject the exact defect, a caller-supplied
+        folder with the session as fallback, in either operator.
+      - `req.json()`, `request.json()`, `req.body` and `request.body` reject the
+        whole shape — a correct signature endpoint parses no request body at
+        all; the bucket arrives on the route and is checked against an
+        allowlist. The browser half of a compliant answer reads the *response*
+        (`res.json()` / `response.json()`), which none of these match.
+      - `body.folder` catches the defect spelled without destructuring, and
+        `searchParams.get(` the query-string spelling of the same thing.
+
+      None of these literals appears anywhere in the layer's guidance — the
+      multipart route uses `req.formData()` and mentions `formData.get("folder")`
+      only inside a comment — so an answer that reproduces the standards
+      verbatim scores 1.
