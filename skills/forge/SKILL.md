@@ -54,6 +54,19 @@ If still failing after 3 iterations:
 > ⚠️ Could not auto-fix these cases — human review needed:
 > | Case | Assertion | Why it's hard to auto-fix |
 
+**A TDD loop that optimises for green will produce green defects.** `payment/braintree`
+reached 3/3 while teaching a webhook handler that acknowledged before verifying its
+signature — its guard asserted `must_contain: "signature"`, which matches inside the
+parameter name `bt_signature` and therefore passed in both orderings.
+
+So an iteration counts as successful only when the case **discriminates**: score 1
+against a correct implementation and 0 against the incorrect one it targets, then
+write that defect a **second idiomatic way** and confirm it still scores 0. Never
+weaken an assertion to end the loop — repair the guidance instead, and report the
+case as unfixable rather than relaxing its guard.
+
+See **Eval files** in `CONTRIBUTING.md` for the full checklist.
+
 ---
 
 ## Mode B — Generate new skill (`/forge new <technology>`)

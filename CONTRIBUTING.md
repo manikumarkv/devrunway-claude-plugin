@@ -148,6 +148,48 @@ Assertions are literal, case-sensitive substring matches against generated outpu
 - Can a **compliant** answer fail it? (`must_not_contain: "fetch("` also matches `refetch(`; `"res."` matches `features.`)
 - Can it **ever** fire? (`must_not_contain: "Scan("` never matches `new ScanCommand(`)
 - Does it test what the case name claims, or does it pass vacuously?
+- Does the `must_not_contain` literal appear **in the layer's own guidance**? If the standards quote the anti-pattern by name, the case fires on any answer that reproduces that block. This broke `notion-01` (*"loose pages"* is the standards' own term, used 4×) and `error-handling` (`flatten()` left in as a quoted anti-pattern).
+
+### A green case is not a working case
+
+A passing assertion proves a token appeared. It does not prove the code is right.
+
+`payment/braintree` sat at **3/3 green** while teaching a webhook handler that acknowledged before verifying the signature, a checkout form that ignored the payment response, and a route that charged `req.body.amount` unauthenticated. Its signature case asserted `must_contain: "signature"`, which matches inside the parameter name `bt_signature` — so it passed whether verification came before the acknowledgement or after.
+
+So every case guarding a subtle rule must **discriminate**: write the correct implementation and the incorrect one the case targets, and score both. The case must score **1 on the first and 0 on the second**. If both score 1, the case is defective — even when green.
+
+### Write the defect a second way
+
+Scoring one wrong implementation is not enough, because you will write the one you already had in mind. That is the same blind spot that made the guard narrow in the first place.
+
+**For every guard, write the same defect in a second idiomatic spelling before believing it.** Measured across two repair passes, the author's own probe reported clean every time while an adversarial re-probe found holes: 5 defective cases in the payment group, 13 in the secrets group. Every one had a single cause — *the guard matched one spelling of a pattern that has several*:
+
+| Guard | Evasion that scored full marks |
+|---|---|
+| `req.json()` | `const { folder } = await request.json()` — different receiver, and destructuring leaves no `body.folder` |
+| `console.log(result` | `logger.info("...", { result })` — a structured logger is not `console.log`, and shipped a live database password |
+| `localStorage.getItem(` | `window.localStorage['auth_token']` — bracket access |
+| `${Date.now()}` | `const ts = Date.now()` then `` `pi-${order.id}-${ts}` `` — a variable in the way |
+| `res.status(400)` | `res.sendStatus(400)` — which does not contain it, so it failed **correct** code |
+
+**Guard the property, not one syntax for expressing it.** Guard the request property being read, not `req.json()`. Guard the clock at its source, not one interpolation of it. Guard the trait key, not the caller's variable name.
+
+### Draw positives from the guidance, not from memory
+
+A `must_contain` must be a literal the layer's own text actually writes. Assertions invented from what the author assumed the standards said produced this class of failure:
+
+- `cld-02` asserted `cloudinary.url(` while the layer mandates a **second** display path (`<AdvancedImage>`), so following its own React guidance scored 0/2
+- `flagsmith-03` asserted `identity` against a detail file whose canonical call is `identify(` — which does not contain it
+- `cld-03` asserted `userId` where the layer's own helper spells it `ownerId`
+- `sm-02` asserted `SecretId:`, the TypeScript spelling, on a scenario the layer answers in Python (boto3 takes `SecretId=`)
+
+Before committing, run the mechanical check: **every `must_contain` literal is present in that layer's `skill_files`, and no `must_not_contain` literal is.** Declare any deliberate exception in the case's `rationale`.
+
+### Fix the guidance, not the test
+
+When a case fails, the default repair is to the **standards**, not the assertion. Weakening a guard to reach green is how `braintree` got to 3/3.
+
+Sometimes a failing case is telling you the guidance has a hole rather than a typo: `stripe-03` asked for a frontend payment form, and the layer prohibited raw card fields while shipping **no frontend example at all** — so the scenario asked for something the standards never showed how to build. The repair was to write the missing guidance, then draw the assertion from it.
 
 ---
 
