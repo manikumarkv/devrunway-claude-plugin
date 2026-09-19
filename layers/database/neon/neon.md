@@ -36,8 +36,8 @@ alembic -x url="$DATABASE_URL_UNPOOLED" upgrade head
 
 | Driver | Transport | Use when | Cannot do |
 |---|---|---|---|
-| `@neondatabase/serverless` → `neon()` | HTTP | One-shot queries in serverless or edge functions | Multi-statement transactions |
-| `@neondatabase/serverless` → `Pool` | WebSocket | You need a real transaction in serverless | — |
+| `@neondatabase/serverless` → `neon()` | HTTP | One-shot queries, and fixed batches via `sql.transaction([...])`, in serverless or edge functions | An *interactive* transaction — one where a later statement depends on an earlier statement's result |
+| `@neondatabase/serverless` → `Pool` | WebSocket | You need an interactive transaction in serverless | — |
 | `pg` (node-postgres) | TCP | Long-lived Node servers, workers, cron containers | Run on edge runtimes |
 
 ```ts
@@ -45,25 +45,58 @@ alembic -x url="$DATABASE_URL_UNPOOLED" upgrade head
 import { neon } from '@neondatabase/serverless'
 const sql = neon(process.env.DATABASE_URL!)
 const rows = await sql`SELECT id, email FROM users WHERE id = ${id}`
+```
 
-// ✅ serverless — needs a transaction, so WebSocket Pool
+Each `sql\`\`` call over HTTP is its own implicit transaction, so two sequential
+calls are two transactions with no atomicity between them. A **fixed batch** of
+statements — none of them depending on another's result — can still go over HTTP
+atomically with `sql.transaction()`:
+
+```ts
+// ✅ serverless — fixed batch, no statement depends on another's result
+await sql.transaction([
+  sql`UPDATE accounts SET balance_cents = balance_cents - ${amountCents} WHERE id = ${from}`,
+  sql`UPDATE accounts SET balance_cents = balance_cents + ${amountCents} WHERE id = ${to}`,
+])
+```
+
+An **interactive** transaction — where a later statement depends on a value read
+by an earlier one, such as checking the balance before debiting it — cannot go
+over HTTP. That needs the WebSocket `Pool`. Create it **inside the handler** and
+close it there too (see §3 — a `Pool` in a module global is the anti-pattern this
+runtime punishes):
+
+```ts
+// ✅ serverless — interactive transaction, so WebSocket Pool, per invocation
 import { Pool } from '@neondatabase/serverless'
-const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-const client = await pool.connect()
-try {
-  await client.query('BEGIN')
-  await client.query('UPDATE accounts SET balance_cents = balance_cents - $1 WHERE id = $2', [amountCents, from])
-  await client.query('UPDATE accounts SET balance_cents = balance_cents + $1 WHERE id = $2', [amountCents, to])
-  await client.query('COMMIT')
-} catch (e) {
-  await client.query('ROLLBACK')
-  throw e
-} finally {
-  client.release()
+
+export async function handler(req: Request) {
+  // Create the Pool inside the request handler, never at module scope
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const { rows: [account] } = await client.query(
+      'SELECT balance_cents FROM accounts WHERE id = $1 FOR UPDATE', [from])
+    if (account.balance_cents < amountCents) throw new InsufficientFundsError()
+    await client.query('UPDATE accounts SET balance_cents = balance_cents - $1 WHERE id = $2', [amountCents, from])
+    await client.query('UPDATE accounts SET balance_cents = balance_cents + $1 WHERE id = $2', [amountCents, to])
+    await client.query('COMMIT')
+    return new Response(null, { status: 204 })
+  } catch (e) {
+    await client.query('ROLLBACK')
+    throw e
+  } finally {
+    client.release()
+    // End the Pool in the same invocation that created it
+    await pool.end()
+  }
 }
 ```
 
-**Never use the HTTP driver for a multi-statement transaction.** Each `sql\`\`` call over HTTP is its own implicit transaction. Two sequential calls are two transactions with no atomicity between them — the money-transfer example above would silently permit a partial transfer.
+On Node 21 and below the WebSocket driver needs a constructor supplied once at
+startup: `import ws from 'ws'; neonConfig.webSocketConstructor = ws`. Node 22+
+and edge runtimes have a global `WebSocket` and need nothing.
 
 ---
 
@@ -82,7 +115,7 @@ export const pool = new Pool({
 })
 ```
 
-Never construct a pool inside a request handler. Each one opens new connections and none of them are ever released.
+In a long-lived process, never construct a pool inside a request handler. Each one opens new connections and none of them are ever released. (Serverless inverts this — see below and §2.)
 
 **Serverless / edge function:**
 
@@ -94,7 +127,7 @@ export async function handler(req: Request) {
 }
 ```
 
-Do **not** cache a WebSocket `Pool` in a module global across serverless invocations. The runtime can freeze the sandbox mid-socket; the resumed invocation then holds a connection the server has already closed, and you get intermittent `Connection terminated unexpectedly` errors that do not reproduce locally.
+Do **not** cache a WebSocket `Pool` in a module global across serverless invocations. The runtime can freeze the sandbox mid-socket; the resumed invocation then holds a connection the server has already closed, and you get intermittent `Connection terminated unexpectedly` errors that do not reproduce locally. This applies to the transactional `Pool` in §2 as much as to a read client — construct it in the handler and `await pool.end()` in the same invocation. On Cloudflare Workers, `ctx.waitUntil(pool.end())` closes it without holding up the response.
 
 > Note the contrast with the `mongodb` layer, which mandates a single client for the application lifetime. That rule is correct for MongoDB and for Neon *in a long-lived process*, and wrong for Neon in serverless. Check the runtime before applying either.
 
@@ -112,6 +145,35 @@ Do **not** cache a WebSocket `Pool` in a module global across serverless invocat
 - Retry **once** on a connection-level error before surfacing it. A cold start can present as a connection error rather than a slow query.
 - Do not add a keep-warm ping (cron, uptime monitor, synthetic query) without a written latency requirement. A ping more frequent than the suspend window bills continuous compute, which is usually more expensive than the cold start it avoids.
 - Do not disable scale-to-zero on development, preview, or CI branches. Those are exactly the branches that should suspend.
+
+```ts
+// ✅ timeouts sized for a cold start, with a single connection-level retry
+import { Pool } from 'pg'
+
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10,
+  connectionTimeoutMillis: 10_000,  // never below ~1s on a scale-to-zero branch
+  idleTimeoutMillis:       30_000,
+})
+
+export async function query<T>(text: string, params: unknown[]): Promise<T[]> {
+  try {
+    return (await pool.query(text, params)).rows as T[]
+  } catch (err) {
+    // Retry once, and only for a connection-level error — a cold start can
+    // surface as a failed connection rather than a slow query. Never retry a
+    // query error; that turns one bad statement into two.
+    if (!isConnectionError(err)) throw err
+    return (await pool.query(text, params)).rows as T[]
+  }
+}
+```
+
+`connectionTimeoutMillis` is the option name for both `pg` and
+`@neondatabase/serverless`. MongoDB's driver spells its connect timeout
+differently; carrying that spelling over here silently configures nothing,
+because an unrecognised key is ignored rather than rejected.
 
 ---
 
@@ -185,8 +247,9 @@ A read replica is a separate read-only compute endpoint sharing the same storage
 | Mistake | Fix |
 |---|---|
 | One `DATABASE_URL` used for both queries and migrations | Pull both strings; override to `DATABASE_URL_UNPOOLED` at the migration command. Pooled migrations fail intermittently, not cleanly. |
-| HTTP `neon()` driver used for a multi-statement transaction | Each HTTP call is its own transaction. Use the WebSocket `Pool` when you need atomicity. |
-| Caching a WebSocket `Pool` in a serverless module global | Create per invocation. A frozen sandbox resumes holding a connection the server already closed. |
+| Separate HTTP `neon()` calls treated as one transaction | Each HTTP call is its own transaction. A fixed batch can use `sql.transaction([...])`; an interactive transaction needs the WebSocket `Pool`. |
+| Caching a WebSocket `Pool` in a serverless module global | Create per invocation, inside the handler, and `end()` it there. A frozen sandbox resumes holding a connection the server already closed. |
+| A serverless `Pool` that is never closed | `await pool.end()` in the same invocation — `ctx.waitUntil(pool.end())` on Cloudflare Workers. |
 | Creating a `Pool` inside a request handler in a long-lived server | Module-level singleton. Per-request pools leak connections until the compute hits its limit. |
 | Aggressive statement timeout on a scale-to-zero branch | Keep timeouts above ~1s and retry once on connection error, or the cold start reads as an outage. |
 | Keep-warm cron to avoid cold starts | Only with a documented latency requirement — continuous compute usually costs more than the cold start it prevents. |

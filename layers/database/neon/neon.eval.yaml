@@ -37,19 +37,48 @@ cases:
       version asserted lowercase "limit" and would have failed valid SQL.
 
   - id: neon-03
-    name: "Transaction uses the WebSocket Pool, not the HTTP driver"
+    name: "Interactive transaction uses a per-invocation WebSocket Pool"
     scenario: |
       Write a Neon function running on a serverless runtime that transfers an
-      amount between two account rows atomically. Use the neon skill rules.
+      amount between two account rows atomically, reading the sender's balance
+      inside the transaction and aborting if it is insufficient.
+      Use the neon skill rules.
     must_contain:
       - "Pool"
       - "BEGIN"
+      - "pool.end("
     must_not_contain:
       - "= neon("
+      - "\nconst pool = new Pool("
     rationale: |
       Each HTTP call via neon() is its own implicit transaction, so two
-      sequential calls permit a partial transfer. Atomicity requires the
-      WebSocket Pool.
+      sequential calls permit a partial transfer.
+
+      Verified against @neondatabase/serverless@1.1.0: the HTTP driver DOES
+      expose sql.transaction(), which runs a fixed batch of statements as one
+      non-interactive transaction — so "the HTTP driver cannot do transactions"
+      is too strong, and a batch answer to the old scenario would have been
+      correct while failing "= neon(". The scenario now pins the interactive
+      case — read the balance, then decide — which sql.transaction() genuinely
+      cannot express, because its queries are fixed before the batch is sent.
+
+      "pool.end(" guards the lifecycle property the layer's §3 requires and its
+      §2 example used to violate: the Pool must be created and closed inside the
+      invocation. The vendor README states the same rule verbatim — "*don't*
+      create a `Pool` or `Client` here, outside the request handler" and "end the
+      `Pool` inside the same request handler". A Pool cached in a module global
+      is never ended per invocation, so it fails this assertion. The
+      "\nconst pool = new Pool(" literal catches the module-scope declaration
+      directly, by column-0 placement rather than by name lookup; the layer's
+      own §2 example is indented inside the handler, so it does not trip it.
+
+      Known residual: an answer that both caches the Pool at module scope as
+      `export const pool = ...` AND calls pool.end() in the handler would score
+      1. That literal is not guarded because §3's long-lived-process `pg`
+      example writes exactly it, correctly, and guarding it would fire on the
+      layer's own text. The combination is not an idiomatic spelling of the
+      caching anti-pattern — caching exists precisely to avoid closing.
+
       Asserts on the assignment "= neon(" rather than "neon(" so that a comment
       explaining why the HTTP driver is unsuitable does not fail the case.
 

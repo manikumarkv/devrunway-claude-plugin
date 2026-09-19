@@ -17,7 +17,8 @@ Full standards in [grpc.md](grpc.md). Always-on summary:
 - One service per `.proto` file; file name matches service name in snake_case
 - Always set `syntax = "proto3"`, `package`, and `option go_package` / `option java_package`
 - Use `google.protobuf.Timestamp` for dates, `google.protobuf.Empty` for no-payload methods
-- Fields must have explicit field numbers starting at `= 1;`; never reuse a deleted field number — use `reserved` blocks to prevent reuse
+- Fields must have explicit field numbers starting at `= 1;`; never reuse a deleted field number or name
+- `reserved` is a statement **inside** a `message { ... }` or `enum { ... }` body, alongside the fields — placed at file scope `protoc` fails the file with "Expected top-level statement"
 
 **Code Generation:**
 - Generate code in CI, never commit generated `*_pb2.py` or `*.grpc.js` files — add them to `.gitignore`

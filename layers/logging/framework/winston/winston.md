@@ -11,6 +11,20 @@ import winston from 'winston'
 const PII_FIELDS = ['email', 'password', 'phone', 'name', 'token',
                     'creditCard', 'ssn', 'dateOfBirth', 'address', 'secret']
 
+// Serialise Errors passed in metadata as `err` — Winston does not do this itself,
+// because Error.message and Error.stack are non-enumerable and JSON-stringify to {}
+const errorSerializer = winston.format((info) => {
+  if (info.err instanceof Error) {
+    info.error = {
+      message: info.err.message,
+      stack: info.err.stack,
+      code: (info.err as NodeJS.ErrnoException).code,
+    }
+    delete info.err
+  }
+  return info
+})
+
 // Redact PII fields from log metadata
 const redactPii = winston.format((info) => {
   const redact = (obj: Record<string, unknown>): Record<string, unknown> => {
@@ -29,6 +43,7 @@ export const logger = winston.createLogger({
 
   format: winston.format.combine(
     winston.format.timestamp(),
+    errorSerializer(),
     redactPii(),
     process.env.NODE_ENV === 'production'
       ? winston.format.json()
@@ -70,11 +85,11 @@ if (process.env.NODE_ENV === 'test') {
 | `silly` | 5 | Very verbose — never in production |
 
 ```typescript
-// ✅ Correct level usage
-logger.error({ err, userId, orderId }, 'Payment charge failed — manual review required')
-logger.warn({ userId, attempts }, 'Login failed — rate limiting may apply')
-logger.info({ userId, orderId, amount }, 'Order created')
-logger.debug({ query, params }, 'Executing DB query')
+// ✅ Correct level usage — message first, metadata object second
+logger.error('Payment charge failed — manual review required', { err, userId, orderId })
+logger.warn('Login failed — rate limiting may apply', { userId, attempts })
+logger.info('Order created', { userId, orderId, amount })
+logger.debug('Executing DB query', { query, params })
 
 // ❌ Wrong levels
 logger.error('User not found')       // 404 is expected — use warn or info
@@ -83,23 +98,34 @@ logger.info('Password is invalid')   // never log anything about passwords
 
 ---
 
-## Structured logging — metadata first
+## Structured logging — message first, metadata second
+
+Winston's leveled methods are typed `(message: string, ...meta: any[])`. The **message string comes first**; the metadata object is merged into the log entry alongside it.
 
 ```typescript
-// ✅ Metadata as first arg — parseable, searchable, filterable
-logger.info({ userId: 'u123', orderId: 'o456', amount: 4000 }, 'Order created')
-logger.error({ err: error, userId, orderId }, 'Failed to process payment')
-logger.warn({ userId, ip, attempts: 5 }, 'Multiple failed login attempts')
+// ✅ Message first, metadata object second — parseable, searchable, filterable
+logger.info('Order created', { userId: 'u123', orderId: 'o456', amount: 4000 })
+logger.error('Failed to process payment', { err: error, userId, orderId })
+logger.warn('Multiple failed login attempts', { userId, ip, attempts: 5 })
+
+// Emits: {"level":"info","message":"Order created","userId":"u123","orderId":"o456","amount":4000,"timestamp":"..."}
 
 // ❌ String interpolation — breaks log search and parsing
 logger.info(`Order ${orderId} created by user ${userId}`)
 logger.error(`Failed: ${error.message}`)
 ```
 
-Structured logs are queryable in log aggregators (CloudWatch Insights, Datadog, Splunk):
+**Do not use Pino's argument order.** Pino is `logger.info(obj, msg)`; Winston is the reverse. Under Winston an object in the first position becomes the entry itself, so `message` is set to that object and the string in the second position is dropped — the event name never reaches the log and no query on it can ever match:
+
+```
+// what Winston actually emits when the arguments are in Pino order
+{"level":"info","message":{"orderId":"o456","userId":"u123"},"timestamp":"..."}
+```
+
+Structured logs are queryable in log aggregators (CloudWatch Insights, Datadog, Splunk). Winston writes the event name to the `message` field, so query that field — `@message` is the raw log line, not the parsed field:
 ```sql
--- CloudWatch Insights
-filter @message = "Order created" | stats count() by userId
+-- CloudWatch Insights — matches the entries the examples above emit
+filter message = "Order created" | stats count() by userId
 ```
 
 ---
@@ -114,7 +140,7 @@ const requestLogger = logger.child({
 })
 
 requestLogger.info('Processing order')
-requestLogger.error({ err }, 'Order processing failed')
+requestLogger.error('Order processing failed', { err })
 // Output: { requestId, userId, message: 'Processing order', ... }
 ```
 
@@ -149,29 +175,21 @@ export const requestLogger = morgan(
 ## Error logging
 
 ```typescript
-// Log the full error object — Winston serialises it with stack trace
+// Winston does NOT serialise a nested Error by default — `{ err }` in metadata
+// JSON-stringifies to `{}` because message and stack are non-enumerable.
+// The `errorSerializer` format in the singleton setup above handles it; with that
+// in the format chain, log the error under the `err` key and it comes out as
+// { error: { message, stack, code } }.
 try {
   await processPayment(orderId)
 } catch (err) {
   logger.error(
-    { err, userId, orderId },  // pass error as 'err' key — Winston serialises it
-    'Payment processing failed'
+    'Payment processing failed',       // message first
+    { err, userId, orderId }           // metadata second — 'err' key picked up by the serialiser
   )
   throw err  // re-throw — logging is not error handling
 }
 
-// Custom error serialiser (optional — configure once in logger setup)
-const errorSerializer = winston.format((info) => {
-  if (info.err instanceof Error) {
-    info.error = {
-      message: info.err.message,
-      stack: info.err.stack,
-      code: (info.err as NodeJS.ErrnoException).code,
-    }
-    delete info.err
-  }
-  return info
-})
 ```
 
 ---
@@ -195,12 +213,19 @@ logger.add(new WinstonCloudWatch({
   logGroupName: `/myapp/${process.env.NODE_ENV}`,
   logStreamName: process.env.HOSTNAME ?? 'default',
   awsRegion: process.env.AWS_REGION,
-  jsonValueFormatter: (value: unknown) => JSON.stringify(value),
+  jsonMessage: true,  // ship the structured entry as JSON, not a formatted string
 }))
 
-// Datadog transport
-// npm install @datadog/winston
-import { createLogger } from '@datadog/winston'
+// Datadog transport — the package is `datadog-winston`, and it default-exports
+// a winston-transport class. There is no `@datadog/winston` package on npm.
+// npm install datadog-winston
+import DatadogWinston from 'datadog-winston'
+logger.add(new DatadogWinston({
+  apiKey: process.env.DATADOG_API_KEY!,
+  service: 'myapp',
+  ddsource: 'nodejs',
+  hostname: process.env.HOSTNAME,
+}))
 // See: layers/logging/provider/datadog/
 ```
 
@@ -213,6 +238,8 @@ import { createLogger } from '@datadog/winston'
 | `console.log()` in production | Use `logger.debug()` / `logger.info()` |
 | `logger.error('User not found')` | 404 is expected — use `logger.warn()` or `logger.info()` |
 | Logging PII fields | Add PII redaction format to the logger |
-| String interpolation in messages | Pass metadata object as first arg |
+| String interpolation in messages | Pass the message string first and a metadata object second |
+| Using Pino's argument order (metadata object first) | Winston is `logger.info(message, meta)` — an object in the first position becomes the `message` field and the string after it is dropped |
+| `{ err }` in metadata logs as `{}` | Add the error serialiser format — `Error` message and stack are non-enumerable |
 | No `userId` on user-action logs | Use `logger.child({ userId })` per request |
 | Creating a new logger per module | Import and use the singleton from `src/lib/logger.ts` |

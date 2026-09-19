@@ -26,8 +26,9 @@ Full standards in [winston.md](winston.md). Always-on summary:
 - `info` — significant business events (user created, order shipped, payment processed)
 - `debug` — development detail — never in production by default
 
-**Structured logging:**
-- Always pass metadata as the first argument, message as the second: `logger.info({ userId, orderId }, 'Order shipped')`
+**Structured logging — message first, metadata second:**
+- Winston's signature is `logger.info(message, meta)`. Always pass the message string first and the metadata object second: `logger.info('Order shipped', { userId, orderId })`
+- Do **not** use Pino's argument order (metadata object first). Winston takes the first argument as the log entry, so an object there becomes the `message` field and the string that follows is discarded — the event name never reaches the log
 - Never interpolate variables into message strings: ❌ `logger.info(\`Order ${id} shipped\`)` → ❌ breaks search
 - Include `userId` and resource `id` on every log in a user-scoped context
 

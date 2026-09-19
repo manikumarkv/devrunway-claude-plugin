@@ -32,14 +32,69 @@ cases:
       Missing kind defaults to 'user' and loses multi-kind targeting rules.
 
   - id: ld-03
-    name: "testData source in unit tests not production SDK"
+    name: "TestData source in unit tests, not a module double"
     scenario: |
-      Write a unit test for a component that checks a feature flag.
+      Write a unit test for the server-side service function that returns a
+      different checkout URL depending on a LaunchDarkly flag.
       Use the launchdarkly-flags skill rules.
     must_contain:
       - "TestData("
+      - "updateProcessor"
     must_not_contain:
-      - "vi.mock('launchdarkly"
+      - "mock('@launchdarkly"
+      - "mock(\"@launchdarkly"
+      - "mock('launchdarkly"
+      - "mock(\"launchdarkly"
     rationale: |
-      LaunchDarkly's TestData source controls flag values in tests without
-      mocking the SDK. vi.mock() prevents testing real SDK integration.
+      Verified by running @launchdarkly/node-server-sdk@9.13.1 offline: TestData
+      lives on the integrations namespace, is a class in v9 (`new TestData()` —
+      calling it without `new` throws "Class constructor TestData cannot be
+      invoked without 'new'"), and is attached to a real client through
+      `updateProcessor: td.getFactory()`. The layer's previous testing section
+      claimed to use TestData and never constructed one; it replaced the SDK
+      module with a double instead, so nothing in the SDK was exercised.
+
+      "TestData(" alone is not enough — an answer can import TestData and still
+      never wire it to a client — so "updateProcessor" guards the property that
+      makes the source take effect.
+
+      The four must_not_contain literals guard the property (the LaunchDarkly
+      module being replaced by a double) rather than one spelling. The previous
+      guard, "vi.mock('launchdarkly", could not fire at all: the layer uses the
+      scoped package, so the specifier starts "@launchdarkly", and the section
+      it was written against used jest, not vitest. These four cover jest.mock
+      and vi.mock, single and double quotes, and both the scoped server package
+      and the unscoped `launchdarkly-react-client-sdk` / legacy
+      `launchdarkly-node-server-sdk` names. None appears in the layer's own
+      text: the Common mistakes row names the anti-pattern as "a test double"
+      without writing a mock call.
+
+  - id: ld-04
+    name: "React flag keys read by the constant, not silently camelCased"
+    scenario: |
+      Write the LaunchDarkly React provider setup and a checkout component that
+      reads the new-checkout-flow flag through useFlags().
+      Use the launchdarkly-flags skill rules.
+    must_contain:
+      - "useCamelCaseFlagKeys: false"
+      - "useFlags("
+      - "FLAGS."
+    rationale: |
+      Verified by rendering launchdarkly-react-client-sdk@3.9.4:
+      defaultReactOptions.useCamelCaseFlagKeys is true, and camelCaseKeys maps
+      'new-checkout-flow' to `newCheckoutFlow`. With the layer's original
+      provider config, a component reading flags[FLAGS.NEW_CHECKOUT_FLOW]
+      rendered the OFF branch while the flag was on — the lookup returns
+      undefined and `?? false` swallows it. Rendered side by side under one
+      provider bootstrapped with the flag on: kebab lookup => false, camel
+      lookup => true.
+
+      The discriminating literal is "useCamelCaseFlagKeys: false", which the
+      defective spelling (default reactOptions, kebab lookup) does not contain.
+
+      Deliberate exception: the second idiomatic spelling — leaving the default
+      on and reading flags.newCheckoutFlow — does run, but scores 0 here because
+      it hardcodes a raw flag key in the component, which SKILL.md forbids
+      ("Hardcode flag keys as raw strings in multiple places"). The layer's
+      position is that flags.ts stays the single source of truth, so the
+      provider is configured to accept its keys.

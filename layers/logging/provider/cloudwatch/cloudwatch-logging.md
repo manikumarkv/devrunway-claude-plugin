@@ -134,13 +134,87 @@ fields @timestamp, responseTime
 | stats pct(responseTime, 99) as p99, pct(responseTime, 95) as p95, avg(responseTime) as avg by bin(5m)
 ```
 
+## Sending logs with the SDK
+
+Prefer not to send log events from application code at all. Write structured JSON
+to stdout and let the platform ship it — the Lambda runtime, the ECS `awslogs`
+log driver, or the CloudWatch agent. A direct `PutLogEvents` call puts your log
+pipeline in the request path, so a CloudWatch throttle becomes a request failure.
+
+When you do need it — a batch job, a sidecar, a custom transport — call it with
+**no sequence token**:
+
+```ts
+import {
+  CloudWatchLogsClient,
+  CreateLogStreamCommand,
+  PutLogEventsCommand,
+  ResourceAlreadyExistsException,
+  ResourceNotFoundException,
+} from '@aws-sdk/client-cloudwatch-logs'
+
+const client = new CloudWatchLogsClient({ region: process.env.AWS_REGION })
+
+async function ensureStream(logGroupName: string, logStreamName: string) {
+  try {
+    await client.send(new CreateLogStreamCommand({ logGroupName, logStreamName }))
+  } catch (err) {
+    // Already there — the normal case after the first call
+    if (!(err instanceof ResourceAlreadyExistsException)) throw err
+  }
+}
+
+export async function putLogEvents(
+  logGroupName: string,
+  logStreamName: string,
+  events: { timestamp: number; message: string }[],
+) {
+  // The API still enforces: ascending timestamps, <= 10,000 events per batch,
+  // <= 1 MB per event, and <= 24 hours spanned by one batch.
+  const batch = [...events].sort((a, b) => a.timestamp - b.timestamp)
+
+  try {
+    await client.send(new PutLogEventsCommand({
+      logGroupName,
+      logStreamName,
+      logEvents: batch,
+      // No sequenceToken. AWS removed sequencing from PutLogEvents in 2023:
+      // the parameter is ignored, the call is always accepted, and
+      // InvalidSequenceTokenException / DataAlreadyAcceptedException are never
+      // returned. Parallel calls on one stream are supported, so there is no
+      // token to thread between callers and nothing to serialise on.
+    }))
+  } catch (err) {
+    // The only recoverable case: the stream was reaped or never created
+    if (err instanceof ResourceNotFoundException) {
+      await ensureStream(logGroupName, logStreamName)
+      await client.send(new PutLogEventsCommand({
+        logGroupName, logStreamName, logEvents: batch,
+      }))
+      return
+    }
+    throw err
+  }
+}
+```
+
+Never hold the token from a response in a module-level variable to feed the next
+call. That was required before 2023 and is now dead code: it serialises writes
+that the API accepts in parallel, and it makes every concurrent caller in the
+process contend on one mutable global for a value the service ignores.
+
+The token field on the `PutLogEvents` response is deprecated for the same reason
+— do not read it, and do not reach into a rejected call for a token to retry
+with. That retry path cannot be reached: the call it was written to recover from
+now always succeeds.
+
 ## Metric filters and alarms
 
 Create a CloudWatch Metric Filter to count errors, then alarm on the metric.
 
 ```ts
-import { MetricFilter, FilterPattern, Metric } from 'aws-cdk-lib/aws-logs'
-import { Alarm, ComparisonOperator, TreatMissingData } from 'aws-cdk-lib/aws-cloudwatch'
+import { MetricFilter, FilterPattern } from 'aws-cdk-lib/aws-logs'
+import { Alarm, ComparisonOperator, TreatMissingData, Unit } from 'aws-cdk-lib/aws-cloudwatch'
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions'
 
 // Create metric filter

@@ -27,7 +27,9 @@ Full standards in [mirage.md](mirage.md). Always-on summary:
 **Factories:**
 - Define factories with `Factory.extend({ ... })` — one per model, with realistic fake data using `faker`
 - Declare under `factories:` key in `createServer`
-- Use traits for variant states: `server.create('user', 'admin')` or `server.create('order', 'cancelled')`
+- Register variant states as traits by wrapping each override in the `trait(` helper imported from `miragejs`: `shipped: trait({ status: 'shipped' })`. A nested attribute object under any other key does **not** register a trait
+- Pass trait names to `create` / `createList` as positional strings, before any attribute overrides: `server.create('user', 'admin')`, `server.createList('order', 5, 'shipped')`
+- An unregistered trait name throws `'<name>' trait is not registered` at create time — and from `seeds(`, that takes down the dev server on boot
 - `server.createList('product', 20)` for seeding list views
 
 **Routes:**

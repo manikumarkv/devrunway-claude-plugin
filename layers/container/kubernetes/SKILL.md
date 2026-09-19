@@ -36,7 +36,7 @@ Full standards in [kubernetes.md](kubernetes.md). Always-on summary:
 **Configuration:**
 - Env vars from ConfigMap for non-sensitive config; from Secret for sensitive values
 - Never hardcode secrets in YAML — use Kubernetes Secrets or external secret managers (Vault, AWS Secrets Manager)
-- Use `secretKeyRef` with `secretName:` to inject individual keys from a Secret into container env vars
+- Inject individual keys from a Secret into container env vars with `valueFrom: secretKeyRef:` — the reference field there is **`name:`**, not `secretName:`. `SecretKeySelector` accepts only `name`, `key` and `optional`, so a `secretName:` key is rejected by the API server. `secretName:` is the field on a *volume's* secret source and on Ingress `tls:` — different types, different field
 
 **Scaling:**
 - Use HorizontalPodAutoscaler (HPA) with CPU or custom metrics — never scale manually in production

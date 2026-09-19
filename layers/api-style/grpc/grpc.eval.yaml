@@ -21,17 +21,32 @@ cases:
       String or int64 timestamps lose timezone information and type safety.
 
   - id: grpc-02
-    name: "Field numbers explicit with reserved blocks"
+    name: "reserved statements sit inside the message body"
     scenario: |
       Write a protobuf UserRequest message that has previously removed fields.
       Show reserved field numbers. Use the grpc-api skill rules.
     must_contain:
-      - "reserved"
+      - "message "
+      - "  reserved "
       - "= 1;"
+    must_not_contain:
+      - "\nreserved "
     rationale: |
       reserved blocks prevent field number reuse after field deletion,
       avoiding wire compatibility bugs when old clients communicate with
-      new servers.
+      new servers. But reserved is only valid INSIDE a message or enum body:
+      verified with protoc 29.3, a file with the statements after the closing
+      brace fails with "Expected top-level statement (e.g. \"message\")", so
+      the whole schema is uncompilable and no client or server is generated.
+
+      The assertions guard indentation, which is what distinguishes the two
+      placements in a flat substring match. "  reserved " requires the
+      statement to be nested (a 4-space-indented answer still contains it),
+      and "\nreserved " rejects a reserved statement starting at column 0 —
+      file scope. That guards the property rather than one syntax: it fires on
+      every file-scope spelling, including the one the layer itself used, where
+      a comment line sits between the closing brace and the statement, which a
+      guard anchored on "}" would miss.
 
   - id: grpc-03
     name: "Generated files excluded from version control"

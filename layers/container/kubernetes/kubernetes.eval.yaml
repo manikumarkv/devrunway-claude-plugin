@@ -33,13 +33,37 @@ cases:
   - id: k8s-03
     name: "Secrets from Kubernetes Secret not plain env values"
     scenario: |
-      Write the environment variable section of a container spec that uses
-      a database password from a Kubernetes Secret. Use the kubernetes-container skill rules.
+      Write the environment variable section of a container spec that reads a
+      database password from the key database-password of a Kubernetes Secret
+      named api-secrets. Use the kubernetes-container skill rules.
     must_contain:
-      - "secretKeyRef"
-      - "secretName:"
+      - "valueFrom:"
+      - "secretKeyRef:"
+      - "name: api-secrets"
+      - "key: database-password"
     must_not_contain:
+      - "secretName: api-secrets"
       - "value: \"password\""
     rationale: |
       Kubernetes Secrets store sensitive values separately from pod specs.
       Plain value: fields in env expose secrets in YAML committed to git.
+
+      The previous assertion required "secretName:" under secretKeyRef, which
+      only a rejected manifest can satisfy. Verified against the official
+      Kubernetes v1.33.0 strict JSON schema: SecretKeySelector declares exactly
+      key, name and optional with additionalProperties false, so the manifest
+      the old case demanded fails validation with "Additional properties are not
+      allowed ('secretName' was unexpected)", while the same manifest spelled
+      name: validates. secretName is a real field, but on SecretVolumeSource and
+      on Ingress tls — different types. The layer's detail file was already
+      correct; SKILL.md was wrong, and the assertion enforced the summary.
+
+      The guard is pinned to the secret name the scenario asks for rather than
+      to a bare "secretName:", deliberately: the layer's own Ingress example
+      writes "secretName: api-tls-cert", which is correct there, and a bare
+      guard would fire on any answer that reproduced it. "secretName:
+      api-secrets" can only be the env-var misuse. The positives catch it a
+      second way independently — "name: api-secrets" is case-sensitive and is
+      not a substring of "secretName: api-secrets", so the defect fails on the
+      must_contain too, and a plaintext env value fails for want of
+      "secretKeyRef:" whatever string the password is spelled with.
