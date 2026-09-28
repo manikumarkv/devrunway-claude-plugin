@@ -210,9 +210,15 @@ Sometimes a failing case is telling you the guidance has a hole rather than a ty
    # Create SKILL.md and jest-standards.md
    ```
 
-4. **Test it locally** — open a project that uses this tech, load the plugin, and verify Claude follows the standards when editing files matching `paths:`
+4. **Rebuild the routing index** so the `layer-autoload` hook can find the layer:
+   ```bash
+   python3 scripts/build_layer_index.py
+   ```
+   CI fails if `layers/index.json` is stale.
 
-5. **Submit a PR** with:
+5. **Test it locally** — open a project that uses this tech, load the plugin (`claude --plugin-dir <path-to-repo>`), read a file matching `paths:`, and check that Claude received the layer's standards
+
+6. **Submit a PR** with:
    - Title: `feat(layer): add jest-standards`
    - Description: what patterns the layer covers, what you tested it on
    - At least one example of Claude applying the standard correctly
@@ -250,6 +256,7 @@ A layer PR will be merged when:
 ```bash
 claude plugin validate .                 # official manifest validator
 python3 scripts/ci/validate_plugin.py    # frontmatter, hooks.json refs, duplicate names, agent/skill refs
+python3 scripts/build_layer_index.py --check   # layers/index.json matches the layers' frontmatter
 bash scripts/ci/test_hooks.sh            # blocking hooks block what they should, allow what they should
 shellcheck -S error hooks/scripts/*.sh
 ```

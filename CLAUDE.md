@@ -14,7 +14,7 @@ layers/      ← 135 technology-specific layers (auto-load by paths: globs)
 setup/       ← stack.schema.json (validation schema for stack.json)
 ```
 
-All 135 layer skills come bundled with the plugin. There is no per-layer install step — the `stack-dispatcher` agent reads `stack.json` and the files you edit at runtime and loads only the relevant layer detail files into a sub-agent.
+All layers come bundled with the plugin. There is no per-layer install step. Claude Code does **not** register `layers/` as skills; the `layer-autoload` hook loads them (see "How layers load" below).
 
 **First time in a project?** Run `/setup` to configure your stack. It generates:
 1. `stack.json` — declares which technologies you use
@@ -43,7 +43,7 @@ All 135 layer skills come bundled with the plugin. There is no per-layer install
 
 ## Background skills (auto-load by stack)
 
-Skills in `layers/` load automatically based on your `stack.json` and the files you touch. Examples:
+Layers load automatically when Claude reads or edits a file matching their `paths:` globs, filtered by your stack. Examples:
 
 | If your stack includes… | Skills that auto-load |
 |---|---|
@@ -72,6 +72,18 @@ Not everything under `layers/` auto-loads. Nine layer skills are `user-invocable
 ```
 
 ---
+
+## How layers load
+
+Claude Code only registers `skills/<name>/SKILL.md`. Layers are loaded by the `layer-autoload` hook (`hooks/scripts/layer_autoload.py`, PostToolUse on `Read|Edit|Write|MultiEdit`):
+
+1. It matches the touched file (relative to the project) against `layers/index.json`, the `paths:` globs of every background layer.
+2. It skips layers that contradict the project's stack: `stack.json` first; for slots it doesn't set, `package.json` dependencies, or a non-Node manifest (`pyproject.toml`, `go.mod`, …) keeps npm-only layers out.
+3. It injects the matching layers' `SKILL.md` body as `additionalContext`, with the absolute path of the detail file: at most 3 layers per call, each at most once per session, specific globs before extension-only ones.
+
+**After adding or changing a layer's frontmatter, run `python3 scripts/build_layer_index.py`.** CI fails if `layers/index.json` is stale.
+
+Registering all layers as skills was evaluated and rejected: plugin skills are listed in every session regardless of `paths:`, which added ~11k tokens per session for every user (#80).
 
 ## Sub-agent context management
 

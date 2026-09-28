@@ -40,6 +40,8 @@ jobs:
       - run: pip install pyyaml
       - name: Validate plugin tree
         run: python3 scripts/ci/validate_plugin.py
+      - name: Layer index is up to date
+        run: python3 scripts/build_layer_index.py --check
 
   hooks:
     name: Hook scripts

@@ -36,7 +36,7 @@ Inside Claude Code:
 | `stack.json` | Declares which tech layers you use |
 | `.mcp.json` | Pre-configures MCP servers (Figma, GitHub, Jira…) |
 
-All 135 layer skills are bundled with the plugin. There is no per-layer install step. The `stack-dispatcher` agent reads `stack.json` and the files you edit, then loads only the relevant layer detail files into a sub-agent so your main thread stays light.
+All layers are bundled with the plugin; there is no per-layer install step. When Claude reads or edits a file, the `layer-autoload` hook matches it against each layer's `paths:` globs and gives Claude the matching layers' short standards summary, once per session, with a pointer to the full standards file. Layers that don't fit your project are skipped, based on `stack.json` and, where it doesn't say, your `package.json` or other manifests. Nothing is loaded until a relevant file is touched.
 
 ---
 
@@ -150,7 +150,7 @@ setup/         ← /setup wizard
 
 ## Background Skills
 
-Once layers are installed, skills auto-load based on the files you touch — no commands needed:
+Layer standards load automatically when Claude reads or edits a matching file — no commands needed:
 
 | Stack includes… | Skills auto-load when you edit… |
 |---|---|
