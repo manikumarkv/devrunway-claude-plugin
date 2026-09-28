@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Behaviour tests for the blocking hooks: feed each one a fake tool-call
-# payload on stdin and assert whether it blocks ("continue": false).
+# payload on stdin and assert whether it denies the call
+# (hookSpecificOutput.permissionDecision == "deny").
 # Run from the repo root.
 
 set -u
@@ -12,7 +13,7 @@ FAIL=0
 expect() {
   local want="$1" script="$2" desc="$3" payload="$4" out got
   out=$(printf '%s' "$payload" | bash "$HOOKS/$script" 2>/dev/null)
-  if printf '%s' "$out" | jq -e '.continue == false' >/dev/null 2>&1; then
+  if printf '%s' "$out" | jq -e '.hookSpecificOutput.permissionDecision == "deny"' >/dev/null 2>&1; then
     got=block
   else
     got=allow
@@ -30,20 +31,55 @@ expect() {
 bash_cmd() { jq -nc --arg c "$1" --arg d "${2:-$PWD}" '{tool_input:{command:$c}, cwd:$d}'; }
 write_file() { jq -nc --arg f "$1" --arg c "$2" '{tool_input:{file_path:$f, content:$c}}'; }
 
+# Claude Code's standard commit form: git commit -m "$(cat <<'EOF' ... EOF)"
+heredoc_commit() { printf 'git commit -m "$(cat <<%sEOF%s\n%s\n\nBody text.\nEOF\n)"' "'" "'" "$1"; }
+
+# Every blocking hook must speak the deny protocol, never end the turn.
+for h in destructive-git-guard destructive-rm-guard conventional-commit-check no-commit-to-main secrets-leak-guard; do
+  if grep -q '"continue": false' "$HOOKS/$h.sh"; then
+    FAIL=$((FAIL + 1)); echo "FAIL  $h.sh: still emits {\"continue\": false}, which ends Claude's turn"
+  else
+    PASS=$((PASS + 1)); echo "ok    $h.sh: uses permissionDecision deny"
+  fi
+done
+
 # --- destructive-git-guard -------------------------------------------------
 expect block destructive-git-guard.sh "force push"         "$(bash_cmd 'git push --force origin main')"
+expect block destructive-git-guard.sh "push -f"            "$(bash_cmd 'git push -f origin main')"
+expect block destructive-git-guard.sh "push +refspec"      "$(bash_cmd 'git push origin +main')"
+expect block destructive-git-guard.sh "git -C dir push -f" "$(bash_cmd 'git -C ../x push --force')"
+expect block destructive-git-guard.sh "chained push -f"    "$(bash_cmd 'git status && git push -f')"
 expect block destructive-git-guard.sh "reset --hard"       "$(bash_cmd 'git reset --hard HEAD~1')"
+expect block destructive-git-guard.sh "reset  --hard (2 spaces)" "$(bash_cmd 'git reset  --hard')"
 expect block destructive-git-guard.sh "clean -fd"          "$(bash_cmd 'git clean -fd')"
+expect block destructive-git-guard.sh "branch -D"          "$(bash_cmd 'git branch -D feat')"
+expect allow destructive-git-guard.sh "force-with-lease"   "$(bash_cmd 'git push --force-with-lease')"
 expect allow destructive-git-guard.sh "normal push"        "$(bash_cmd 'git push -u origin feat/x')"
 expect allow destructive-git-guard.sh "git status"         "$(bash_cmd 'git status')"
+expect allow destructive-git-guard.sh "branch -d"          "$(bash_cmd 'git branch -d feat')"
+expect allow destructive-git-guard.sh "clean -n (dry run)" "$(bash_cmd 'git clean -n')"
+expect allow destructive-git-guard.sh "message mentions reset --hard" "$(bash_cmd 'git commit -m "docs: explain git reset --hard"')"
+expect allow destructive-git-guard.sh "grep for force push" "$(bash_cmd 'grep -r "git push --force" .')"
+expect allow destructive-git-guard.sh "rm -rf node_modules (not its job)" "$(bash_cmd 'rm -rf node_modules')"
 
 # --- destructive-rm-guard --------------------------------------------------
 expect block destructive-rm-guard.sh "rm -rf /"            "$(bash_cmd 'rm -rf /')"
 expect block destructive-rm-guard.sh "rm -rf ~"            "$(bash_cmd 'rm -rf ~')"
 expect block destructive-rm-guard.sh "rm -rf \$HOME"       "$(bash_cmd 'rm -rf $HOME')"
 expect block destructive-rm-guard.sh "parent traversal"    "$(bash_cmd 'rm -rf ../other')"
+expect block destructive-rm-guard.sh "rm -fr ~ (flag order)" "$(bash_cmd 'rm -fr ~')"
+expect block destructive-rm-guard.sh "rm -r -f / (split flags)" "$(bash_cmd 'rm -r -f /')"
+expect block destructive-rm-guard.sh "rm -Rf /"            "$(bash_cmd 'rm -Rf /')"
+expect block destructive-rm-guard.sh "rm --recursive --force /" "$(bash_cmd 'rm --recursive --force /')"
+expect block destructive-rm-guard.sh "sudo rm -rf /usr"    "$(bash_cmd 'sudo rm -rf /usr')"
+expect block destructive-rm-guard.sh "rm -rf * (wildcard)" "$(bash_cmd 'rm -rf *')"
+expect block destructive-rm-guard.sh "absolute path outside project" "$(bash_cmd 'rm -rf /etc/nginx')"
 expect allow destructive-rm-guard.sh "node_modules in repo" "$(bash_cmd 'rm -rf node_modules')"
+expect allow destructive-rm-guard.sh "./dist"              "$(bash_cmd 'rm -rf ./dist')"
+expect allow destructive-rm-guard.sh "absolute path inside project" "$(bash_cmd "rm -rf $PWD/dist")"
+expect allow destructive-rm-guard.sh "scratch under /tmp"  "$(bash_cmd 'rm -rf /tmp/scratch-123')"
 expect allow destructive-rm-guard.sh "non-recursive rm"    "$(bash_cmd 'rm file.txt')"
+expect allow destructive-rm-guard.sh "echo mentions rm -rf /" "$(bash_cmd 'echo "rm -rf /"')"
 
 # --- conventional-commit-check ---------------------------------------------
 expect allow conventional-commit-check.sh "valid feat"     "$(bash_cmd 'git commit -m "feat(auth): add reset"')"
@@ -52,6 +88,11 @@ expect block conventional-commit-check.sh "no type prefix" "$(bash_cmd 'git comm
 expect block conventional-commit-check.sh "unknown type"   "$(bash_cmd 'git commit -m "feature: add x"')"
 expect block conventional-commit-check.sh "subject > 72"   "$(bash_cmd "git commit -m \"feat: $(printf 'x%.0s' {1..80})\"")"
 expect allow conventional-commit-check.sh "not a commit"   "$(bash_cmd 'git log -1')"
+expect allow conventional-commit-check.sh "-am valid"      "$(bash_cmd 'git commit -am "fix: y"')"
+expect block conventional-commit-check.sh "-am invalid"    "$(bash_cmd 'git commit -am "wip"')"
+expect allow conventional-commit-check.sh "heredoc valid (Claude Code form)" "$(bash_cmd "$(heredoc_commit 'feat(hooks): accept heredoc')")"
+expect block conventional-commit-check.sh "heredoc invalid" "$(bash_cmd "$(heredoc_commit 'added stuff')")"
+expect allow conventional-commit-check.sh "message from variable" "$(bash_cmd 'git commit -m "$MSG"')"
 
 # --- no-commit-to-main -----------------------------------------------------
 TMP=$(mktemp -d)

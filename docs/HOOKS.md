@@ -253,8 +253,12 @@ If we ship in phases, I'd suggest:
 ## Implementation notes
 
 - All hooks read input via `jq` from the JSON Claude Code passes on stdin
-- All hooks emit `{"continue": false, "stopReason": "..."}` to block, or `{"continue": true}` to allow
-- For `PostToolUse` hooks, emitting `{"continue": true, "decision": "block", "reason": "..."}` lets Claude see the warning and react
+- **Blocking `PreToolUse` hooks deny the single tool call** by printing
+  `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"..."}}`
+  (build it with `jq -n --arg`). Claude sees the reason and can adjust. To allow, print nothing and exit 0.
+- **Never emit `{"continue": false}` to block.** It ends Claude's whole turn and shows the reason to the user,
+  not to Claude, so Claude cannot correct itself. `scripts/ci/test_hooks.sh` fails the build if a guard does this.
+- For `PostToolUse` hooks, emitting `{"decision": "block", "reason": "..."}` lets Claude see the warning and react
 - Heavy hooks (linters, type-checkers) should be runnable in `async: true` mode so they don't slow the loop
 - Each hook script must be idempotent — Claude may retry the same Write/Edit if the hook prompts a fix
 - The selection model mirrors layers: hooks live in `hooks/<bundle>/<hook>.sh`, registered via `hooks/<bundle>/hook.json` partials that `/setup` concatenates into the final `hooks/hooks.json`

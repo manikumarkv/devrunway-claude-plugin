@@ -1,55 +1,77 @@
 #!/usr/bin/env bash
-# Blocks `rm -rf` against high-risk paths (HOME, /, parent dirs, paths outside repo).
-# Allows rm -rf inside the project tree (node_modules, dist, etc.).
+# Blocks recursive+forced rm against high-risk paths (/, system dirs, HOME,
+# parent traversal, absolute paths outside the project). Allows rm -rf inside
+# the project tree (node_modules, dist, etc.). Denies the single tool call so
+# Claude sees the reason, rather than ending the turn.
 
-CMD=$(jq -r '.tool_input.command // empty' 2>/dev/null)
+INPUT=$(cat)
+set -f  # never glob-expand the command's words (rm -rf * must stay literal)
 
-# Only inspect rm -rf invocations
-echo "$CMD" | grep -qE '\brm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f' || { echo '{"continue": true}'; exit 0; }
+deny() {
+  jq -nc --arg r "destructive-rm-guard: $1" \
+    '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"deny",permissionDecisionReason:$r}}'
+  exit 0
+}
 
-# Extract paths (anything after rm -rf flags)
-PATHS=$(echo "$CMD" | grep -oE 'rm[[:space:]]+-[a-zA-Z]+[[:space:]]+[^|;&]+' | sed -E 's/^rm[[:space:]]+-[a-zA-Z]+[[:space:]]+//')
+CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
+[ -n "$CMD" ] || exit 0
 
-REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-HOME_EXPANDED="${HOME%/}"
+PROJECT=$(printf '%s' "$INPUT" | jq -r '.cwd // empty' 2>/dev/null)
+[ -z "$PROJECT" ] && PROJECT="${CLAUDE_PROJECT_DIR:-$PWD}"
+ROOT=$(git -C "$PROJECT" rev-parse --show-toplevel 2>/dev/null || printf '%s' "$PROJECT")
+HOME_DIR="${HOME%/}"
 
-for raw in $PATHS; do
-  # Strip quotes
-  p="${raw//\"/}"
-  p="${p//\'/}"
+# Drop quoted text so `echo "rm -rf /"` or a commit message does not match.
+BARE=$(printf '%s' "$CMD" | tr '\n' ' ' | sed -E "s/'[^']*'//g; s/\"[^\"]*\"//g")
 
-  # High-risk literal matches
-  case "$p" in
-    /|/*|"$HOME"|"$HOME/"|"~"|"~/"|"\$HOME"|"\$HOME/")
-      echo '{"continue": false, "stopReason": "destructive-rm-guard: refusing rm -rf against root/home/system path. Run manually if you are certain."}'
-      exit 0
-      ;;
-  esac
+while IFS= read -r seg; do
+  # shellcheck disable=SC2206
+  words=($seg)
+  # Find the rm word (allow sudo / env prefixes).
+  i=0
+  while [ $i -lt ${#words[@]} ] && [ "${words[$i]}" != "rm" ]; do i=$((i + 1)); done
+  [ $i -lt ${#words[@]} ] || continue
 
-  # Parent traversal
-  case "$p" in
-    ../*|*/../*|..)
-      echo '{"continue": false, "stopReason": "destructive-rm-guard: refusing rm -rf with parent-directory traversal."}'
-      exit 0
-      ;;
-  esac
+  recursive=0 force=0 targets=()
+  for w in "${words[@]:$((i + 1))}"; do
+    case "$w" in
+      --recursive) recursive=1 ;;
+      --force) force=1 ;;
+      --) ;;
+      --*) ;;
+      -*)
+        [[ "$w" == *[rR]* ]] && recursive=1
+        [[ "$w" == *f* ]] && force=1 ;;
+      *) targets+=("$w") ;;
+    esac
+  done
+  [ $recursive -eq 1 ] && [ $force -eq 1 ] || continue
 
-  # Expand $HOME and ~ for absolute-path check
-  expanded="${p/#\~/$HOME_EXPANDED}"
-  expanded="${expanded//\$HOME/$HOME_EXPANDED}"
+  for t in "${targets[@]}"; do
+    # Literal patterns on purpose: these are the unexpanded words Claude typed.
+    # shellcheck disable=SC2088
+    case "$t" in
+      '*'|'/*'|'~'|'~/'|'~/*'|'$HOME'|'$HOME/'|'${HOME}'|/|/bin*|/boot*|/dev*|/etc*|/lib*|/opt*|/proc*|/root*|/sbin*|/sys*|/usr*|/var*|/home|/home/|/Users|/Users/)
+        deny "refusing rm -rf on '$t' (root, system, home or wildcard path). Ask the user to run it manually if intended." ;;
+    esac
+    case "$t" in
+      ..|../*|*/..|*/../*)
+        deny "refusing rm -rf with parent-directory traversal ('$t'). Use a path inside the project." ;;
+    esac
 
-  # Reject anything that resolves to HOME or above
-  if [[ "$expanded" == "$HOME_EXPANDED" || "$expanded" == "$HOME_EXPANDED/" ]]; then
-    echo '{"continue": false, "stopReason": "destructive-rm-guard: refusing rm -rf against $HOME."}'
-    exit 0
-  fi
+    expanded="${t/#\~/$HOME_DIR}"
+    expanded="${expanded//\$HOME/$HOME_DIR}"
+    expanded="${expanded//\$\{HOME\}/$HOME_DIR}"
+    expanded="${expanded%/}"
+    if [ "$expanded" = "$HOME_DIR" ]; then
+      deny "refusing rm -rf on \$HOME."
+    fi
+    # Scratch space under /tmp is fine; /tmp itself is not.
+    [[ "$expanded" == /tmp/?* || "$expanded" == /private/tmp/?* ]] && continue
+    if [[ "$expanded" == /* && "$expanded" != "$ROOT" && "$expanded" != "$ROOT"/* ]]; then
+      deny "refusing rm -rf on '$expanded', which is outside the project ($ROOT). Ask the user to run it manually."
+    fi
+  done
+done < <(printf '%s\n' "$BARE" | sed -E 's/(&&|\|\||;|\|)/\n/g')
 
-  # If absolute and outside repo root, block
-  if [[ "$expanded" == /* && "$expanded" != "$REPO_ROOT"* ]]; then
-    echo "{\"continue\": false, \"stopReason\": \"destructive-rm-guard: refusing rm -rf against path outside repo ($expanded). Repo root: $REPO_ROOT\"}"
-    exit 0
-  fi
-done
-
-echo '{"continue": true}'
 exit 0

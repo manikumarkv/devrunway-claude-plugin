@@ -70,7 +70,7 @@ Layers activated for your stack (auto-load on matching files):
   layers/mocking/msw
   layers/design/figma
 
-MCP servers configured in .mcp.json (auto-registered on plugin install):
+MCP servers configured in .mcp.json (written by /setup; the plugin itself needs no tokens):
   figma  → @figma/mcp-server (FIGMA_ACCESS_TOKEN)
   github → @modelcontextprotocol/server-github (GITHUB_PERSONAL_ACCESS_TOKEN)
 ```
