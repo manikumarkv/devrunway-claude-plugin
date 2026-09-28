@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
 # Blocks Write/Edit operations whose payload contains high-confidence secret patterns.
+# Denies the single tool call so Claude sees the reason, rather than ending the turn.
 
 INPUT=$(cat)
+
+deny() {
+  jq -nc --arg r "$1" \
+    '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"deny",permissionDecisionReason:$r}}'
+  exit 0
+}
+
 FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // empty' 2>/dev/null)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // empty' 2>/dev/null)
 
 # Nothing to inspect
-[ -z "$CONTENT" ] && { echo '{"continue": true}'; exit 0; }
+[ -z "$CONTENT" ] && exit 0
 
 # Skip the plugin's own hook + skill files (they describe these patterns)
 case "$FILE" in
   */hooks/scripts/*|*/agents/*|*/docs/HOOKS.md|*/CAPABILITIES.md|*/docs/CAPABILITIES.md)
-    echo '{"continue": true}'; exit 0 ;;
+    exit 0 ;;
 esac
 
 # High-confidence patterns
@@ -44,18 +52,15 @@ for pat in "${PATTERNS[@]}"; do
       fi
     fi
     REDACTED=$(echo "$MATCH" | cut -c1-8)
-    echo "{\"continue\": false, \"stopReason\": \"secrets-leak-guard: refused to write a likely secret to $FILE (pattern '${REDACTED}…'). Move it to a .env file or a secret manager.\"}"
-    exit 0
+    deny "secrets-leak-guard: refused to write a likely secret to $FILE (pattern '${REDACTED}…'). Read it from an environment variable or secret manager instead, and use a placeholder in code."
   fi
 done
 
 # Generic JWT — looser, so check separately and skip in markdown
 if [ "$IS_DOC" = "0" ]; then
   if echo "$CONTENT" | grep -qE 'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'; then
-    echo "{\"continue\": false, \"stopReason\": \"secrets-leak-guard: refused to write what looks like a JWT to $FILE. Don't commit real tokens — use placeholders or .env.\"}"
-    exit 0
+    deny "secrets-leak-guard: refused to write what looks like a JWT to $FILE. Don't commit real tokens; use a placeholder or read it from the environment."
   fi
 fi
 
-echo '{"continue": true}'
 exit 0

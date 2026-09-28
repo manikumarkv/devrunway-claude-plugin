@@ -101,7 +101,7 @@ Within a forked skill, layer standards are loaded on demand via two agents:
 
 ## MCP auto-configuration
 
-`/setup` generates `.mcp.json` for layers that have MCP support. Currently wired:
+The plugin itself bundles **no** MCP servers and asks for **no** tokens at install. `/setup` generates the project's `.mcp.json` for the tools you pick. Currently wired (package names being corrected in #75):
 
 | Layer | MCP package | Env var |
 |---|---|---|
