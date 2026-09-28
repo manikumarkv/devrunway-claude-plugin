@@ -21,12 +21,6 @@ import yaml
 errors = []
 warnings = []
 
-# Pre-existing duplicate skill names, reported as warnings until renamed.
-# Do not add to this list — a new duplicate should fail the build.
-KNOWN_DUPLICATE_NAMES = {
-    "flutter-release",  # skills/flutter-release (command) vs layers/ci/flutter-release (layer)
-}
-
 
 def err(path, msg):
     errors.append((path, msg))
@@ -102,8 +96,7 @@ for path in sorted(glob.glob("skills/**/SKILL.md", recursive=True)
         continue  # already reported above
     name = d["name"]
     if name in skills:
-        report = warn if name in KNOWN_DUPLICATE_NAMES else err
-        report(path, f"duplicate skill name `{name}` (also in {skills[name]})")
+        err(path, f"duplicate skill name `{name}` (also in {skills[name]})")
     else:
         skills[name] = path
     agent = d.get("agent")

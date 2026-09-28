@@ -1,5 +1,5 @@
 ---
-name: flutter-release
+name: flutter-release-standards
 description: Flutter build, flavor and release-CI standards — the two independent flavor switches (--flavor and --dart-define=FLAVOR), startup flavor assertion and crash keys, per-flavor application id suffix, display name and icon, pinned SDKs with explicit Android and iOS API levels, the four required PR checks, the canonical analysis_options.yaml, CI input assertions, CI-generated monotonic versions, obfuscation with symbol upload, and pinned runners with masked secrets. Load when working with workflow YAML, Gradle build files, Android manifests, iOS plists or pbxproj, per-flavor env files, or analysis_options.yaml.
 user-invocable: false
 stack: ci/flutter-release
@@ -13,7 +13,7 @@ paths:
   - "**/analysis_options.yaml"
 ---
 
-Full standards in [flutter-release.md](flutter-release.md). Always-on summary:
+Full standards in [flutter-release-standards.md](flutter-release-standards.md). Always-on summary:
 
 **Scope:** the build configuration files and the workflows that consume them. Signing credentials and store accounts are the `/flutter-signing` command; build-failure triage is `/flutter-build-doctor`; logger and crash-reporter implementation is `logging/flutter-observability`.
 
