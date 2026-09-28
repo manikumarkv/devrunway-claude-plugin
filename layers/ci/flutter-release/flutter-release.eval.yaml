@@ -1,7 +1,7 @@
-skill: flutter-release
+skill: flutter-release-standards
 skill_files:
   - layers/ci/flutter-release/SKILL.md
-  - layers/ci/flutter-release/flutter-release.md
+  - layers/ci/flutter-release/flutter-release-standards.md
 version: 1
 
 cases:
@@ -16,7 +16,7 @@ cases:
       arrives from a user two months from now, and the binary must not be trivially
       reverse-engineerable. Assume `flutter pub get` and the env file have already run in
       earlier steps. Write the workflow YAML only — no Dart, no Gradle.
-      Use the flutter-release skill rules.
+      Use the flutter-release-standards skill rules.
     must_contain:
       - "--flavor prod"
       - "--dart-define=FLAVOR=prod"
@@ -50,7 +50,7 @@ cases:
       `CrashReporter` with `Future<void> setCustomKey(String key, String value)` and an
       `AppLogger` are already injected — do not write them. Consider what must happen when
       someone runs a release build and the value is not supplied at all.
-      Use the flutter-release skill rules.
+      Use the flutter-release-standards skill rules.
     must_contain:
       - "String.fromEnvironment("
       - "FLAVOR"
@@ -79,7 +79,7 @@ cases:
       to contain lint violations, unformatted files, and a transitive dependency bump
       nobody reviewed. The gate must finish quickly enough that people watch it, and the
       team's CI budget is already strained. Write the workflow YAML only.
-      Use the flutter-release skill rules.
+      Use the flutter-release-standards skill rules.
     must_contain:
       - "--set-exit-if-changed"
       - "--fatal-infos"
@@ -113,7 +113,7 @@ cases:
       confusing failure in an unrelated file several minutes into the pipeline. Write the
       workflow steps that write `.env_staging`, verify it, and verify the generated code —
       so that each failure stops the run immediately and names what is wrong.
-      Write the workflow YAML only. Use the flutter-release skill rules.
+      Write the workflow YAML only. Use the flutter-release-standards skill rules.
     must_contain:
       - "base64 -d"
       - "-s .env_staging"
@@ -144,7 +144,7 @@ cases:
       and routes all logging through an injected facade. The gate runs
       `flutter analyze --fatal-infos --fatal-warnings`, and the team wants the same
       failures to show up in the IDE rather than only in CI.
-      Use the flutter-release skill rules.
+      Use the flutter-release-standards skill rules.
     must_contain:
       - "strict-casts: true"
       - "strict-inference: true"
@@ -183,7 +183,7 @@ cases:
       pull request diff. The app supports Android 7.0 (API 24) and up, and targets API 35.
       Write the `android` block of `android/app/build.gradle.kts` and the `<application>`
       element of `android/app/src/main/AndroidManifest.xml`.
-      Use the flutter-release skill rules.
+      Use the flutter-release-standards skill rules.
     must_contain:
       - "applicationIdSuffix"
       - ".staging"
