@@ -117,6 +117,61 @@ expect block secrets-leak-guard.sh "JWT in code"           "$(write_file src/a.t
 expect allow secrets-leak-guard.sh "example key in docs"   "$(write_file README.md "Example: $AWS")"
 expect allow secrets-leak-guard.sh "clean file"            "$(write_file src/a.ts "export const x = 1")"
 
+# --- layer-autoload --------------------------------------------------------
+# expect_layers <description> <project-dir> <session> <relative-file> <heading|NONE>
+# Asserts the injected context contains "### <heading> (" (or nothing for NONE).
+expect_layers() {
+  local desc="$1" proj="$2" sess="$3" file="$4" want="$5" ctx ok=0
+  ctx=$(jq -nc --arg f "$proj/$file" --arg d "$proj" --arg s "$sess" \
+          '{tool_input:{file_path:$f}, cwd:$d, session_id:$s}' \
+        | bash "$HOOKS/layer-autoload.sh" 2>/dev/null \
+        | jq -r '.hookSpecificOutput.additionalContext // empty' 2>/dev/null)
+  if [ "$want" = "NONE" ]; then [ -z "$ctx" ] && ok=1
+  else printf '%s' "$ctx" | grep -qF "### $want (" && ok=1
+  fi
+  if [ $ok -eq 1 ]; then PASS=$((PASS + 1)); echo "ok    layer-autoload.sh: $desc"
+  else
+    FAIL=$((FAIL + 1)); echo "FAIL  layer-autoload.sh: $desc (wanted $want; got: $(printf '%s' "$ctx" | grep '^### ' | tr '\n' ' '))"
+    [ "${GITHUB_ACTIONS:-}" = "true" ] && echo "::error file=$HOOKS/layer_autoload.py::$desc"
+  fi
+}
+not_layer() {  # not_layer <description> <project-dir> <session> <relative-file> <heading>
+  local ctx
+  ctx=$(jq -nc --arg f "$2/$4" --arg d "$2" --arg s "$3" '{tool_input:{file_path:$f}, cwd:$d, session_id:$s}' \
+        | bash "$HOOKS/layer-autoload.sh" 2>/dev/null | jq -r '.hookSpecificOutput.additionalContext // empty' 2>/dev/null)
+  if printf '%s' "$ctx" | grep -qF "### $5 ("; then
+    FAIL=$((FAIL + 1)); echo "FAIL  layer-autoload.sh: $1 ($5 should not load)"
+  else PASS=$((PASS + 1)); echo "ok    layer-autoload.sh: $1"; fi
+}
+sid() { echo "ci-$RANDOM$RANDOM$RANDOM"; }
+
+REACT="$TMP/react-app"; mkdir -p "$REACT"
+echo '{"dependencies":{"react":"19","zod":"3","@mui/material":"6","@prisma/client":"5"}}' > "$REACT/package.json"
+expect_layers "React component gets react-standards" "$REACT" "$(sid)" src/components/Button.tsx react-standards
+not_layer     "Vue layer skipped in a React app (package.json)" "$REACT" "$(sid)" src/components/Button.tsx vue
+expect_layers "zod schema gets zod-validation" "$REACT" "$(sid)" src/schemas/user.schema.ts zod-validation
+not_layer     "mongodb skipped without mongoose/mongodb dep" "$REACT" "$(sid)" src/schemas/user.schema.ts mongodb
+expect_layers "prisma schema gets database-sql" "$REACT" "$(sid)" prisma/schema.prisma database-sql
+expect_layers "unrelated file loads nothing" "$REACT" "$(sid)" notes/todo.txt NONE
+expect_layers "outside the project loads nothing" "$REACT" "$(sid)" ../elsewhere/App.tsx NONE
+
+S=$(sid)
+expect_layers "first touch in a session injects" "$REACT" "$S" src/components/Card.tsx react-standards
+expect_layers "same layer is not re-injected in that session" "$REACT" "$S" src/components/Modal.tsx NONE
+
+PY="$TMP/py-app"; mkdir -p "$PY"; echo "django" > "$PY/requirements.txt"
+expect_layers "Django model gets python-django" "$PY" "$(sid)" app/models.py python-django
+not_layer     "nextjs skipped in a Python project" "$PY" "$(sid)" app/models.py nextjs
+
+SJ="$TMP/stackjson-app"; mkdir -p "$SJ"; echo '{"frontend":"vue"}' > "$SJ/stack.json"
+expect_layers "stack.json frontend=vue loads vue" "$SJ" "$(sid)" src/components/Button.vue vue
+not_layer     "stack.json frontend=vue skips react-standards" "$SJ" "$(sid)" src/components/Button.tsx react-standards
+
+CAP=$(jq -nc --arg f "$REACT/src/components/Big.tsx" --arg d "$REACT" --arg s "$(sid)" '{tool_input:{file_path:$f},cwd:$d,session_id:$s}' \
+      | bash "$HOOKS/layer-autoload.sh" | jq -r '.hookSpecificOutput.additionalContext' | grep -c '^### ')
+if [ "$CAP" -le 3 ]; then PASS=$((PASS + 1)); echo "ok    layer-autoload.sh: at most 3 layers per call ($CAP)"
+else FAIL=$((FAIL + 1)); echo "FAIL  layer-autoload.sh: injected $CAP layers (cap is 3)"; fi
+
 echo
 echo "$PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
