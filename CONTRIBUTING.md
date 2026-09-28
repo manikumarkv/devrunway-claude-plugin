@@ -239,6 +239,24 @@ A layer PR will be merged when:
 - [ ] No duplicate content with `core/` (core covers universal principles; layers cover tech-specific implementation)
 - [ ] Anti-patterns section explains *why*, not just *what*
 - [ ] The stub `README.md` is deleted
+- [ ] The `Validate plugin` CI workflow is green
+
+---
+
+## CI
+
+`.github/workflows/validate.yml` runs on every PR and push to `main`. It makes no model calls. Run the same checks locally before pushing:
+
+```bash
+claude plugin validate .                 # official manifest validator
+python3 scripts/ci/validate_plugin.py    # frontmatter, hooks.json refs, duplicate names, agent/skill refs
+bash scripts/ci/test_hooks.sh            # blocking hooks block what they should, allow what they should
+shellcheck -S error hooks/scripts/*.sh
+```
+
+Changing a blocking hook (`destructive-*`, `secrets-leak-guard`, `no-commit-to-main`, `conventional-commit-check`)? Add a case to `scripts/ci/test_hooks.sh`.
+
+CI does not run `/eval`. Evals call a model, so run them with `/eval` when you change a skill's guidance.
 
 ---
 
