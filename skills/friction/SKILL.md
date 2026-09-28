@@ -51,7 +51,7 @@ If `$ARGUMENTS[0]` is non-empty, use it as the **title**. Otherwise, ask:
 Then ask, in order:
 
 > What did you expect?
-> Which skill/agent? (path, e.g. `layers/backend/nodejs-standards`, or skip)
+> Which skill/agent? (path, e.g. `layers/backend/node-express/nodejs-standards`, or skip)
 > Type? (skill-gap | hook-fp | hook-fn | pipeline | ux | other)
 > Severity? (low | medium | high — default medium)
 

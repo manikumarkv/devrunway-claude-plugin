@@ -23,7 +23,7 @@ Full standards in [jest.md](jest.md). Always-on summary:
 - Use `expect(` for all assertions — Arrange-Act-Assert with blank lines between sections
 
 **Setup / teardown:**
-- `beforeEach(` to reset state before each test; call `jest.clearAllMocks(` in `beforeEach` to prevent cross-test pollution
+- Reset mocks between tests in config: `clearMocks: true` (same as `jest.clearAllMocks()` before each test: clears calls, keeps implementations) and `restoreMocks: true` (restores `jest.spyOn` originals). Use `jest.resetAllMocks()` only when a test must also drop `mockReturnValue` implementations. Use `beforeEach(` for per-test fixtures, not for mock cleanup the config already does
 
 **Mocking:**
 - `jest.mock(` calls go at the top of the file, before imports take effect

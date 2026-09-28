@@ -52,7 +52,7 @@ Build two clusters:
 **By skill/agent path:**
 | Path | Count | High-severity count |
 | --- | --- | --- |
-| `layers/backend/nodejs-standards` | 8 | 3 |
+| `layers/backend/node-express/nodejs-standards` | 8 | 3 |
 | `layers/frontend/react` | 5 | 1 |
 | ... | | |
 

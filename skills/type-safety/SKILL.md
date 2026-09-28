@@ -35,5 +35,5 @@ Always-on type safety principles:
 
 **For language-specific implementation, consult your language layer:**
 - TypeScript → `layers/language/typescript/`
-- Python → `layers/language/python/` *(stub)*
-- Java / Kotlin → `layers/language/java/` *(stub)*
+- Python → no language layer yet; the framework layers `layers/backend/python-fastapi/` and `layers/backend/python-django/` carry the typing rules
+- Java / Kotlin → no layer yet

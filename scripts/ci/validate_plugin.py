@@ -8,6 +8,7 @@ Checks:
   - every SKILL.md / agent .md / .eval.yaml passes skill-frontmatter-validate.sh
   - skill names are unique
   - `agent:` in a skill and `skills:` in an agent point at things that exist
+  - backticked layers/, skills/, agents/, hooks/scripts/ paths in docs exist
 """
 import glob
 import json
@@ -108,6 +109,23 @@ for path in sorted(glob.glob("agents/*.md")):
     for s in d.get("skills") or []:
         if s not in skills:
             warn(path, f"`skills:` lists `{s}`, which is not a skill in this plugin")
+
+# 5. Path references in docs, skills, agents and layers must exist.
+# Backticked `layers/...`, `skills/...`, `agents/...`, `hooks/scripts/...` paths
+# are instructions Claude follows; a missing one sends it looking for nothing.
+REF = re.compile(r"`((?:layers|skills|agents|hooks/scripts)/[A-Za-z0-9_./-]+)`")
+doc_files = (glob.glob("skills/**/*.md", recursive=True) + glob.glob("agents/*.md")
+             + [f for f in glob.glob("layers/**/*.md", recursive=True) if not f.endswith("README.md")]
+             + ["CLAUDE.md", "README.md", "CONTRIBUTING.md"])
+for path in sorted(doc_files):
+    for lineno, line in enumerate(open(path, encoding="utf-8"), 1):
+        if "e.g." in line:  # illustrative paths ("e.g. `layers/analytics/`")
+            continue
+        for m in REF.finditer(line):
+            ref = m.group(1).rstrip("/.")
+            if "*" in ref or "<" in ref or os.path.exists(ref):
+                continue
+            err(f"{path}:{lineno}", f"references `{ref}`, which does not exist")
 
 # Report
 gha = os.environ.get("GITHUB_ACTIONS") == "true"

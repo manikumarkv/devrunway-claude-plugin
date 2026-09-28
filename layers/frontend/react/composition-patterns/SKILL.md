@@ -13,7 +13,7 @@ Full patterns in [patterns.md](patterns.md). Always-on summary:
 
 > **Scope — composition only.** This layer shares `**/components/**` with `react-standards`
 > (which claims `**/*.tsx`), so both load on the same file. `react-standards` is authoritative
-> for the React version, the UI primitive library (shadcn/ui) and forms; this layer is
+> for the React version, the UI primitive library (whatever the project uses) and forms; this layer is
 > authoritative for how components are composed out of those primitives. Where the two overlap,
 > follow `react-standards`.
 > See `docs/adr/0001-layer-glob-collision-and-dispatcher-routing-policy.md`.
@@ -24,9 +24,9 @@ Full patterns in [patterns.md](patterns.md). Always-on summary:
 - Children-based composition over `renderX` render props — accept `children: React.ReactNode` for flexible slot-based layouts
 
 **Forwarding refs:**
-- Use `forwardRef(` to expose the underlying element to parent components
-- Forward onto the shadcn primitive, never onto a hand-rolled HTML element — `react-standards`
-  forbids building an input, button, dialog, select, table or badge from scratch:
+- React 18: use `forwardRef(` to expose the underlying element to parent components. React 19: accept `ref` as a regular prop instead
+- Forward onto the project's component-library primitive, never onto a hand-rolled HTML element — `react-standards`
+  forbids building an input, button, dialog, select, table or badge from scratch. Example with shadcn/ui (with MUI, forward onto `TextField`, and so on):
   ```tsx
   import { Input } from '@/components/ui/input'
   import { Label } from '@/components/ui/label'

@@ -167,6 +167,22 @@ SJ="$TMP/stackjson-app"; mkdir -p "$SJ"; echo '{"frontend":"vue"}' > "$SJ/stack.
 expect_layers "stack.json frontend=vue loads vue" "$SJ" "$(sid)" src/components/Button.vue vue
 not_layer     "stack.json frontend=vue skips react-standards" "$SJ" "$(sid)" src/components/Button.tsx react-standards
 
+DET=$(jq -nc --arg f "$REACT/src/components/Det.tsx" --arg d "$REACT" --arg s "$(sid)" '{tool_input:{file_path:$f},cwd:$d,session_id:$s}' \
+      | bash "$HOOKS/layer-autoload.sh" | jq -r '.hookSpecificOutput.additionalContext')
+if printf '%s' "$DET" | grep -q "Detected in this project: package.json: .*@mui/material"; then
+  PASS=$((PASS + 1)); echo "ok    layer-autoload.sh: tells Claude the detected stack (@mui/material)"
+else FAIL=$((FAIL + 1)); echo "FAIL  layer-autoload.sh: detected-stack line missing"; fi
+
+# Language filter: with no manifest at all, the file's own language still decides.
+BARE_P="$TMP/no-manifest"; mkdir -p "$BARE_P"
+not_layer     "no Next.js rules on a Python file (app/**)" "$BARE_P" "$(sid)" app/errors.py nextjs
+not_layer     "no Express error-handling on a Dart file" "$BARE_P" "$(sid)" lib/widgets/error_view.dart error-handling
+expect_layers "Dart widget gets flutter" "$BARE_P" "$(sid)" lib/widgets/error_view.dart flutter
+expect_layers ".vue file gets vue" "$BARE_P" "$(sid)" src/components/Button.vue vue
+not_layer     "no React composition-patterns on a .vue file" "$BARE_P" "$(sid)" src/components/Button.vue composition-patterns
+not_layer     "no Vue rules on a React component path (.tsx)" "$BARE_P" "$(sid)" src/components/Button.tsx vue
+expect_layers "Go file gets nothing (no Go layers)" "$BARE_P" "$(sid)" cmd/server/main.go NONE
+
 CAP=$(jq -nc --arg f "$REACT/src/components/Big.tsx" --arg d "$REACT" --arg s "$(sid)" '{tool_input:{file_path:$f},cwd:$d,session_id:$s}' \
       | bash "$HOOKS/layer-autoload.sh" | jq -r '.hookSpecificOutput.additionalContext' | grep -c '^### ')
 if [ "$CAP" -le 3 ]; then PASS=$((PASS + 1)); echo "ok    layer-autoload.sh: at most 3 layers per call ($CAP)"

@@ -4,10 +4,14 @@ description: Error handling standards for frontend and backend — custom error 
 user-invocable: false
 stack: backend/node-express
 paths:
-  - "**/errors/**"
-  - "**/error*"
-  - "**/*.middleware.*"
-  - "**/ErrorBoundary*"
+  - "**/errors/**/*.ts"
+  - "**/errors/**/*.js"
+  - "**/error*.ts"
+  - "**/error*.js"
+  - "**/*.middleware.ts"
+  - "**/*.middleware.js"
+  - "**/ErrorBoundary*.tsx"
+  - "**/ErrorBoundary*.jsx"
 ---
 
 Full standards in [error-handling.md](error-handling.md). Always-on summary:

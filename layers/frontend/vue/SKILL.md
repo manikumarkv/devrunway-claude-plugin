@@ -6,8 +6,6 @@ stack: frontend/vue
 paths:
   - "**/*.vue"
   - "**/composables/**"
-  - "src/views/**"
-  - "src/components/**"
 ---
 
 Full standards in [vue.md](vue.md). Always-on summary:

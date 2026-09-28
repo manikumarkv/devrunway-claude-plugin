@@ -29,7 +29,7 @@ Full standards in [shadcn-ui.md](shadcn-ui.md). Always-on summary:
 
 **Dialogs:** control open state via React state; always add `aria-describedby` to `DialogContent`
 
-**Toast:** `useToast()` hook only; messages under 80 chars
+**Toast:** Sonner (`npx shadcn@latest add sonner`, then `import { toast } from 'sonner'`); the old `useToast()` hook is deprecated. Messages under 80 chars; mount `<Toaster />` once at the root
 
 **Dark mode:** CSS variables + `dark:` class via `ThemeProvider` — don't override per-component
 

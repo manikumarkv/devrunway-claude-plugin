@@ -58,7 +58,7 @@ Full standards in [jest-standards.md](jest-standards.md). Always-on quick-refere
 - `jest.mock('./module')` at file top
 - `jest.spyOn(obj, 'method').mockReturnValue(val)` for partial mocks
 - `jest.clearAllMocks()` in `afterEach`
-- Never mock what you own
+- Don't mock what you don't own: wrap third-party APIs in your own adapter and mock the adapter
 
 **Coverage:**
 - Thresholds in `jest.config.ts`: `{ branches: 80, functions: 85, lines: 85 }`

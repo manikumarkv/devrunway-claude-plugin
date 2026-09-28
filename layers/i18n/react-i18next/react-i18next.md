@@ -232,6 +232,27 @@ function LanguageSwitcher() {
 }
 ```
 
+## Zod validation messages — localised
+
+```tsx
+// Use t() inside the schema factory, called inside the component
+function useOrderSchema() {
+  const { t } = useTranslation()
+  return z.object({
+    name: z.string().min(2, t('validation.minLength', { min: 2 })),
+    status: z.enum(['PENDING', 'SHIPPED', 'DELIVERED', 'CANCELLED'], {
+      errorMap: () => ({ message: t('validation.required') }),
+    }),
+  })
+}
+
+function OrderForm() {
+  const schema = useOrderSchema()
+  const form = useForm({ resolver: zodResolver(schema) })
+  // …
+}
+```
+
 ## Anti-Patterns
 
 | Anti-pattern | Problem | Fix |

@@ -211,23 +211,81 @@ export function DeleteConfirmDialog({ open, onOpenChange, onConfirm }: Props) {
 
 Note: dialogs are only for destructive confirmations. Create/edit forms get their own routes.
 
-## Toast
+## Toast — use Sonner (not the deprecated `useToast` hook)
 
-Use the `useToast()` hook, not direct imports. Keep messages under 80 characters.
-
-```tsx
-import { useToast } from '@/components/ui/use-toast'
-
-const { toast } = useToast()
-
-// Success
-toast({ title: 'Order created', description: 'Your order #1234 has been placed.' })
-
-// Error
-toast({ title: 'Something went wrong', variant: 'destructive' })
+```bash
+# Install via shadcn CLI
+npx shadcn@latest add sonner
 ```
 
-Mount `<Toaster />` once in `App.tsx` — never per-component.
+```tsx
+// App.tsx — mount Toaster once at the root
+import { Toaster } from '@/components/ui/sonner'
+
+function App() {
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster position="bottom-right" richColors closeButton />
+    </>
+  )
+}
+
+// In any component — import toast directly from sonner (no hook needed)
+import { toast } from 'sonner'
+
+function OrderForm() {
+  async function onSubmit(values: FormValues) {
+    try {
+      await createOrder(values)
+      toast.success('Order created', { description: 'Your order is being processed.' })
+    } catch {
+      toast.error('Failed to create order')
+    }
+  }
+}
+```
+
+> The older shadcn built-in `useToast` / `@/components/ui/use-toast` pattern is **deprecated** — do not use it in new code.
+
+## Table — data display
+
+```tsx
+import {
+  Table, TableBody, TableCell,
+  TableHead, TableHeader, TableRow,
+} from '@/components/ui/table'
+
+function OrdersTable({ orders }: { orders: Order[] }) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>ID</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right">Total</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {orders.map(order => (
+          <TableRow key={order.id}>
+            <TableCell className="font-mono text-sm">{order.id}</TableCell>
+            <TableCell><Badge variant="secondary">{order.status}</Badge></TableCell>
+            <TableCell className="text-right">${order.total}</TableCell>
+          </TableRow>
+        ))}
+        {orders.length === 0 && (
+          <TableRow>
+            <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+              No orders yet
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
+  )
+}
+```
 
 ## Dark mode
 
@@ -257,3 +315,36 @@ import * as Icons from 'lucide-react'
 ```
 
 Standard size is `size={16}` (1rem) for inline icons, `size={20}` for standalone.
+
+## Available components — check before building
+
+Before writing any UI, check this list. If it's here, use shadcn — do not roll your own.
+
+| shadcn component | `npx shadcn@latest add` |
+|---|---|
+| Button, Link button | `button` |
+| Text input, Textarea | `input` · `textarea` |
+| Checkbox, Radio, Switch | `checkbox` · `radio-group` · `switch` |
+| Select dropdown | `select` |
+| Date picker | `calendar` · `popover` |
+| Form wrapper + validation | `form` |
+| Modal / overlay | `dialog` |
+| Confirmation dialog | `alert-dialog` |
+| Dropdown menu | `dropdown-menu` |
+| Context menu | `context-menu` |
+| Tabs | `tabs` |
+| Accordion | `accordion` |
+| Data table | `table` |
+| Card | `card` |
+| Badge / pill | `badge` |
+| Avatar | `avatar` |
+| Toast notification | `sonner` |
+| Alert banner | `alert` |
+| Skeleton loader | `skeleton` |
+| Progress bar | `progress` |
+| Separator | `separator` |
+| Tooltip | `tooltip` |
+| Sheet (side panel) | `sheet` |
+| Command palette | `command` |
+| Breadcrumb | `breadcrumb` |
+| Pagination | `pagination` |

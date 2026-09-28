@@ -22,6 +22,26 @@ import yaml
 
 INDEX = "layers/index.json"
 
+# Source-file extension -> language family. Shared with the hook, which only
+# loads a layer for a source file when the file's family is one of the layer's.
+EXT_LANG = {
+    "ts": "js", "tsx": "js", "js": "js", "jsx": "js", "mjs": "js", "cjs": "js", "vue": "js", "svelte": "js",
+    "py": "python", "dart": "dart", "cs": "dotnet", "csproj": "dotnet",
+}
+# Layers whose globs name no source extension but whose rules are for one language.
+STACK_LANG = {"ci/flutter-release": ["dart"], "i18n/flutter-l10n": ["dart"], "mobile/flutter": ["dart"]}
+
+
+def languages(stack, paths):
+    """Language families a layer's rules are written for. Globs with source
+    extensions decide; otherwise STACK_LANG; otherwise JS/TS, which is what
+    every other layer's code samples are written in."""
+    if stack in STACK_LANG:
+        return STACK_LANG[stack]
+    found = sorted({EXT_LANG[ext] for p in paths
+                    for ext in [p.rsplit(".", 1)[-1].strip('"')] if "." in p and ext in EXT_LANG})
+    return found or ["js"]
+
 
 def frontmatter(path):
     text = open(path, encoding="utf-8").read()
@@ -60,6 +80,7 @@ def build():
             "stack": d.get("stack") or "",
             "dir": layer_dir,
             "paths": [str(p) for p in paths],
+            "langs": languages(d.get("stack") or "", [str(p) for p in paths]),
             "detail": detail,
         })
     return {

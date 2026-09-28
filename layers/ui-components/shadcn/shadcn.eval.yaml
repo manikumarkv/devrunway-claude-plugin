@@ -43,3 +43,21 @@ cases:
     rationale: |
       shadcn Form components integrate react-hook-form with accessible
       label/error linking. Raw inputs miss this integration.
+
+  - id: shadcn-04
+    name: "shadcn/ui components not raw HTML form elements"
+    scenario: |
+      Write a React form with a text input and submit button for creating
+      a new product. The project uses shadcn/ui (components.json present). Use the shadcn-ui skill rules.
+    must_contain:
+      - "@/components/ui/"
+    must_not_contain:
+      - "<input"
+      - "<button"
+    rationale: |
+      shadcn/ui components must be used instead of raw HTML form elements
+      to ensure consistent design system usage. Rejects a form built from
+      `<input type="text">` + `<button type="submit">`, and — because the literals
+      carry no trailing space — also rejects the same form written with each
+      attribute on its own line (`<input\n  type="text"`), which the previous
+      `"<input "` spelling let through.
