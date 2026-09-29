@@ -139,6 +139,21 @@ See `docs/ROADMAP.md` for the full layer status table (✅ done / 🚧 stub / �
 
 ---
 
+## Keep the product site in sync
+
+The user-facing site at **`manikumarkv/devrunway`** (devrunway.dev, Vite + React) describes this plugin. After any change here that alters something a user can see (commands, agents, hooks, how layers load, `/setup` questions or output, MCP wiring, install steps, counts), update the site in the same piece of work and open a PR there too. Pure internals (CI scripts, eval fixtures, typo fixes in layer detail files) need no site change.
+
+| Site file | Mirrors (plugin source of truth) |
+|---|---|
+| `src/data/docsData.ts` | commands (`skills/*/SKILL.md`), agents (`agents/*.md`), hooks (`hooks/hooks.json`, `hooks/scripts/`), glossary counts, version (`.claude-plugin/plugin.json`) |
+| `src/data/pickerData.ts` | `/setup` questions and `.mcp.json` output (`skills/setup/SKILL.md`, `setup/stack.schema.json`), layer list |
+| `src/sections/McpSection.tsx` | MCP servers and packages `/setup` writes |
+| `src/sections/SubAgents.tsx`, `src/components/Picker.tsx`, `src/sections/Skills.tsx` | how layers load (`hooks/scripts/layer_autoload.py`) |
+| `src/sections/Hero.tsx`, `HowItWorks.tsx`, `Install.tsx` | headline counts: commands, hooks, layers, evals, `/setup` questions |
+| `src/sections/LayerCatalog.tsx` | layer categories under `layers/` |
+
+Build the site (`npm ci && npm run build`) before pushing.
+
 ## Modifying this plugin
 
 - Commit prefix: `chore(evolve):` or `chore(plugin):`
