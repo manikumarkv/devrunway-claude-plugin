@@ -11,7 +11,7 @@ FILE=$(jq -r '.tool_input.file_path // .tool_input.path // empty' 2>/dev/null)
 HITS=$(grep -n 'console\.' "$FILE" 2>/dev/null | grep -v '// *eslint-disable' | head -5)
 
 if [ -n "$HITS" ]; then
-  echo "⚠️  console.* found in $FILE (use pino logger instead):"
+  echo "⚠️  console.* found in $FILE (use the project's logger instead):"
   echo "$HITS"
 fi
 

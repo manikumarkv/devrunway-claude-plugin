@@ -229,6 +229,26 @@
       "description": "Documentation / knowledge-base tool (Q37).",
       "type": "string",
       "enum": ["confluence", "notion", "none"]
+    },
+    "language": {
+      "description": "Primary programming language (Q36).",
+      "type": "string",
+      "enum": ["typescript", "python", "none"]
+    },
+    "policies": {
+      "description": "Team policies enforced by devrunway hooks (Q38). Each is off unless set to true, so a user-level install never imposes them on a repo that didn't ask.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "protect-main": {
+          "description": "Deny git commit on main, master, develop and release branches.",
+          "type": "boolean"
+        },
+        "conventional-commits": {
+          "description": "Require type(scope): subject commit messages. When unset, enforced only if the repo already uses commitlint.",
+          "type": "boolean"
+        }
+      }
     }
   }
 }

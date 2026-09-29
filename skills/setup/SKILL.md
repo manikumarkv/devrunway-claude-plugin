@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Interactive stack configuration wizard. Asks 35 questions across 6 screens to configure your full tech stack, then generates stack.json and .mcp.json so the right layer skills auto-load when you edit matching files.
+description: Interactive stack configuration wizard. Asks 38 questions across 6 screens to configure your full tech stack, then generates stack.json and .mcp.json so the right layer skills auto-load when you edit matching files.
 user-invocable: true
 effort: medium
 allowed-tools:
@@ -13,7 +13,7 @@ allowed-tools:
 
 # Setup Wizard
 
-Configure the devrunway plugin for this project by running a 6-screen interactive wizard. Each screen covers a different layer of the stack. After all screens, two outputs are generated: `stack.json` (declares your tech choices) and `.mcp.json` (pre-wired MCP servers for the tools you picked, if any). All 135 layer skills come bundled with the plugin — the dispatcher auto-loads only the relevant ones based on `stack.json` and the files you edit.
+Configure the devrunway plugin for this project by running a 6-screen interactive wizard. Each screen covers a different layer of the stack. After all screens, two outputs are generated: `stack.json` (declares your tech choices) and `.mcp.json` (pre-wired MCP servers for the tools you picked, if any). All layers come bundled with the plugin — the `layer-autoload` hook loads only the relevant ones, based on `stack.json` and the files Claude reads or edits.
 
 ---
 
@@ -277,7 +277,14 @@ For reference, here are the questions to ask:
 
 37. Documentation / knowledge-base tool (where specs, ADRs, runbooks live)
     confluence | notion | none
+
+38. Team policies to enforce in this repo (multi-select; both off unless picked)
+    protect-main          — refuse commits directly on main/master/develop/release
+    conventional-commits  — require "type(scope): subject" commit messages
+    none
 ```
+
+Ask Q38 with `multiSelect: true`. These are off by default because devrunway is often installed at user level and runs in every repo; only the repo that opts in gets them. (Conventional commits are also enforced, without this answer, in a repo that already has a commitlint config.)
 
 Wait for the user's answers. After receiving answers to Screen 6, generate all outputs.
 
@@ -326,7 +333,11 @@ Write this file to `stack.json` in the project root (the directory where the use
   "mocking": "<answer to Q34>",
   "project-management": "<answer to Q35>",
   "language": "<answer to Q36>",
-  "documents": "<answer to Q37>"
+  "documents": "<answer to Q37>",
+  "policies": {
+    "protect-main": <true if Q38 includes protect-main, else false>,
+    "conventional-commits": <true if Q38 includes conventional-commits, else false>
+  }
 }
 ```
 
@@ -469,13 +480,14 @@ Your stack summary:
   Logging        : <Q24> → <Q25>  |  Errors : <Q26>
   Testing        : <Q31> + <Q32> + <Q33> + <Q34>
   Design         : <Q11>  |  PM : <Q35>  |  Language : <Q36>  |  Docs : <Q37>
+  Policies       : <Q38, or "none">
 
 stack.json written to ./stack.json
 
 Layers activated for your stack — these auto-load when you edit matching files:
 ```
 
-All layer skills are bundled with the plugin. There is no per-layer install step. The `stack-dispatcher` agent reads `stack.json` plus the files you edit and loads only the relevant layer detail files into a sub-agent — your main thread stays light.
+All layer skills are bundled with the plugin. There is no per-layer install step. When Claude reads or edits a matching file, the `layer-autoload` hook gives it that layer's standards, skipping layers `stack.json` rules out.
 
 Print the table of layers that will be active for the user's choices, using these mappings:
 

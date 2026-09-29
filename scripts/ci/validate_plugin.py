@@ -9,6 +9,7 @@ Checks:
   - skill names are unique
   - `agent:` in a skill and `skills:` in an agent point at things that exist
   - backticked layers/, skills/, agents/, hooks/scripts/ paths in docs exist
+  - every key /setup writes to stack.json exists in the schema, and vice versa for required keys
 """
 import glob
 import json
@@ -126,6 +127,29 @@ for path in sorted(doc_files):
             if "*" in ref or "<" in ref or os.path.exists(ref):
                 continue
             err(f"{path}:{lineno}", f"references `{ref}`, which does not exist")
+
+# 6. Every key /setup writes into stack.json exists in setup/stack.schema.json
+# (which has additionalProperties: false, so an unknown key makes the file invalid).
+setup_md = open("skills/setup/SKILL.md", encoding="utf-8").read()
+m = re.search(r"## Output 1 — stack\.json.*?```json\n(.*?)```", setup_md, re.S)
+schema = json.load(open("setup/stack.schema.json", encoding="utf-8"))
+if not m:
+    err("skills/setup/SKILL.md", "could not find the stack.json template under '## Output 1 — stack.json'")
+else:
+    template = m.group(1)
+    props = schema.get("properties", {})
+    top = re.findall(r'^  "([A-Za-z0-9_-]+)":', template, re.M)
+    for key in top:
+        if key not in props:
+            err("setup/stack.schema.json", f"/setup writes `{key}` to stack.json but the schema has no such property")
+    nested = re.findall(r'^    "([A-Za-z0-9_-]+)":', template, re.M)
+    policy_props = props.get("policies", {}).get("properties", {})
+    for key in nested:
+        if key not in policy_props:
+            err("setup/stack.schema.json", f"/setup writes `policies.{key}` but the schema has no such property")
+    for key in schema.get("required", []):
+        if key not in top:
+            err("skills/setup/SKILL.md", f"schema requires `{key}` but the /setup stack.json template never writes it")
 
 # Report
 gha = os.environ.get("GITHUB_ACTIONS") == "true"

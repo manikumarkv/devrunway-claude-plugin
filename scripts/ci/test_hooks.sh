@@ -81,27 +81,44 @@ expect allow destructive-rm-guard.sh "scratch under /tmp"  "$(bash_cmd 'rm -rf /
 expect allow destructive-rm-guard.sh "non-recursive rm"    "$(bash_cmd 'rm file.txt')"
 expect allow destructive-rm-guard.sh "echo mentions rm -rf /" "$(bash_cmd 'echo "rm -rf /"')"
 
-# --- conventional-commit-check ---------------------------------------------
-expect allow conventional-commit-check.sh "valid feat"     "$(bash_cmd 'git commit -m "feat(auth): add reset"')"
-expect allow conventional-commit-check.sh "valid chore"    "$(bash_cmd 'git commit -m "chore(plugin): bump"')"
-expect block conventional-commit-check.sh "no type prefix" "$(bash_cmd 'git commit -m "added stuff"')"
-expect block conventional-commit-check.sh "unknown type"   "$(bash_cmd 'git commit -m "feature: add x"')"
-expect block conventional-commit-check.sh "subject > 72"   "$(bash_cmd "git commit -m \"feat: $(printf 'x%.0s' {1..80})\"")"
-expect allow conventional-commit-check.sh "not a commit"   "$(bash_cmd 'git log -1')"
-expect allow conventional-commit-check.sh "-am valid"      "$(bash_cmd 'git commit -am "fix: y"')"
-expect block conventional-commit-check.sh "-am invalid"    "$(bash_cmd 'git commit -am "wip"')"
-expect allow conventional-commit-check.sh "heredoc valid (Claude Code form)" "$(bash_cmd "$(heredoc_commit 'feat(hooks): accept heredoc')")"
-expect block conventional-commit-check.sh "heredoc invalid" "$(bash_cmd "$(heredoc_commit 'added stuff')")"
-expect allow conventional-commit-check.sh "message from variable" "$(bash_cmd 'git commit -m "$MSG"')"
-
-# --- no-commit-to-main -----------------------------------------------------
+# --- policy hooks: opt-in per project (#85) --------------------------------
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-git -C "$TMP" init -q -b main main-repo
-git -C "$TMP" init -q -b feat/x feature-repo
-expect block no-commit-to-main.sh "commit on main"         "$(bash_cmd 'git commit -m "feat: x"' "$TMP/main-repo")"
-expect allow no-commit-to-main.sh "commit on feature"      "$(bash_cmd 'git commit -m "feat: x"' "$TMP/feature-repo")"
-expect allow no-commit-to-main.sh "non-commit on main"     "$(bash_cmd 'git status' "$TMP/main-repo")"
+mkrepo() {  # mkrepo <name> <branch> [stack.json policies JSON]
+  git -C "$TMP" init -q -b "$2" "$1"
+  [ -n "${3:-}" ] && printf '{"devrunway":"1.0","policies":%s}\n' "$3" > "$TMP/$1/stack.json"
+  return 0
+}
+mkrepo cc-on    feat/x '{"conventional-commits":true}'
+mkrepo plain    feat/x
+mkrepo lint     feat/x;  echo "module.exports = {}" > "$TMP/lint/commitlint.config.js"
+mkrepo lint-off feat/x '{"conventional-commits":false}'; echo "{}" > "$TMP/lint-off/.commitlintrc.json"
+mkrepo main-on  main   '{"protect-main":true}'
+mkrepo main-off main
+mkrepo feat-on  feat/x '{"protect-main":true}'
+CC="$TMP/cc-on"
+
+# --- conventional-commit-check ---------------------------------------------
+expect allow conventional-commit-check.sh "valid feat"     "$(bash_cmd 'git commit -m "feat(auth): add reset"' "$CC")"
+expect allow conventional-commit-check.sh "valid chore"    "$(bash_cmd 'git commit -m "chore(plugin): bump"' "$CC")"
+expect block conventional-commit-check.sh "no type prefix" "$(bash_cmd 'git commit -m "added stuff"' "$CC")"
+expect block conventional-commit-check.sh "unknown type"   "$(bash_cmd 'git commit -m "feature: add x"' "$CC")"
+expect block conventional-commit-check.sh "subject > 72"   "$(bash_cmd "git commit -m \"feat: $(printf 'x%.0s' {1..80})\"" "$CC")"
+expect allow conventional-commit-check.sh "not a commit"   "$(bash_cmd 'git log -1' "$CC")"
+expect allow conventional-commit-check.sh "-am valid"      "$(bash_cmd 'git commit -am "fix: y"' "$CC")"
+expect block conventional-commit-check.sh "-am invalid"    "$(bash_cmd 'git commit -am "wip"' "$CC")"
+expect allow conventional-commit-check.sh "heredoc valid (Claude Code form)" "$(bash_cmd "$(heredoc_commit 'feat(hooks): accept heredoc')" "$CC")"
+expect block conventional-commit-check.sh "heredoc invalid" "$(bash_cmd "$(heredoc_commit 'added stuff')" "$CC")"
+expect allow conventional-commit-check.sh "message from variable" "$(bash_cmd 'git commit -m "$MSG"' "$CC")"
+expect allow conventional-commit-check.sh "off by default: repo with no stack.json or commitlint" "$(bash_cmd 'git commit -m "added stuff"' "$TMP/plain")"
+expect block conventional-commit-check.sh "auto-on: repo already uses commitlint" "$(bash_cmd 'git commit -m "added stuff"' "$TMP/lint")"
+expect allow conventional-commit-check.sh "explicit false beats commitlint detection" "$(bash_cmd 'git commit -m "added stuff"' "$TMP/lint-off")"
+
+# --- no-commit-to-main -----------------------------------------------------
+expect block no-commit-to-main.sh "commit on main, protect-main on" "$(bash_cmd 'git commit -m "feat: x"' "$TMP/main-on")"
+expect allow no-commit-to-main.sh "off by default: commit on main without the policy" "$(bash_cmd 'git commit -m "feat: x"' "$TMP/main-off")"
+expect allow no-commit-to-main.sh "commit on feature, protect-main on" "$(bash_cmd 'git commit -m "feat: x"' "$TMP/feat-on")"
+expect allow no-commit-to-main.sh "non-commit on main"     "$(bash_cmd 'git status' "$TMP/main-on")"
 
 # --- secrets-leak-guard ----------------------------------------------------
 # Fixtures are assembled at runtime so this file never contains a literal
