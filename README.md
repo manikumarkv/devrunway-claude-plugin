@@ -29,6 +29,26 @@ Inside Claude Code:
 /setup
 ```
 
+### User-level or project-level install
+
+`/plugin install` installs at **user level** by default: devrunway is active in every repo you open. That is safe:
+
+- The safety guards (destructive git and `rm`, secrets) are on everywhere.
+- Layer standards load only for files that match your stack.
+- Team policies are **off unless a repo opts in**: "no commits to `main`" and "Conventional Commits only". Opt in through `/setup` (Q38), which writes `"policies"` to `stack.json`. Conventional Commits are also enforced, without opting in, in a repo that already has a commitlint config.
+
+To enable devrunway for one repo only, and share it with everyone who clones that repo:
+
+```bash
+claude plugin install devrunway@devrunway --scope project   # writes .claude/settings.json
+```
+
+To keep a user-level install but switch it off in one repo:
+
+```bash
+claude plugin disable devrunway --scope project
+```
+
 `/setup` asks 35 questions across 6 screens and generates:
 
 | Output | What it does |

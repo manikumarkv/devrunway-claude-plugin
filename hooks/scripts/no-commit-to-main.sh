@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Blocks `git commit` when the *project's* current branch is protected.
 # Denies the single tool call so Claude sees the reason, rather than ending the turn.
+#
+# Opt-in per project, so a user-level install is safe in personal and
+# trunk-based repos: enforced only when stack.json sets
+#   "policies": {"protect-main": true}
 
 INPUT=$(cat)
 
@@ -22,6 +26,7 @@ PROJECT_DIR=$(printf '%s' "$INPUT" | jq -r '.cwd // empty' 2>/dev/null)
 [ -z "$PROJECT_DIR" ] && PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 
 ROOT=$(git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ "$(jq -r '.policies["protect-main"] // empty' "$ROOT/stack.json" 2>/dev/null)" = "true" ] || exit 0
 
 BRANCH=$(git -C "$ROOT" symbolic-ref --short HEAD 2>/dev/null)
 [ -z "$BRANCH" ] && exit 0

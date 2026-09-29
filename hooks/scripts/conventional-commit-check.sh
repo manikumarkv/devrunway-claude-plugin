@@ -4,6 +4,11 @@
 # uses: git commit -m "$(cat <<'EOF' ... EOF)". Editor-driven commits and
 # messages it cannot evaluate statically pass through.
 # Denies the single tool call so Claude sees the reason and can fix the message.
+#
+# Opt-in per project, so a user-level install is safe in every repo:
+#   - stack.json "policies": {"conventional-commits": true}   -> enforced
+#   - stack.json "policies": {"conventional-commits": false}  -> never enforced
+#   - not set: enforced only if the repo already uses commitlint
 
 deny() {
   jq -nc --arg r "conventional-commit-check: $1" \
@@ -11,11 +16,31 @@ deny() {
   exit 0
 }
 
-CMD=$(jq -r '.tool_input.command // empty' 2>/dev/null)
+INPUT=$(cat)
+CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 
 # Only target git commit with an inline message
 printf '%s' "$CMD" | grep -qE '\bgit([[:space:]]+-[cC][[:space:]]+[^[:space:]]+)*[[:space:]]+commit\b' || exit 0
 printf '%s' "$CMD" | grep -qE '([[:space:]]-[a-zA-Z]*m|--message)([[:space:]=]|")' || exit 0
+
+# Is the policy on for this project?
+PROJECT_DIR=$(printf '%s' "$INPUT" | jq -r '.cwd // empty' 2>/dev/null)
+[ -z "$PROJECT_DIR" ] && PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
+ROOT=$(git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null || printf '%s' "$PROJECT_DIR")
+# Not `// empty`: jq's alternative operator treats an explicit false as missing.
+POLICY=$(jq -r '.policies["conventional-commits"] | if . == null then empty else tostring end' "$ROOT/stack.json" 2>/dev/null)
+case "$POLICY" in
+  true) ;;
+  false) exit 0 ;;
+  *)
+    uses_commitlint=0
+    for f in commitlint.config.js commitlint.config.cjs commitlint.config.mjs commitlint.config.ts \
+             .commitlintrc .commitlintrc.json .commitlintrc.yml .commitlintrc.yaml .commitlintrc.js .commitlintrc.cjs; do
+      [ -f "$ROOT/$f" ] && uses_commitlint=1 && break
+    done
+    [ $uses_commitlint -eq 0 ] && jq -e '.commitlint' "$ROOT/package.json" >/dev/null 2>&1 && uses_commitlint=1
+    [ $uses_commitlint -eq 1 ] || exit 0 ;;
+esac
 
 if printf '%s' "$CMD" | grep -qE "<<-?[[:space:]]*['\"]?[A-Za-z_]+['\"]?"; then
   # Heredoc: the subject is the first non-blank line after the <<MARKER line.

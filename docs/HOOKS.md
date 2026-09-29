@@ -28,7 +28,7 @@ A catalog of safety, quality, and productivity hooks proposed for the plugin. Ho
 
 | Hook | Trigger | What it does | Applies to |
 |---|---|---|---|
-| ✅ tsc-check | Write/Edit (`*.ts`, `*.tsx`) | Runs `tsc --noEmit`, reports first 20 errors | TypeScript |
+| ✅ tsc-check | Write/Edit (`*.ts`, `*.tsx`), async | Runs `tsc --noEmit` in the background, so edits don't wait on a full-project type-check | TypeScript |
 | ✅ console-guard | Write/Edit | Flags new `console.log` / `debugger` statements | All |
 | ✅ eslint-on-save | Write/Edit (`*.ts`, `*.tsx`, `*.js`) | Runs `eslint --quiet` on the touched file only | TypeScript/JS |
 | ✅ prettier-check | Write/Edit | Runs `prettier --check`; offers `--write` fix | All web |
@@ -122,9 +122,9 @@ A catalog of safety, quality, and productivity hooks proposed for the plugin. Ho
 
 | Hook | Trigger | What it does | Applies to |
 |---|---|---|---|
-| ✅ conventional-commit-check | PreToolUse Bash (`git commit`) | Validates commit message format `type(scope): subject` | All |
+| ✅ conventional-commit-check | PreToolUse Bash (`git commit`) | Validates commit message format `type(scope): subject`. **Opt-in**: `stack.json` `policies.conventional-commits: true`, or automatically when the repo has a commitlint config | All |
 | 🆕 branch-naming-check | PreToolUse Bash (`git checkout -b`, `git switch -c`) | Enforces `feat/`, `fix/`, `chore/` prefixes with ticket numbers | All |
-| ✅ no-commit-to-main | PreToolUse Bash (`git commit`) | Blocks commits to `main`/`master`/`develop` directly | All |
+| ✅ no-commit-to-main | PreToolUse Bash (`git commit`) | Blocks commits to `main`/`master`/`develop` directly. **Opt-in**: `stack.json` `policies.protect-main: true` | All |
 | 🆕 binary-file-commit-warn | PreToolUse Bash (`git add`) | Warns when adding binary files (images >1MB, archives, executables) | All |
 | 🆕 gitignore-coverage | PostToolUse Write | Detects newly-created file types that should be gitignored (`.env`, `dist/`, `*.log`) | All |
 | 🆕 commit-signing-check | PreToolUse Bash (`git commit`) | Warns if signing is not configured when policy requires it | All |
