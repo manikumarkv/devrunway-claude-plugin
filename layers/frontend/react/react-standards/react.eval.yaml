@@ -60,26 +60,18 @@ cases:
       and survive page refresh. Local useState for filters is forbidden.
 
   - id: react-05
-    name: "shadcn/ui components not raw HTML form elements"
+    name: "Uses the project's component library, not shadcn by default"
     scenario: |
-      Write a React form with a text input and submit button for creating
-      a new product. Use the react-standards skill rules.
+      The project's package.json depends on react and @mui/material (no shadcn,
+      no components.json). Write a React form with a text input and a submit
+      button for creating a new product. Use the react-standards skill rules.
     must_contain:
-      - "@/components/ui/"
+      - "@mui/material"
     must_not_contain:
-      - "<input"
-      - "<button"
+      - "@/components/ui/"
+      - "npx shadcn"
     rationale: |
-      shadcn/ui components must be used instead of raw HTML form elements
-      to ensure consistent design system usage. Rejects a form built from
-      `<input type="text">` + `<button type="submit">`, and — because the literals
-      carry no trailing space — also rejects the same form written with each
-      attribute on its own line (`<input\n  type="text"`), which the previous
-      `"<input "` spelling let through.
-
-      Deliberate exception to the "must_not_contain literal absent from skill_files"
-      check: react.md keeps exactly one raw `<button>`, inside the "never build
-      primitives from scratch" counter-example, flagged in a comment as the only raw
-      form element in the document. It is the demonstration of the anti-pattern this
-      case guards, so it stays; every incidental raw element elsewhere in react.md
-      was converted to the shadcn primitive.
+      react-standards must defer to the project's component library. It used to
+      mandate shadcn/ui for every .tsx file, so an MUI project was told to add
+      shadcn primitives. The negatives are the shadcn import path and install
+      command: a compliant answer for an MUI project contains neither.

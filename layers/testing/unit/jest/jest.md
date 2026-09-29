@@ -9,14 +9,14 @@
 import type { Config } from 'jest'
 
 const config: Config = {
-  preset: 'ts-jest',                    // or 'babel-jest' for non-TS projects
+  preset: 'ts-jest',                    // omit for plain JS: babel-jest is the default transformer
   testEnvironment: 'node',              // 'jsdom' for browser/React tests
   rootDir: '.',
   testMatch: ['**/*.test.ts', '**/*.spec.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',     // mirror your tsconfig paths
   },
-  setupFilesAfterFramework: ['./jest.setup.ts'],
+  setupFilesAfterEnv: ['./jest.setup.ts'],
   clearMocks: true,       // clears mock.calls and mock.instances between tests
   restoreMocks: true,     // restores spies after each test
   collectCoverageFrom: [
@@ -24,7 +24,7 @@ const config: Config = {
     '!src/**/*.d.ts',
     '!src/**/index.ts',   // barrel exports don't need coverage
   ],
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches: 80,
       functions: 80,

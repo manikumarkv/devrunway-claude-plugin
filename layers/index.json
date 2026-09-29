@@ -13,6 +13,9 @@
     "**/api/**/*.py",
     "**/openapi*"
    ],
+   "langs": [
+    "python"
+   ],
    "detail": "layers/api-docs/openapi-fastapi/openapi-fastapi.md"
   },
   {
@@ -27,6 +30,9 @@
     "src/**/*.route.*",
     "docs/api/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/api-docs/swagger-express/swagger-docs.md"
   },
   {
@@ -38,6 +44,9 @@
     "**/data/api/*.dart",
     "**/core/network/*.dart",
     "**/core/error/*.dart"
+   ],
+   "langs": [
+    "dart"
    ],
    "detail": "layers/api-style/dio/dio.md"
   },
@@ -52,6 +61,9 @@
     "**/schema/**",
     "**/graphql/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/api-style/graphql/graphql.md"
   },
   {
@@ -64,6 +76,10 @@
     "**/*_pb2*.py",
     "**/*.grpc.js",
     "**/grpc/**"
+   ],
+   "langs": [
+    "js",
+    "python"
    ],
    "detail": "layers/api-style/grpc/grpc.md"
   },
@@ -78,6 +94,9 @@
     "openapi.yaml",
     "openapi.json"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/api-style/rest/rest.md"
   },
   {
@@ -90,6 +109,9 @@
     "**/server/api/**",
     "src/server/api/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/api-style/trpc/trpc.md"
   },
   {
@@ -99,6 +121,9 @@
    "paths": [
     "**/auth0*",
     "**/auth/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/auth/auth0/auth0.md"
   },
@@ -114,6 +139,9 @@
     "**/*msal*",
     "**/*entra*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/auth/azure-ad/azure-ad.md"
   },
   {
@@ -126,6 +154,9 @@
     "**/cognito*",
     "**/*.controller.*",
     "**/*.route.*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": null
   },
@@ -140,6 +171,9 @@
     "infra/**",
     "cdk/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/auth/cognito/security/security.md"
   },
   {
@@ -152,6 +186,9 @@
     "**/firebase/**",
     "**/firebaseConfig*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/auth/firebase/firebase.md"
   },
   {
@@ -162,6 +199,9 @@
     "**/features/auth/**/*.dart",
     "**/core/network/auth_interceptor.dart",
     "**/core/lifecycle/*.dart"
+   ],
+   "langs": [
+    "dart"
    ],
    "detail": "layers/auth/flutter-session/flutter-session.md"
   },
@@ -176,6 +216,9 @@
     "**/Program.cs",
     "**/Startup.cs"
    ],
+   "langs": [
+    "dotnet"
+   ],
    "detail": "layers/backend/dotnet/dotnet.md"
   },
   {
@@ -183,10 +226,17 @@
    "stack": "backend/node-express",
    "dir": "layers/backend/node-express/error-handling",
    "paths": [
-    "**/errors/**",
-    "**/error*",
-    "**/*.middleware.*",
-    "**/ErrorBoundary*"
+    "**/errors/**/*.ts",
+    "**/errors/**/*.js",
+    "**/error*.ts",
+    "**/error*.js",
+    "**/*.middleware.ts",
+    "**/*.middleware.js",
+    "**/ErrorBoundary*.tsx",
+    "**/ErrorBoundary*.jsx"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/backend/node-express/error-handling/error-handling.md"
   },
@@ -200,6 +250,9 @@
     "src/**/*.route.*",
     "src/**/*.middleware.*",
     "server/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/backend/node-express/nodejs-standards/nodejs.md"
   },
@@ -221,6 +274,9 @@
     "**/wsgi.py",
     "**/asgi.py"
    ],
+   "langs": [
+    "python"
+   ],
    "detail": "layers/backend/python-django/python-django.md"
   },
   {
@@ -236,6 +292,9 @@
     "**/dependencies.py",
     "**/api/**/*.py"
    ],
+   "langs": [
+    "python"
+   ],
    "detail": "layers/backend/python-fastapi/python-fastapi.md"
   },
   {
@@ -247,6 +306,9 @@
     "**/workers/**",
     "**/jobs/**",
     "**/bullmq*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/cache-queue/bullmq/bullmq.md"
   },
@@ -263,6 +325,9 @@
     "**/queues/**",
     "**/workers/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/cache-queue/rabbitmq/rabbitmq.md"
   },
   {
@@ -272,6 +337,9 @@
    "paths": [
     "**/redis*",
     "**/cache/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/cache-queue/redis/redis.md"
   },
@@ -283,6 +351,9 @@
     "**/sqs/**",
     "**/queues/**",
     "**/workers/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/cache-queue/sqs/sqs.md"
   },
@@ -296,6 +367,9 @@
     "**/azure-pipelines/**",
     "**/.pipelines/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/ci/azure-pipelines/azure-pipelines.md"
   },
   {
@@ -305,6 +379,9 @@
    "paths": [
     ".circleci/config.yml",
     ".circleci/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/ci/circleci/circleci.md"
   },
@@ -321,6 +398,9 @@
     "**/.env_*",
     "**/analysis_options.yaml"
    ],
+   "langs": [
+    "dart"
+   ],
    "detail": "layers/ci/flutter-release/flutter-release-standards.md"
   },
   {
@@ -333,6 +413,9 @@
     "**/seed*",
     ".env.example"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/ci/github-actions/local-dev/local-dev.md"
   },
   {
@@ -343,6 +426,9 @@
     ".github/workflows/**",
     ".github/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/ci/github-actions/pipeline/pipeline.md"
   },
   {
@@ -352,6 +438,9 @@
    "paths": [
     ".gitlab-ci.yml",
     ".gitlab/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/ci/gitlab-ci/gitlab-ci.md"
   },
@@ -367,6 +456,9 @@
     "**/neon.config.*",
     "**/*neon*.yml"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/ci/neon-branching/neon-branching.md"
   },
   {
@@ -378,6 +470,9 @@
     "cdk/**",
     "**/*stack*.ts",
     "**/*Stack*.ts"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/cloud/aws/cdk/cdk.md"
   },
@@ -391,6 +486,9 @@
     "**/ErrorBoundary*",
     "**/*vitals*",
     "**/instrumentation.*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/cloud/aws/monitoring/monitoring.md"
   },
@@ -407,6 +505,9 @@
     "**/azure.yaml",
     "**/*azure*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/cloud/azure/azure.md"
   },
   {
@@ -422,6 +523,9 @@
     "**/app.yaml",
     "**/cloudbuild.yml"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/cloud/gcp/gcp.md"
   },
   {
@@ -433,6 +537,9 @@
     ".github/workflows/codeql*",
     ".github/workflows/security*",
     ".github/workflows/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/code-quality/github-security/github-security.md"
   },
@@ -447,6 +554,9 @@
     "**/*.tf",
     "**/.github/workflows/*.yml"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/code-quality/snyk/snyk.md"
   },
   {
@@ -460,6 +570,9 @@
     "**/Jenkinsfile",
     "**/azure-pipelines.yml"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/code-quality/sonarqube/sonarqube.md"
   },
   {
@@ -471,6 +584,9 @@
     "**/*.stories.ts",
     "**/.ladle/**",
     "**/ladle/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/component-docs/ladle/ladle.md"
   },
@@ -484,6 +600,9 @@
     "**/*.stories.jsx",
     ".storybook/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/component-docs/storybook/storybook.md"
   },
   {
@@ -496,6 +615,9 @@
     ".dockerignore",
     "docker-compose*.yml",
     "docker-compose*.yaml"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/container/docker/docker.md"
   },
@@ -513,6 +635,9 @@
     "**/values*.yaml",
     "**/*.k8s.yaml"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/container/kubernetes/kubernetes.md"
   },
   {
@@ -523,6 +648,9 @@
     "railway.json",
     "railway.toml",
     "Procfile"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/container/railway/railway.md"
   },
@@ -538,6 +666,9 @@
     "**/handler*.ts",
     "**/handler*.js"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/container/serverless/serverless.md"
   },
   {
@@ -547,6 +678,9 @@
    "paths": [
     "vercel.json",
     ".vercel/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/container/vercel/vercel.md"
   },
@@ -560,6 +694,9 @@
     "**/_variables.scss",
     "**/_bootstrap*.scss"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/css/bootstrap/bootstrap.md"
   },
   {
@@ -569,6 +706,9 @@
    "paths": [
     "**/*.module.css",
     "**/*.module.scss"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/css/css-modules/css-modules.md"
   },
@@ -584,6 +724,9 @@
     "**/styles/**",
     "**/*Styled*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/css/styled-components/styled-components.md"
   },
   {
@@ -597,6 +740,9 @@
     "**/tailwind.css",
     "**/index.css"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/css/tailwind/tailwind-css.md"
   },
   {
@@ -607,6 +753,9 @@
     "**/dynamo*",
     "**/repositories/**",
     "**/*.repository.*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/database/dynamodb/database-nosql/nosql.md"
   },
@@ -620,6 +769,9 @@
     "**/*.model.js",
     "**/schemas/**",
     "mongoose.config.*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/database/mongodb/mongodb.md"
   },
@@ -638,6 +790,9 @@
     "**/*.sql",
     "**/neon*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/database/neon/neon.md"
   },
   {
@@ -650,6 +805,9 @@
     "**/migrations/**",
     "**/*.repository.*",
     "**/*.sql"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/database/postgres-prisma/database-sql/sql.md"
   },
@@ -666,6 +824,9 @@
     "**/db.py",
     "**/session.py"
    ],
+   "langs": [
+    "python"
+   ],
    "detail": "layers/database/sqlalchemy/sqlalchemy.md"
   },
   {
@@ -677,6 +838,9 @@
     "**/design/**",
     "**/tokens/**",
     "**/design-tokens*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/design/adobe-xd/adobe-xd.md"
   },
@@ -690,6 +854,9 @@
     "design/**",
     ".mcp.json"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/design/figma/figma-design.md"
   },
   {
@@ -701,6 +868,9 @@
     "**/design/**",
     "**/sketch/**",
     "**/tokens/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/design/sketch/sketch.md"
   },
@@ -714,6 +884,9 @@
     ".confluence*",
     "docs/**/*.confluence.md"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/documents/confluence/confluence.md"
   },
   {
@@ -724,6 +897,9 @@
     ".mcp.json",
     "notion*",
     ".notion*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/documents/notion/notion.md"
   },
@@ -736,6 +912,9 @@
     "**/resend*",
     "**/emails/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/email/resend/resend.md"
   },
   {
@@ -746,6 +925,9 @@
     "**/email/**",
     "**/mailer/**",
     "**/sendgrid*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/email/sendgrid/sendgrid.md"
   },
@@ -763,6 +945,9 @@
     "**/*mailer*",
     "**/cdk/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/email/ses/ses.md"
   },
   {
@@ -773,6 +958,9 @@
     "**/bugsnag*",
     "**/error-boundary*",
     "**/*monitoring*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/error-monitoring/bugsnag/bugsnag.md"
   },
@@ -785,6 +973,9 @@
     "**/dd-trace*",
     "datadog.yaml"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/error-monitoring/datadog-apm/datadog-apm.md"
   },
   {
@@ -796,6 +987,9 @@
     "sentry.*.config.*",
     "**/*sentry*",
     "**/instrumentation.*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/error-monitoring/sentry/sentry-monitoring.md"
   },
@@ -810,6 +1004,9 @@
     "**/flags/**",
     "**/*appConfig*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/feature-flags/aws-appconfig/aws-appconfig.md"
   },
   {
@@ -820,6 +1017,9 @@
     "**/*flagsmith*",
     "**/*feature-flag*",
     "**/flags/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/feature-flags/flagsmith/flagsmith.md"
   },
@@ -833,6 +1033,9 @@
     "**/ldclient*",
     "**/flags/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/feature-flags/launchdarkly/launchdarkly.md"
   },
   {
@@ -843,6 +1046,9 @@
     "**/posthog*",
     "**/ph-*",
     "**/flags/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/feature-flags/posthog/posthog.md"
   },
@@ -859,6 +1065,9 @@
     "**/angular.json",
     "**/*.module.ts"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/frontend/angular/angular.md"
   },
   {
@@ -869,6 +1078,9 @@
     "**/presentation/pages/*.dart",
     "**/presentation/widgets/*.dart",
     "**/core/widgets/*.dart"
+   ],
+   "langs": [
+    "dart"
    ],
    "detail": "layers/frontend/flutter-ui/flutter-ui.md"
   },
@@ -881,6 +1093,9 @@
     "**/routes.dart",
     "**/app_router.dart",
     "**/.well-known/**"
+   ],
+   "langs": [
+    "dart"
    ],
    "detail": "layers/frontend/go-router/go-router.md"
   },
@@ -895,6 +1110,9 @@
     "**/layout.tsx",
     "**/page.tsx"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/frontend/nextjs/nextjs.md"
   },
   {
@@ -905,6 +1123,9 @@
     "**/components/**",
     "**/providers/**",
     "**/context/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/frontend/react/composition-patterns/patterns.md"
   },
@@ -918,6 +1139,9 @@
     ".prettierrc*",
     "prettier.config.*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/frontend/react/linting/linting.md"
   },
   {
@@ -927,6 +1151,9 @@
    "paths": [
     "package.json",
     "**/package.json"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/frontend/react/packages/packages.md"
   },
@@ -939,6 +1166,9 @@
     "**/*.jsx",
     "**/hooks/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/frontend/react/react-standards/react.md"
   },
   {
@@ -947,9 +1177,10 @@
    "dir": "layers/frontend/vue",
    "paths": [
     "**/*.vue",
-    "**/composables/**",
-    "src/views/**",
-    "src/components/**"
+    "**/composables/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/frontend/vue/vue.md"
   },
@@ -961,6 +1192,9 @@
     "**/l10n/**",
     "**/*.arb",
     "**/l10n.yaml"
+   ],
+   "langs": [
+    "dart"
    ],
    "detail": "layers/i18n/flutter-l10n/flutter-l10n.md"
   },
@@ -975,6 +1209,9 @@
     "**/*.pot",
     "**/lingui.config.*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/i18n/lingui/lingui.md"
   },
   {
@@ -988,6 +1225,9 @@
     "**/locales/**",
     "**/*i18n*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/i18n/react-i18next/react-i18next.md"
   },
   {
@@ -998,6 +1238,9 @@
     "**/i18n/**",
     "**/locales/**",
     "**/vue-i18n/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/i18n/vue-i18n/vue-i18n.md"
   },
@@ -1010,6 +1253,9 @@
     "**/domain/**/*.dart",
     "**/data/dto/*.dart"
    ],
+   "langs": [
+    "dart"
+   ],
    "detail": "layers/language/dart-models/dart-models.md"
   },
   {
@@ -1020,6 +1266,9 @@
     "**/*.ts",
     "**/*.tsx",
     "tsconfig*.json"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/language/typescript/typescript.md"
   },
@@ -1035,6 +1284,9 @@
     "**/*remote_config*.dart",
     "**/*feature_flag*.dart"
    ],
+   "langs": [
+    "dart"
+   ],
    "detail": "layers/logging/flutter-observability/flutter-observability.md"
   },
   {
@@ -1045,6 +1297,9 @@
     "**/logger*",
     "**/logging/**",
     "**/pino*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/logging/framework/pino/logging-standards/logging.md"
   },
@@ -1057,6 +1312,9 @@
     "**/winston*",
     "**/logging/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/logging/framework/winston/winston.md"
   },
   {
@@ -1067,6 +1325,9 @@
     "infra/**",
     "cdk/**",
     "src/lib/logger*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/logging/provider/cloudwatch/cloudwatch-logging.md"
   },
@@ -1084,6 +1345,9 @@
     "pubspec.yaml",
     "**/lib/**/*.dart"
    ],
+   "langs": [
+    "dart"
+   ],
    "detail": "layers/mobile/flutter/flutter.md"
   },
   {
@@ -1096,6 +1360,9 @@
     "**/json-server/**",
     "**/__mocks__/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/mocking/json-server/json-server.md"
   },
   {
@@ -1106,6 +1373,9 @@
     "**/mirage/**",
     "**/miragejs/**",
     "**/__mocks__/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/mocking/mirage/mirage.md"
   },
@@ -1119,6 +1389,9 @@
     "**/*.test.tsx",
     "**/*.test.ts"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/mocking/msw/msw-mocking.md"
   },
   {
@@ -1131,6 +1404,9 @@
     "**/*push*.dart",
     "**/firebase_messaging*.dart"
    ],
+   "langs": [
+    "dart"
+   ],
    "detail": "layers/notifications/fcm/fcm.md"
   },
   {
@@ -1140,6 +1416,9 @@
    "paths": [
     "bun.lockb",
     "bunfig.toml"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/package-manager/bun/bun.md"
   },
@@ -1153,6 +1432,9 @@
     ".npmrc",
     "**/package.json"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/package-manager/npm/npm.md"
   },
   {
@@ -1163,6 +1445,9 @@
     "pnpm-workspace.yaml",
     "pnpm-lock.yaml",
     ".npmrc"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/package-manager/pnpm/pnpm.md"
   },
@@ -1175,6 +1460,9 @@
     ".yarnrc.yml",
     ".yarn/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/package-manager/yarn/yarn.md"
   },
   {
@@ -1186,6 +1474,9 @@
     "**/payment/**",
     "**/checkout/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/payment/braintree/braintree.md"
   },
   {
@@ -1196,6 +1487,9 @@
     "**/paypal/**",
     "**/payment/**",
     "**/checkout/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/payment/paypal/paypal.md"
   },
@@ -1209,6 +1503,9 @@
     "**/*.payment*",
     "src/**/stripe*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/payment/stripe/stripe-payment.md"
   },
   {
@@ -1220,6 +1517,9 @@
     "**/.github/PULL_REQUEST_TEMPLATE*",
     "**/.github/workflows/*.yml",
     "**/.github/labels.yml"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/project-management/github/github.md"
   },
@@ -1233,6 +1533,9 @@
     ".gitlab/merge_request_templates/**",
     ".gitlab-ci.yml"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/project-management/gitlab/gitlab-issues.md"
   },
   {
@@ -1242,6 +1545,9 @@
    "paths": [
     "**/.huly/**",
     "**/huly.config*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/project-management/huly/huly.md"
   },
@@ -1254,6 +1560,9 @@
     "jira*",
     ".jira*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/project-management/jira/jira.md"
   },
   {
@@ -1263,6 +1572,9 @@
    "paths": [
     ".mcp.json",
     "linear*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/project-management/linear/linear.md"
   },
@@ -1275,6 +1587,9 @@
     "**/realtime/**",
     "**/channels/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/realtime/ably/ably.md"
   },
   {
@@ -1285,6 +1600,9 @@
     "**/pusher/**",
     "**/realtime/**",
     "**/channels/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/realtime/pusher/pusher.md"
   },
@@ -1298,6 +1616,9 @@
     "**/io.ts",
     "**/io.js"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/realtime/socketio/socketio.md"
   },
   {
@@ -1308,6 +1629,9 @@
     "**/algolia*",
     "**/instantsearch*",
     "**/search/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/search/algolia/algolia.md"
   },
@@ -1320,6 +1644,9 @@
     "**/elastic*",
     "**/search/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/search/elasticsearch/elasticsearch.md"
   },
   {
@@ -1330,6 +1657,9 @@
     "**/typesense/**",
     "**/search/**",
     "**/instantsearch/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/search/typesense/typesense.md"
   },
@@ -1344,6 +1674,9 @@
     "**/*secretsmanager*",
     "**/*Secret*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/secrets/aws-secrets-manager/aws-secrets-manager.md"
   },
   {
@@ -1357,6 +1690,9 @@
     "**/Dockerfile*",
     "**/.github/workflows/*.yml"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/secrets/doppler/doppler.md"
   },
   {
@@ -1366,6 +1702,9 @@
    "paths": [
     ".env*",
     "**/config/env*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/secrets/env-only/env-only.md"
   },
@@ -1380,6 +1719,9 @@
     "**/secrets/**",
     "**/policies/*.hcl"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/secrets/vault/vault.md"
   },
   {
@@ -1391,6 +1733,9 @@
     "**/.azure/**",
     "**/.pipelines/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/source-control/azure-devops/azure-devops.md"
   },
   {
@@ -1400,6 +1745,9 @@
    "paths": [
     "**/bitbucket-pipelines.yml",
     "**/.bitbucket/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/source-control/bitbucket/bitbucket.md"
   },
@@ -1412,6 +1760,9 @@
     "**/CODEOWNERS",
     "**/PULL_REQUEST_TEMPLATE*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/source-control/github/github-projects.md"
   },
   {
@@ -1421,6 +1772,9 @@
    "paths": [
     ".gitlab-ci.yml",
     ".gitlab/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/source-control/gitlab/gitlab.md"
   },
@@ -1434,6 +1788,9 @@
     "**/store/**",
     "**/jotai*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/state/jotai/jotai.md"
   },
   {
@@ -1444,6 +1801,9 @@
     "**/stores/**",
     "**/*.store.ts",
     "**/pinia*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/state/pinia/pinia.md"
   },
@@ -1457,6 +1817,9 @@
     "**/features/**/slice*",
     "src/app/store*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/state/redux-toolkit/redux-toolkit.md"
   },
   {
@@ -1469,6 +1832,9 @@
     "**/*_providers.dart",
     "**/*_provider.dart"
    ],
+   "langs": [
+    "dart"
+   ],
    "detail": "layers/state/riverpod/riverpod.md"
   },
   {
@@ -1479,6 +1845,9 @@
     "src/store/**",
     "src/stores/**",
     "**/*.store.ts"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/state/zustand/zustand-state.md"
   },
@@ -1493,6 +1862,9 @@
     "**/media/**",
     "**/*Cloudinary*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/storage/cloudinary/cloudinary.md"
   },
   {
@@ -1504,6 +1876,9 @@
     "**/core/cache/*.dart",
     "**/*_store.dart",
     "**/app_database.dart"
+   ],
+   "langs": [
+    "dart"
    ],
    "detail": "layers/storage/flutter-local/flutter-local.md"
   },
@@ -1518,6 +1893,9 @@
     "**/*google*",
     "**/buckets/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/storage/gcs/gcs.md"
   },
   {
@@ -1530,6 +1908,9 @@
     "infra/**",
     "cdk/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/storage/s3/s3-storage.md"
   },
   {
@@ -1540,6 +1921,9 @@
     "**/uploadthing*",
     "**/core.ts",
     "**/upload/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/storage/uploadthing/uploadthing.md"
   },
@@ -1552,6 +1936,9 @@
     "**/bruno/**",
     "**/bruno.json"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/testing/api/bruno/bruno.md"
   },
   {
@@ -1562,6 +1949,9 @@
     "postman/**",
     "**/*.postman_collection.json",
     "**/*.postman_environment.json"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/testing/api/postman/postman.md"
   },
@@ -1575,6 +1965,9 @@
     "**/*.cy.ts",
     "**/*.cy.js"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/testing/e2e/cypress/cypress.md"
   },
   {
@@ -1587,6 +1980,9 @@
     "playwright.config.*",
     "**/*.e2e.*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/testing/e2e/playwright/playwright/playwright.md"
   },
   {
@@ -1597,6 +1993,9 @@
     "**/test/**/*.dart",
     "**/integration_test/**/*.dart",
     "**/*_test.dart"
+   ],
+   "langs": [
+    "dart"
    ],
    "detail": "layers/testing/flutter-test/flutter-test.md"
   },
@@ -1612,6 +2011,9 @@
     "**/*.spec.js",
     "**/__tests__/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/testing/unit/jest/jest.md"
   },
   {
@@ -1626,6 +2028,9 @@
     "**/test_*.py",
     "**/*_test.py"
    ],
+   "langs": [
+    "python"
+   ],
    "detail": "layers/testing/unit/pytest/pytest.md"
   },
   {
@@ -1639,6 +2044,9 @@
     "**/setupTests.*",
     "**/mocks/**"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/testing/unit/vitest/testing-standards/testing.md"
   },
   {
@@ -1649,6 +2057,9 @@
     "**/*antd*",
     "**/*ant-design*",
     "**/antd/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/ui-components/ant-design/ant-design.md"
   },
@@ -1662,6 +2073,9 @@
     "**/theme/**",
     "**/*Chakra*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/ui-components/chakra/chakra.md"
   },
   {
@@ -1672,6 +2086,9 @@
     "**/theme*",
     "**/ThemeProvider*",
     "src/styles/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/ui-components/mui/mui.md"
   },
@@ -1685,6 +2102,9 @@
     "components.json",
     "**/lib/utils.ts"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/ui-components/shadcn/shadcn-ui.md"
   },
   {
@@ -1697,6 +2117,9 @@
     "**/schemas/**",
     "**/joi*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/validation/joi/joi.md"
   },
   {
@@ -1707,6 +2130,9 @@
     "**/*.schema.ts",
     "**/schemas/**",
     "**/valibot*"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/validation/valibot/valibot.md"
   },
@@ -1720,6 +2146,9 @@
     "**/schemas/**",
     "**/yup*"
    ],
+   "langs": [
+    "js"
+   ],
    "detail": "layers/validation/yup/yup.md"
   },
   {
@@ -1730,6 +2159,9 @@
     "**/*.schema.ts",
     "src/validation/**",
     "src/schemas/**"
+   ],
+   "langs": [
+    "js"
    ],
    "detail": "layers/validation/zod/zod-validation.md"
   }

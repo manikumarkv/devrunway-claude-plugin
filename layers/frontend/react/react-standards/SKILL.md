@@ -11,32 +11,22 @@ paths:
 
 Full rules in [react.md](react.md). Always-on summary:
 
-**Stack (no alternatives):**
-- React 18 + TypeScript strict + Vite + Tailwind CSS
-- **UI components: shadcn/ui** — always check `src/components/ui/` before building from scratch
-- Server state: React Query v5 — use `useQuery(` for reads, `useMutation` for writes — never `fetch` in `useEffect`
-- Routing: React Router v6
-- Forms: React Hook Form — `const { register } = useForm(` with `zodResolver(schema)` for schema validation
-- i18n: react-i18next — every user-visible string goes through `t()`
-- Testing: Vitest + React Testing Library + MSW + Playwright
+**Follow the project's existing choices first.** These are the defaults only where the project hasn't chosen:
+- React 18+ with TypeScript strict
+- UI components: the project's component library (shadcn/ui, MUI, Chakra, Ant Design…). Check what exists before building anything. Library-specific rules load from their own `ui-components/*` layers
+- Server state: React Query (TanStack Query) v5 — `useQuery(` for reads, `useMutation` for writes — never `fetch` in `useEffect`
+- Forms: React Hook Form with `zodResolver(schema)` when the project uses Zod
+- i18n: if the project is localised, every user-visible string goes through its translation function (`t()` with react-i18next). Don't add i18n unprompted
+- Testing: Vitest or Jest + React Testing Library + MSW
 
-**Single-file rules (enforced, no exceptions):**
-- `src/lib/constants.ts` — every magic value (numbers, limits, timeouts, locale list)
-- `src/lib/api-routes.ts` — every API endpoint path, including parameterised ones
-- `src/lib/i18n.ts` — i18next init; `src/locales/<lang>/<namespace>.json` for strings
-- Never inline a URL string, page size, debounce delay, or user-visible label in a component
-
-**shadcn/ui rules:**
-- Install: `npx shadcn@latest add <component>` — copies source into `src/components/ui/`
-- Never hand-edit `src/components/ui/` files — re-run the CLI to update
-- Always import from `@/components/ui/<name>`, never from `radix-ui` directly
-- Use `cn()` from `src/lib/utils.ts` for all conditional class merging — never string template literals
-- Custom composite components live in `src/shared/components/` and wrap shadcn primitives
-- Forms always use shadcn `<Form>`, `<FormField>`, `<FormItem>`, `<FormLabel>`, `<FormControl>`, `<FormMessage>` wrappers around React Hook Form
+**Single sources of truth:**
+- One constants module (e.g. `src/lib/constants.ts`) for magic values: numbers, limits, timeouts
+- One API routes module (e.g. `src/lib/api-routes.ts`) for every endpoint path, including parameterised ones
+- Never inline a URL string, page size or debounce delay in a component
 
 **Components:**
 - Functional only · explicit `interface` props · max ~150 lines
-- Named exports · barrel `index.ts` per feature · co-located `.test.tsx`
+- Named exports · co-located `.test.tsx` · a feature's `index.ts`, if any, exports only its public API; inside the app, import from the file directly
 
 **URL accessibility — every view must be deep-linkable:**
 - Every feature has a dedicated route — create → `/resource/new`, edit → `/resource/:id/edit`, detail → `/resource/:id`
@@ -45,21 +35,21 @@ Full rules in [react.md](react.md). Always-on summary:
 - After create/edit mutations, `navigate()` to the detail page — never stay on the same page and show a modal
 
 **UI patterns — modals and notifications:**
-- **Modals (`AlertDialog`) only for destructive confirmations** — "Delete?" / "Archive all?" — never for create/edit forms
-- **All feedback via toast (Sonner)** — `toast.success()` · `toast.error()` · `toast.warning()` · `toast.promise()`
-- Inline `<FormMessage />` for field-level validation errors — not a toast
-- `<Toaster position="bottom-right" richColors />` mounted once in `App.tsx`
+- **Modals (the library's alert dialog) only for destructive confirmations** — "Delete?" / "Archive all?" — never for create/edit forms
+- **All feedback via the library's toast/snackbar** (Sonner with shadcn: `toast.success()` · `toast.error()` · `toast.promise()`)
+- Field-level validation errors inline under the field, not in a toast
+- Mount the toast container once at the app root, never per component
 
 **Never:**
 - `any` type
-- Raw stdout logging (`console.*`) in production code — use Pino `logger.*` methods or Sentry
+- Raw `console.*` in production code — use the project's logger or error reporter (e.g. Sentry)
 - `useEffect` for data fetching
 - Components defined inside components
 - Default exports inside feature folders
 - Inline `style={{}}` for static values
 - Business logic in component body (belongs in a hook)
 - Server state stored in Zustand/Redux
-- Build a button, input, dialog, select, table, or badge from scratch — use shadcn
+- Build a button, input, dialog, select, table or badge from scratch when the project's component library has one
 - Open a create/edit form in a modal — give it its own page/route
 - Show success/error/warning in a modal alert — use `toast` instead
 
@@ -74,7 +64,7 @@ Full rules in [react.md](react.md). Always-on summary:
 **Performance rules (see react.md for full examples):**
 - `Promise.all()` for independent async operations — never sequential awaits
 - `React.lazy` + `Suspense` for heavy components
-- Direct imports, never barrel imports
+- Import library modules directly (`lodash-es/debounce`), never whole-package barrels that defeat tree-shaking
 - Map/Set for O(1) lookups instead of array.find/includes
 - Hoist RegExp to module scope
 - `{ passive: true }` on touch/wheel listeners

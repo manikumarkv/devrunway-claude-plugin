@@ -21,7 +21,7 @@ allowed-tools:
 
 # Log Inspector
 
-Query CloudWatch logs for the current project. See `skills/logs/cloudwatch-queries.md` for the full query library.
+Query CloudWatch logs for the current project. See [cloudwatch-queries.md](cloudwatch-queries.md), in this layer's directory, for the full query library.
 
 Sub-command is `$ARGUMENTS[0]`. Environment is `$ARGUMENTS[1]` (default: `staging`).
 

@@ -2,11 +2,11 @@
 
 Source: Vercel Engineering agent-skills — composition-patterns
 
-> **React version and UI primitives are owned by `react-standards`.** It pins the stack
-> (currently React 18) and mandates shadcn/ui for every input, button, dialog, select, table
-> and badge. Every example below is written for that pin and imports primitives from
-> `@/components/ui/`. § React 19 APIs at the end is reference material for the day the pin
-> moves — not guidance to follow today.
+> **React version and UI primitives are owned by `react-standards`:** use the project's React
+> version and component library. Examples below import primitives from shadcn/ui's
+> `@/components/ui/` for illustration; translate them to the project's library (MUI, Chakra,
+> Ant Design…). They target React 18; if the project is on React 19, prefer § React 19 APIs at
+> the end (for example `ref` as a prop instead of `forwardRef`).
 
 ---
 
@@ -331,12 +331,12 @@ Each variant:
 A parent needs the underlying element for focus management, form libraries (React Hook Form
 registers a ref) and animation. On the pinned React 18 that means `forwardRef(`.
 
-Forward onto the **shadcn primitive**, never onto a hand-rolled element — `react-standards`
+Forward onto the **component-library primitive** (shadcn below; `TextField` with MUI), never onto a hand-rolled element — `react-standards`
 forbids building an input, button, dialog, select, table or badge from scratch, and a raw
 element here would drift from the design system and lose its focus and invalid states.
 
 ```tsx
-// ❌ — hand-rolled element: no design-system styling, no shadcn a11y wiring
+// ❌ — hand-rolled element: no design-system styling, no library a11y wiring
 const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
   ({ label, ...props }, ref) => <>{label}<HandRolledField ref={ref} {...props} /></>
 )

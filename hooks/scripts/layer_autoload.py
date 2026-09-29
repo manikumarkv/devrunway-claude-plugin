@@ -26,6 +26,18 @@ PLUGIN_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__
 INDEX = os.path.join(PLUGIN_ROOT, "layers", "index.json")
 CATCHALL = re.compile(r"^(?:\*\*/)?\*(?:\.[A-Za-z0-9]+)?$")
 
+# Source-file extension -> language family (keep in sync with build_layer_index.py).
+# A source file only gets layers written for its family: no Next.js rules on
+# app/models.py, no Express rules on error_view.dart. Languages with no layers
+# (Go, Ruby, Java, Rust, ...) map to their own family, so they get none.
+EXT_LANG = {
+    "ts": "js", "tsx": "js", "js": "js", "jsx": "js", "mjs": "js", "cjs": "js", "vue": "js", "svelte": "js",
+    "py": "python", "dart": "dart", "cs": "dotnet",
+    "go": "go", "rb": "ruby", "java": "java", "kt": "kotlin", "rs": "rust", "php": "php", "swift": "swift",
+}
+# Extensions that settle a stack slot on their own (a .vue file is Vue, not React).
+EXT_SLOT = {"vue": ("frontend", "vue"), "svelte": ("frontend", "svelte")}
+
 
 def glob_to_regex(pattern):
     """Translate a paths: glob to a regex over a /-separated relative path."""
@@ -90,11 +102,13 @@ def slot_and_tech(layer_stack):
     return "-".join(parts[:-1]), parts[-1]
 
 
-def stack_allows(layer_stack, stack_json, npm_deps):
+def stack_allows(layer_stack, stack_json, npm_deps, ext=""):
     """False only when the project clearly picked a different tech for this slot."""
     slot, tech = slot_and_tech(layer_stack)
     if not slot:
         return True
+    if ext in EXT_SLOT and EXT_SLOT[ext][0] == slot:
+        return tech == EXT_SLOT[ext][1]
     if stack_json and slot in stack_json:
         chosen = stack_json[slot]
         chosen = chosen if isinstance(chosen, list) else [chosen]
@@ -148,6 +162,23 @@ def summary(layer_dir):
     return body
 
 
+def detected_stack(stack_json, npm_deps):
+    """One line telling Claude what the project uses, so examples written for
+    another library (e.g. shadcn) are translated rather than copied."""
+    parts = []
+    if stack_json:
+        parts.append("stack.json: " + ", ".join(
+            f"{k}={v}" for k, v in stack_json.items() if isinstance(v, (str, list)) and v not in ("none", [])))
+    if npm_deps:
+        known = sorted({p for sig in NPM_SIGNALS.values() for pkgs in sig.values() for p in pkgs if p in npm_deps})
+        if known:
+            parts.append("package.json: " + ", ".join(known))
+    if not parts:
+        return ""
+    return ("Detected in this project: " + "; ".join(parts)
+            + ". Where a rule or example below names a different library, use the project's equivalent.\n\n")
+
+
 def seen_file(session_id):
     safe = re.sub(r"[^A-Za-z0-9_.-]", "_", session_id or "no-session")
     d = os.path.join(tempfile.gettempdir(), "devrunway-layers")
@@ -172,10 +203,15 @@ def main():
     stack_json = load_stack_json(project)
     npm_deps = load_npm_deps(project)
 
+    ext = rel.rsplit(".", 1)[-1].lower() if "." in os.path.basename(rel) else ""
+    file_lang = EXT_LANG.get(ext)
+
     matches = []
     for layer in layers:
+        if file_lang and file_lang not in layer.get("langs", ["js"]):
+            continue
         best = max((specificity(p) for p in layer["paths"] if glob_to_regex(p).match(rel)), default=None)
-        if best is not None and stack_allows(layer.get("stack"), stack_json, npm_deps):
+        if best is not None and stack_allows(layer.get("stack"), stack_json, npm_deps, ext):
             matches.append((best, layer))
     if not matches:
         return
@@ -200,7 +236,8 @@ def main():
         sections.append(f"### {layer['name']} ({layer.get('stack') or layer['dir']})\n\n{summary(layer['dir'])}{pointer}")
 
     context = (f"devrunway: team standards that apply to `{rel}` (auto-loaded once per session). "
-               f"Follow them for this and similar files.\n\n" + "\n\n---\n\n".join(sections))
+               f"Follow them for this and similar files.\n\n{detected_stack(stack_json, npm_deps)}"
+               + "\n\n---\n\n".join(sections))
 
     with open(state, "a", encoding="utf-8") as f:
         f.write("".join(layer["dir"] + "\n" for layer in fresh))

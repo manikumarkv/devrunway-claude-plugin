@@ -215,11 +215,11 @@ SENTRY_DSN=
 npx gitleaks protect --staged --verbose
 ```
 
-Or using the hooks already in the plugin — add to `hooks/scripts/`:
+The plugin already ships `hooks/scripts/secrets-leak-guard.sh`, which stops Claude from *writing* a secret into a file. To also block *commits* made by anyone, add a git pre-commit hook:
 
 ```bash
 #!/usr/bin/env bash
-# hooks/scripts/secret-guard.sh
+# .git/hooks/pre-commit
 # Blocks commits containing known secret patterns
 
 STAGED=$(git diff --cached --diff-filter=ACM -U0)
