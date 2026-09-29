@@ -63,13 +63,15 @@ Universal skills active for **all** stacks:
 
 ### Layer skills that are commands, not background layers
 
-Not everything under `layers/` auto-loads. Nine layer skills are `user-invocable: true` with **no `paths:`** — you invoke them by name and `stack-dispatcher` never routes to them (it reports them as `Unroutable`). Do not list these in the auto-load table above:
+Not everything under `layers/` auto-loads. Nine layer skills are `user-invocable: true` with **no `paths:`**: you invoke them by name, and `layer-autoload` never routes to them (they are left out of `layers/index.json`). Do not list these in the auto-load table above:
 
 ```
 /cognito-auth   ← scaffold an AWS Cognito auth flow (frontend | backend | fullstack)
-/scaffold       ← scaffold a React feature
-/deploy  /validate  /logs  /feature-flag  /synthetic  /test-load  /test-smoke
+/scaffold       ← scaffold a React + Node/Express feature
+/deploy  /validate  /logs  /feature-flag  /synthetic  /test-load  /test-smoke   ← AWS (layers/cloud/aws)
 ```
+
+Claude Code only discovers `skills/<name>/SKILL.md` by default, so each of these directories is listed individually under `"skills"` in `.claude-plugin/plugin.json` (a directory containing a `SKILL.md` registers just that one skill). **A new command layer must be added there too**; CI fails if a user-invocable layer command is unregistered or two registered skills share a directory name.
 
 ---
 

@@ -10,6 +10,7 @@ Checks:
   - `agent:` in a skill and `skills:` in an agent point at things that exist
   - backticked layers/, skills/, agents/, hooks/scripts/ paths in docs exist
   - every key /setup writes to stack.json exists in the schema, and vice versa for required keys
+  - every user-invocable layer command is registered in plugin.json "skills", with unique names
 """
 import glob
 import json
@@ -150,6 +151,30 @@ else:
     for key in schema.get("required", []):
         if key not in top:
             err("skills/setup/SKILL.md", f"schema requires `{key}` but the /setup stack.json template never writes it")
+
+# 7. Every user-invocable command is registered with Claude Code. Claude Code
+# discovers skills/<name>/SKILL.md plus the directories listed under "skills"
+# in plugin.json; a command anywhere else can never be invoked (#83). Registered
+# skill names come from directory names, so they must be unique too.
+manifest = json.load(open(".claude-plugin/plugin.json", encoding="utf-8"))
+skill_roots = [p.lstrip("./").rstrip("/") for p in manifest.get("skills", ["./skills"])]
+registered = {}
+for root in skill_roots:
+    if not os.path.isdir(root):
+        err(".claude-plugin/plugin.json", f'"skills" lists `{root}`, which does not exist')
+        continue
+    dirs = [root] if os.path.isfile(os.path.join(root, "SKILL.md")) else sorted(
+        os.path.dirname(f) for f in glob.glob(os.path.join(root, "*", "SKILL.md")))
+    for d in dirs:
+        name = os.path.basename(d)
+        if name in registered:
+            err(".claude-plugin/plugin.json", f"skill name `{name}` is registered twice: {registered[name]} and {d}")
+        registered[name] = d
+registered_dirs = set(registered.values())
+for path in sorted(glob.glob("layers/**/SKILL.md", recursive=True)):
+    d = frontmatter(path) or {}
+    if d.get("user-invocable") is True and not d.get("paths") and os.path.dirname(path) not in registered_dirs:
+        err(path, 'user-invocable command is not registered: add its directory to "skills" in .claude-plugin/plugin.json')
 
 # Report
 gha = os.environ.get("GITHUB_ACTIONS") == "true"

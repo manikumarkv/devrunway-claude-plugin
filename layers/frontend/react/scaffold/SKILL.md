@@ -1,6 +1,6 @@
 ---
 name: scaffold
-description: Generate all boilerplate files for a new feature. Usage — /scaffold <feature-name> [frontend|backend|fullstack]
+description: Generate all boilerplate files for a new React + Node/Express feature. Usage — /scaffold <feature-name> [frontend|backend|fullstack]
 argument-hint: <feature-name> [frontend|backend|fullstack]
 arguments:
   - name: feature-name

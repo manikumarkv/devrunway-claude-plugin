@@ -1,6 +1,6 @@
 ---
 name: validate
-description: Validate a deployed feature by comparing error rates, checking analytics events fired, scanning Sentry, and producing a ship-green or rollback-recommended verdict. Usage — /validate <issue-number> [--env prod|staging]
+description: Validate a feature deployed on AWS by comparing error rates, checking analytics events fired, scanning Sentry, and producing a ship-green or rollback-recommended verdict. Usage — /validate <issue-number> [--env prod|staging]
 argument-hint: "<issue-number> [--env prod|staging]"
 arguments:
   - name: issue
