@@ -1,0 +1,42 @@
+skill: astro
+skill_files:
+  - layers/frontend/astro/SKILL.md
+  - layers/frontend/astro/astro.md
+version: 1
+
+cases:
+  - id: astro-01
+    name: "Content collection with a Zod schema"
+    scenario: |
+      Add a blog to an Astro 5 site. Posts are Markdown files with a title,
+      publish date and draft flag. Use the astro skill rules.
+    must_contain:
+      - "defineCollection"
+      - "z.object"
+      - "getCollection("
+    rationale: |
+      Collections give typed, validated content. Raw glob imports skip
+      validation and break silently when a field is missing.
+
+  - id: astro-02
+    name: "Lightest client directive for a below-the-fold island"
+    scenario: |
+      Add a React comments widget at the bottom of an Astro article page.
+      Use the astro skill rules.
+    must_contain:
+      - "client:visible"
+    must_not_contain:
+      - "client:load"
+    rationale: |
+      Below-the-fold islands should hydrate when seen, not on page load.
+
+  - id: astro-03
+    name: "Secrets stay out of PUBLIC_ env vars"
+    scenario: |
+      An Astro page calls a third-party API that needs a secret key.
+      Write the page. Use the astro skill rules.
+    must_not_contain:
+      - "PUBLIC_API_KEY"
+      - "PUBLIC_SECRET"
+    rationale: |
+      PUBLIC_ variables are bundled into client JavaScript.
