@@ -7,5 +7,17 @@
     "name": "yamani"
   },
   "homepage": "https://devrunway.dev",
-  "repository": "https://github.com/manikumarkv/devrunway-claude-plugin"
+  "repository": "https://github.com/manikumarkv/devrunway-claude-plugin",
+  "skills": [
+    "./skills",
+    "./layers/auth/cognito/cognito-auth",
+    "./layers/frontend/react/scaffold",
+    "./layers/cloud/aws/deploy",
+    "./layers/cloud/aws/validate",
+    "./layers/cloud/aws/logs",
+    "./layers/cloud/aws/feature-flag",
+    "./layers/cloud/aws/synthetic",
+    "./layers/cloud/aws/test-load",
+    "./layers/cloud/aws/test-smoke"
+  ]
 }

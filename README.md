@@ -148,6 +148,8 @@ setup/         ← /setup wizard
 /deploy staging → /validate → /deploy prod
 ```
 
+`/deploy`, `/validate`, `/logs`, `/feature-flag` and `/synthetic` target AWS (CDK, CloudWatch, AppConfig).
+
 ---
 
 ## Key Commands
@@ -163,7 +165,8 @@ setup/         ← /setup wizard
 | `/dev-review` | Full code review via `code-reviewer` agent |
 | `/security-review` | OWASP + secrets audit via `security-reviewer` agent |
 | `/pr` | Create PR with description, checklist, linked issues |
-| `/deploy` | Deploy to staging or production |
+| `/deploy` | Deploy to AWS staging or production, check status, or roll back |
+| `/scaffold` | Generate the boilerplate for a new React + Node/Express feature |
 | `/evolve` | Evidence-based plugin improvement based on session history |
 
 ---
