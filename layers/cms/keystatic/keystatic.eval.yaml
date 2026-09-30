@@ -1,0 +1,39 @@
+skill: keystatic
+skill_files:
+  - layers/cms/keystatic/SKILL.md
+  - layers/cms/keystatic/keystatic.md
+version: 1
+
+cases:
+  - id: keystatic-01
+    name: "Collection with typed fields"
+    scenario: |
+      Add a Keystatic collection for blog posts with a title, a category
+      (news, guide or update) and a body. Use the keystatic skill rules.
+    must_contain:
+      - "collection("
+      - "fields.slug"
+      - "fields.select"
+    rationale: |
+      A slug field names the file; a select stops editors mistyping categories.
+
+  - id: keystatic-02
+    name: "Singleton for one-off content"
+    scenario: |
+      Let editors change the site name and footer text in Keystatic.
+      Use the keystatic skill rules.
+    must_contain:
+      - "singleton("
+    rationale: |
+      One-off content is a singleton, not a one-entry collection.
+
+  - id: keystatic-03
+    name: "Storage switches by environment"
+    scenario: |
+      Configure Keystatic so developers edit locally and the team edits
+      through GitHub in production. Use the keystatic skill rules.
+    must_contain:
+      - "kind: 'local'"
+      - "kind: 'github'"
+    rationale: |
+      Local storage in production leaves the admin route without auth.
