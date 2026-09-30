@@ -51,7 +51,7 @@ In a Client Component, unwrap them with `use(params)`, or use `useParams()` / `u
 - Use them for form submissions and mutations from your own UI.
 - They are public HTTP endpoints. Always, at the top: check auth, then validate input (Zod).
 - After a write, call `revalidatePath()` or `revalidateTag()`, or `redirect()`.
-- Use `useActionState` (React 19) for pending state and errors. `useFormState` is the old name.
+- Use `useActionState` (React 19) for pending state and errors.
 
 ```ts
 'use server';
