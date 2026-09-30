@@ -268,24 +268,9 @@ export default async function CheckoutPage() {
 
 ---
 
-## Event capture best practices
+## Event capture
 
-```typescript
-const posthog = getPostHogClient()
-
-// Capture a business event with relevant properties
-posthog.capture({
-  distinctId: user.id,
-  event:      'order_completed',
-  properties: {
-    order_id:       order.id,
-    order_total:    order.total,
-    payment_method: order.paymentMethod,
-    item_count:     order.items.length,
-    // PostHog auto-links to active feature flags — no need to add them here
-  },
-})
-```
+Event naming, identify/reset, consent and PII rules live in the analytics layer: `layers/analytics/posthog`. PostHog links active flags to captured events automatically, so don't add flag properties by hand.
 
 ---
 
