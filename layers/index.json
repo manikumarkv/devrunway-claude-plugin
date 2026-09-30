@@ -1165,7 +1165,11 @@
    "paths": [
     "app/**",
     "src/app/**",
+    "pages/**",
+    "src/pages/**",
     "next.config*",
+    "middleware.{ts,js}",
+    "src/middleware.{ts,js}",
     "**/layout.tsx",
     "**/page.tsx"
    ],
