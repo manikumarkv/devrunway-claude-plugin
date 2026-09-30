@@ -51,20 +51,20 @@ Plus utility commands: `/branch`, `/task`, `/release`, `/security-review`, `/deb
 
 Result: Claude knows your stack on day one. No prompt engineering required.
 
-### 3. 135 technology layers across 35 categories
+### 3. 149 technology layers across 43 categories
 
 Each layer is a self-contained skill bundle with code examples, "always do this / never do that" rules, and a test suite. Layers cover:
 
 | Category | Example technologies |
 |---|---|
-| Frontend | React, Vue, Angular, Next.js |
+| Frontend | React, Vue, Angular, Next.js, Astro |
 | CSS / UI | Tailwind, styled-components, shadcn, MUI, Chakra |
 | State | Zustand, Redux Toolkit, Jotai, Pinia |
 | Backend | Node/Express, Python/FastAPI, Django, .NET |
 | API style | REST, GraphQL, tRPC, gRPC |
 | Validation | Zod, Yup, Valibot, Joi |
 | Database | Postgres+Prisma, MongoDB, DynamoDB, SQLAlchemy |
-| Auth | Cognito, Firebase, Auth0, Azure AD |
+| Auth | Cognito, Firebase, Auth0, Azure AD, Clerk |
 | Cloud | AWS, GCP, Azure |
 | Logging | Pino, Winston, Morgan, Datadog, CloudWatch, Sentry |
 | Testing | Vitest, Jest, Pytest, Playwright, Cypress, MSW |
@@ -73,6 +73,7 @@ Each layer is a self-contained skill bundle with code examples, "always do this 
 | CI | GitHub Actions, GitLab CI, CircleCI, Azure Pipelines |
 | Ticket management | GitHub Issues, Jira, GitLab Issues, Linear, Huly |
 | Documentation | Confluence, Notion |
+| Content | Keystatic (CMS), Pagefind (search), PostHog (analytics) |
 | ...and 20 more categories |
 
 Layers auto-load based on the files you're touching — edit a `.tsx` file, the React layer's rules apply; edit a `.schema.ts` file, the Zod layer applies.
@@ -134,7 +135,7 @@ GitHub · GitLab · Bitbucket · Azure DevOps · Jira · Linear · Huly · Confl
 
 ## Quality numbers
 
-- **135 layers** across 35 categories — full-stack coverage
+- **149 layers** across 43 categories — full-stack coverage
 - **93 eval files** with hundreds of assertion-based test cases
 - **5 review agents** (code, security, debug, eval-runner, skill-forge)
 - **4 active safety hooks**
@@ -157,7 +158,7 @@ GitHub · GitLab · Bitbucket · Azure DevOps · Jira · Linear · Huly · Confl
 1. **Hero** — tagline + one-liner + "Install" CTA
 2. **The problem** — "AI code that works but doesn't follow your team's rules"
 3. **How it works** — `/setup` → declare stack → standards auto-apply → verified output (3-step diagram)
-4. **The 135 layers** — searchable/filterable grid by category
+4. **The 149 layers** — searchable/filterable grid by category
 5. **The eval harness** — animated example of `must_contain` assertions catching a bug
 6. **SDLC flow** — vertical timeline from `/product-brainstorm` to `/deploy prod`
 7. **Sub-agent architecture** — small diagram showing main thread + dispatcher + consultants

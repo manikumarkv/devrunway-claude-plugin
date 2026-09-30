@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Interactive stack configuration wizard. Asks 38 questions across 6 screens to configure your full tech stack, then generates stack.json and .mcp.json so the right layer skills auto-load when you edit matching files.
+description: Interactive stack configuration wizard. Asks 40 questions across 6 screens to configure your full tech stack, then generates stack.json and .mcp.json so the right layer skills auto-load when you edit matching files.
 user-invocable: true
 effort: medium
 allowed-tools:
@@ -111,8 +111,8 @@ For reference, here are the questions to ask:
   Frontend
 ─────────────────────────────────────────────────
 
-5. Frontend framework
-   react | vue | angular | nextjs | none
+5. Frontend framework (multi-select: Astro sites often add React or Vue islands)
+   react | vue | angular | nextjs | astro | none
 
 6. CSS framework
    tailwind | styled-components | css-modules | bootstrap | none
@@ -132,6 +132,8 @@ For reference, here are the questions to ask:
 11. Design tool
     figma | sketch | adobe-xd | none
 ```
+
+Ask Q5 with `multiSelect: true`. Write a single pick as a string (`"react"`) and several as an array (`["astro", "react"]`).
 
 Wait for the user's answers, then proceed to Screen 3.
 
@@ -188,7 +190,7 @@ For reference, here are the questions to ask:
     postgres-prisma | neon | mongodb | dynamodb | sqlalchemy | none
 
 19. Authentication
-    cognito | firebase | auth0 | azure-ad | none
+    cognito | firebase | auth0 | azure-ad | clerk | none
 
 20. Cache / queue
     redis | sqs | bullmq | rabbitmq | none
@@ -232,13 +234,19 @@ For reference, here are the questions to ask:
     socketio | pusher | ably | none
 
 28. Search
-    algolia | typesense | elasticsearch | none
+    algolia | typesense | elasticsearch | pagefind | none
 
 29. Payment processing
     stripe | paypal | braintree | none
 
 30. Transactional email
     resend | sendgrid | ses | none
+
+31. Product analytics
+    posthog | none
+
+32. Content management (CMS)
+    keystatic | none
 ```
 
 Wait for the user's answers, then proceed to Screen 6.
@@ -257,34 +265,34 @@ For reference, here are the questions to ask:
   Developer Tooling
 ─────────────────────────────────────────────────
 
-31. Unit testing
+33. Unit testing
     vitest | jest | pytest | none
 
-32. End-to-end testing
+34. End-to-end testing
     playwright | cypress | selenium | webdriverio | none
 
-33. API testing
+35. API testing
     bruno | postman | insomnia | none
 
-34. API mocking
+36. API mocking
     msw | mirage | json-server | none
 
-35. Project management
+37. Project management
     github | jira | gitlab | linear | huly | none
 
-36. Primary programming language (for language-specific pattern standards)
+38. Primary programming language (for language-specific pattern standards)
     typescript | python | none
 
-37. Documentation / knowledge-base tool (where specs, ADRs, runbooks live)
+39. Documentation / knowledge-base tool (where specs, ADRs, runbooks live)
     confluence | notion | none
 
-38. Team policies to enforce in this repo (multi-select; both off unless picked)
+40. Team policies to enforce in this repo (multi-select; both off unless picked)
     protect-main          — refuse commits directly on main/master/develop/release
     conventional-commits  — require "type(scope): subject" commit messages
     none
 ```
 
-Ask Q38 with `multiSelect: true`. These are off by default because devrunway is often installed at user level and runs in every repo; only the repo that opts in gets them. (Conventional commits are also enforced, without this answer, in a repo that already has a commitlint config.)
+Ask Q40 with `multiSelect: true`. These are off by default because devrunway is often installed at user level and runs in every repo; only the repo that opts in gets them. (Conventional commits are also enforced, without this answer, in a repo that already has a commitlint config.)
 
 Wait for the user's answers. After receiving answers to Screen 6, generate all outputs.
 
@@ -301,7 +309,7 @@ Write this file to `stack.json` in the project root (the directory where the use
   "ci": "<answer to Q2>",
   "package-manager": "<answer to Q3>",
   "code-quality": "<answer to Q4>",
-  "frontend": "<answer to Q5>",
+  "frontend": "<answer to Q5: a string, or an array if several were picked>",
   "css": "<answer to Q6>",
   "ui-components": "<answer to Q7>",
   "state": "<answer to Q8>",
@@ -327,16 +335,18 @@ Write this file to `stack.json` in the project root (the directory where the use
   "search": "<answer to Q28>",
   "payment": "<answer to Q29>",
   "email": "<answer to Q30>",
-  "testing-unit": "<answer to Q31>",
-  "testing-e2e": "<answer to Q32>",
-  "testing-api": "<answer to Q33>",
-  "mocking": "<answer to Q34>",
-  "project-management": "<answer to Q35>",
-  "language": "<answer to Q36>",
-  "documents": "<answer to Q37>",
+  "analytics": "<answer to Q31>",
+  "cms": "<answer to Q32>",
+  "testing-unit": "<answer to Q33>",
+  "testing-e2e": "<answer to Q34>",
+  "testing-api": "<answer to Q35>",
+  "mocking": "<answer to Q36>",
+  "project-management": "<answer to Q37>",
+  "language": "<answer to Q38>",
+  "documents": "<answer to Q39>",
   "policies": {
-    "protect-main": <true if Q38 includes protect-main, else false>,
-    "conventional-commits": <true if Q38 includes conventional-commits, else false>
+    "protect-main": <true if Q40 includes protect-main, else false>,
+    "conventional-commits": <true if Q40 includes conventional-commits, else false>
   }
 }
 ```
@@ -359,7 +369,7 @@ Only generate `.mcp.json` if the user selected one or more tools that have MCP s
 }
 ```
 
-### github (selected when Q1 = `github` OR Q35 = `github`)
+### github (selected when Q1 = `github` OR Q37 = `github`)
 
 ```json
 "github": {
@@ -371,7 +381,7 @@ Only generate `.mcp.json` if the user selected one or more tools that have MCP s
 }
 ```
 
-### jira (selected when Q35 = `jira`)
+### jira (selected when Q37 = `jira`)
 
 ```json
 "jira": {
@@ -385,7 +395,7 @@ Only generate `.mcp.json` if the user selected one or more tools that have MCP s
 }
 ```
 
-### linear (selected when Q35 = `linear`)
+### linear (selected when Q37 = `linear`)
 
 ```json
 "linear": {
@@ -397,7 +407,7 @@ Only generate `.mcp.json` if the user selected one or more tools that have MCP s
 }
 ```
 
-### gitlab (selected when Q1 = `gitlab` OR Q35 = `gitlab`)
+### gitlab (selected when Q1 = `gitlab` OR Q37 = `gitlab`)
 
 ```json
 "gitlab": {
@@ -410,7 +420,7 @@ Only generate `.mcp.json` if the user selected one or more tools that have MCP s
 }
 ```
 
-### confluence (selected when Q37 = `confluence`)
+### confluence (selected when Q39 = `confluence`)
 
 ```json
 "confluence": {
@@ -424,7 +434,7 @@ Only generate `.mcp.json` if the user selected one or more tools that have MCP s
 }
 ```
 
-### notion (selected when Q37 = `notion`)
+### notion (selected when Q39 = `notion`)
 
 ```json
 "notion": {
@@ -478,9 +488,10 @@ Your stack summary:
   Backend        : <Q12> + <Q13> + <Q14> + <Q15>
   Cloud          : <Q16>  |  DB : <Q18>  |  Auth : <Q19>
   Logging        : <Q24> → <Q25>  |  Errors : <Q26>
-  Testing        : <Q31> + <Q32> + <Q33> + <Q34>
-  Design         : <Q11>  |  PM : <Q35>  |  Language : <Q36>  |  Docs : <Q37>
-  Policies       : <Q38, or "none">
+  Content        : Analytics : <Q31>  |  CMS : <Q32>  |  Search : <Q28>
+  Testing        : <Q33> + <Q34> + <Q35> + <Q36>
+  Design         : <Q11>  |  PM : <Q37>  |  Language : <Q38>  |  Docs : <Q39>
+  Policies       : <Q40, or "none">
 
 stack.json written to ./stack.json
 
@@ -512,6 +523,7 @@ Print the table of layers that will be active for the user's choices, using thes
 | Q5 | `vue` | `layers/frontend/vue` |
 | Q5 | `angular` | `layers/frontend/angular` |
 | Q5 | `nextjs` | `layers/frontend/nextjs` |
+| Q5 | `astro` | `layers/frontend/astro` |
 | Q6 | `tailwind` | `layers/css/tailwind` |
 | Q6 | `styled-components` | `layers/css/styled-components` |
 | Q6 | `css-modules` | `layers/css/css-modules` |
@@ -563,6 +575,7 @@ Print the table of layers that will be active for the user's choices, using thes
 | Q19 | `firebase` | `layers/auth/firebase` |
 | Q19 | `auth0` | `layers/auth/auth0` |
 | Q19 | `azure-ad` | `layers/auth/azure-ad` |
+| Q19 | `clerk` | `layers/auth/clerk` |
 | Q20 | `redis` | `layers/cache-queue/redis` |
 | Q20 | `sqs` | `layers/cache-queue/sqs` |
 | Q20 | `bullmq` | `layers/cache-queue/bullmq` |
@@ -596,34 +609,37 @@ Print the table of layers that will be active for the user's choices, using thes
 | Q28 | `algolia` | `layers/search/algolia` |
 | Q28 | `typesense` | `layers/search/typesense` |
 | Q28 | `elasticsearch` | `layers/search/elasticsearch` |
+| Q28 | `pagefind` | `layers/search/pagefind` |
 | Q29 | `stripe` | `layers/payment/stripe` |
 | Q29 | `paypal` | `layers/payment/paypal` |
 | Q29 | `braintree` | `layers/payment/braintree` |
 | Q30 | `resend` | `layers/email/resend` |
 | Q30 | `sendgrid` | `layers/email/sendgrid` |
 | Q30 | `ses` | `layers/email/ses` |
-| Q31 | `vitest` | `layers/testing/unit/vitest` |
-| Q31 | `jest` | `layers/testing/unit/jest` |
-| Q31 | `pytest` | `layers/testing/unit/pytest` |
-| Q32 | `playwright` | `layers/testing/e2e/playwright` |
-| Q32 | `cypress` | `layers/testing/e2e/cypress` |
-| Q32 | `selenium` | `layers/testing/e2e/selenium` |
-| Q32 | `webdriverio` | `layers/testing/e2e/webdriverio` |
-| Q33 | `bruno` | `layers/testing/api/bruno` |
-| Q33 | `postman` | `layers/testing/api/postman` |
-| Q33 | `insomnia` | `layers/testing/api/insomnia` |
-| Q34 | `msw` | `layers/mocking/msw` |
-| Q34 | `mirage` | `layers/mocking/mirage` |
-| Q34 | `json-server` | `layers/mocking/json-server` |
-| Q35 | `github` | `layers/project-management/github` |
-| Q35 | `jira` | `layers/project-management/jira` |
-| Q35 | `gitlab` | `layers/project-management/gitlab` |
-| Q35 | `linear` | `layers/project-management/linear` |
-| Q35 | `huly` | `layers/project-management/huly` |
-| Q36 | `typescript` | `layers/language/typescript` |
-| Q36 | `python` | _(no layer yet — python patterns covered in backend layers)_ |
-| Q37 | `confluence` | `layers/documents/confluence` |
-| Q37 | `notion` | `layers/documents/notion` |
+| Q31 | `posthog` | `layers/analytics/posthog` |
+| Q32 | `keystatic` | `layers/cms/keystatic` |
+| Q33 | `vitest` | `layers/testing/unit/vitest` |
+| Q33 | `jest` | `layers/testing/unit/jest` |
+| Q33 | `pytest` | `layers/testing/unit/pytest` |
+| Q34 | `playwright` | `layers/testing/e2e/playwright` |
+| Q34 | `cypress` | `layers/testing/e2e/cypress` |
+| Q34 | `selenium` | `layers/testing/e2e/selenium` |
+| Q34 | `webdriverio` | `layers/testing/e2e/webdriverio` |
+| Q35 | `bruno` | `layers/testing/api/bruno` |
+| Q35 | `postman` | `layers/testing/api/postman` |
+| Q35 | `insomnia` | `layers/testing/api/insomnia` |
+| Q36 | `msw` | `layers/mocking/msw` |
+| Q36 | `mirage` | `layers/mocking/mirage` |
+| Q36 | `json-server` | `layers/mocking/json-server` |
+| Q37 | `github` | `layers/project-management/github` |
+| Q37 | `jira` | `layers/project-management/jira` |
+| Q37 | `gitlab` | `layers/project-management/gitlab` |
+| Q37 | `linear` | `layers/project-management/linear` |
+| Q37 | `huly` | `layers/project-management/huly` |
+| Q38 | `typescript` | `layers/language/typescript` |
+| Q38 | `python` | _(no layer yet — python patterns covered in backend layers)_ |
+| Q39 | `confluence` | `layers/documents/confluence` |
+| Q39 | `notion` | `layers/documents/notion` |
 
 After the layer table, if `.mcp.json` was written, append:
 

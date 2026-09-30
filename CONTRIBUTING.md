@@ -8,7 +8,7 @@ devrunway is built around a modular layer system. Each layer teaches Claude the 
 
 Three ways to contribute:
 
-**1. Improve an existing layer** — All 135 layers are implemented, but every layer can get sharper. Common improvements:
+**1. Improve an existing layer** — All 149 layers are implemented, but every layer can get sharper. Common improvements:
 - Add more code examples for edge cases
 - Expand the "Common mistakes" table
 - Update for a new major version of the library

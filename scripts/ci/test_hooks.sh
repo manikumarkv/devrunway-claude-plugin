@@ -184,6 +184,22 @@ SJ="$TMP/stackjson-app"; mkdir -p "$SJ"; echo '{"frontend":"vue"}' > "$SJ/stack.
 expect_layers "stack.json frontend=vue loads vue" "$SJ" "$(sid)" src/components/Button.vue vue
 not_layer     "stack.json frontend=vue skips react-standards" "$SJ" "$(sid)" src/components/Button.tsx react-standards
 
+# Astro site with React islands, Clerk, Pagefind, Keystatic and PostHog (#94-#98)
+AST="$TMP/astro-app"; mkdir -p "$AST"
+echo '{"dependencies":{"astro":"5","react":"19","@clerk/astro":"2","@keystatic/core":"0.5","posthog-js":"1"},"devDependencies":{"pagefind":"1"}}' > "$AST/package.json"
+expect_layers ".astro page gets astro" "$AST" "$(sid)" src/pages/index.astro astro
+not_layer     "no React rules on a .astro file" "$AST" "$(sid)" src/pages/index.astro react-standards
+expect_layers "React island in an Astro app gets react-standards" "$AST" "$(sid)" src/components/Quiz.tsx react-standards
+expect_layers "middleware gets clerk-auth" "$AST" "$(sid)" src/middleware.ts clerk-auth
+expect_layers "search component gets pagefind" "$AST" "$(sid)" src/components/Search.astro pagefind
+expect_layers "keystatic.config gets keystatic" "$AST" "$(sid)" keystatic.config.ts keystatic
+expect_layers "analytics module gets posthog-analytics" "$AST" "$(sid)" src/lib/analytics.ts posthog-analytics
+not_layer     "no clerk-auth without a @clerk package" "$REACT" "$(sid)" src/middleware.ts clerk-auth
+not_layer     "no posthog-analytics without posthog-js" "$REACT" "$(sid)" src/lib/analytics.ts posthog-analytics
+SJA="$TMP/stackjson-astro"; mkdir -p "$SJA"; echo '{"frontend":["astro","react"]}' > "$SJA/stack.json"
+expect_layers "stack.json frontend array keeps React islands" "$SJA" "$(sid)" src/components/Quiz.tsx react-standards
+not_layer     "stack.json frontend array still skips vue" "$SJA" "$(sid)" src/components/Quiz.tsx vue
+
 DET=$(jq -nc --arg f "$REACT/src/components/Det.tsx" --arg d "$REACT" --arg s "$(sid)" '{tool_input:{file_path:$f},cwd:$d,session_id:$s}' \
       | bash "$HOOKS/layer-autoload.sh" | jq -r '.hookSpecificOutput.additionalContext')
 if printf '%s' "$DET" | grep -q "Detected in this project: package.json: .*@mui/material"; then

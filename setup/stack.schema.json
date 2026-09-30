@@ -71,9 +71,16 @@
       "enum": ["github-security", "sonarqube", "snyk", "none"]
     },
     "frontend": {
-      "description": "Frontend framework (Q5).",
-      "type": "string",
-      "enum": ["react", "vue", "angular", "nextjs", "none"]
+      "description": "Frontend framework (Q5). An array when the project uses several, e.g. Astro with React islands.",
+      "oneOf": [
+        { "type": "string", "enum": ["react", "vue", "angular", "nextjs", "astro", "none"] },
+        {
+          "type": "array",
+          "items": { "type": "string", "enum": ["react", "vue", "angular", "nextjs", "astro"] },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      ]
     },
     "css": {
       "description": "CSS framework or styling approach (Q6).",
@@ -143,7 +150,7 @@
     "auth": {
       "description": "Authentication provider (Q19).",
       "type": "string",
-      "enum": ["cognito", "firebase", "auth0", "azure-ad", "none"]
+      "enum": ["cognito", "firebase", "auth0", "azure-ad", "clerk", "none"]
     },
     "cache-queue": {
       "description": "Caching or message-queue technology (Q20).",
@@ -188,7 +195,7 @@
     "search": {
       "description": "Full-text search service (Q28).",
       "type": "string",
-      "enum": ["algolia", "typesense", "elasticsearch", "none"]
+      "enum": ["algolia", "typesense", "elasticsearch", "pagefind", "none"]
     },
     "payment": {
       "description": "Payment processing provider (Q29).",
@@ -200,43 +207,53 @@
       "type": "string",
       "enum": ["resend", "sendgrid", "ses", "none"]
     },
+    "analytics": {
+      "description": "Product analytics (Q31).",
+      "type": "string",
+      "enum": ["posthog", "none"]
+    },
+    "cms": {
+      "description": "Content management system (Q32).",
+      "type": "string",
+      "enum": ["keystatic", "none"]
+    },
     "testing-unit": {
-      "description": "Unit and integration test runner (Q31).",
+      "description": "Unit and integration test runner (Q33).",
       "type": "string",
       "enum": ["vitest", "jest", "pytest", "none"]
     },
     "testing-e2e": {
-      "description": "End-to-end test framework (Q32).",
+      "description": "End-to-end test framework (Q34).",
       "type": "string",
       "enum": ["playwright", "cypress", "selenium", "webdriverio", "none"]
     },
     "testing-api": {
-      "description": "API testing tool (Q33).",
+      "description": "API testing tool (Q35).",
       "type": "string",
       "enum": ["bruno", "postman", "insomnia", "none"]
     },
     "mocking": {
-      "description": "API mocking library for tests (Q34).",
+      "description": "API mocking library for tests (Q36).",
       "type": "string",
       "enum": ["msw", "mirage", "json-server", "none"]
     },
     "project-management": {
-      "description": "Project / issue tracking tool (Q35).",
+      "description": "Project / issue tracking tool (Q37).",
       "type": "string",
       "enum": ["github", "jira", "gitlab", "linear", "huly", "none"]
     },
     "documents": {
-      "description": "Documentation / knowledge-base tool (Q37).",
+      "description": "Documentation / knowledge-base tool (Q39).",
       "type": "string",
       "enum": ["confluence", "notion", "none"]
     },
     "language": {
-      "description": "Primary programming language (Q36).",
+      "description": "Primary programming language (Q38).",
       "type": "string",
       "enum": ["typescript", "python", "none"]
     },
     "policies": {
-      "description": "Team policies enforced by devrunway hooks (Q38). Each is off unless set to true, so a user-level install never imposes them on a repo that didn't ask.",
+      "description": "Team policies enforced by devrunway hooks (Q40). Each is off unless set to true, so a user-level install never imposes them on a repo that didn't ask.",
       "type": "object",
       "additionalProperties": false,
       "properties": {

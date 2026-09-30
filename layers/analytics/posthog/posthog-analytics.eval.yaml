@@ -1,0 +1,54 @@
+skill: posthog-analytics
+skill_files:
+  - layers/analytics/posthog/SKILL.md
+  - layers/analytics/posthog/posthog-analytics.md
+version: 1
+
+cases:
+  - id: posthog-analytics-01
+    name: "Typed event catalog with object_verb names"
+    scenario: |
+      Track when a user views a glossary term and when they finish a quiz,
+      using PostHog. Use the posthog-analytics skill rules.
+    must_contain:
+      - "term_viewed"
+      - "quiz_completed"
+    must_not_contain:
+      - "'Term Viewed'"
+    rationale: |
+      Consistent snake_case object_verb names keep insights queryable.
+
+  - id: posthog-analytics-02
+    name: "No PII in event properties"
+    scenario: |
+      Track a newsletter signup with PostHog. The form has name and email.
+      Show only the analytics code. Use the posthog-analytics skill rules.
+    must_contain:
+      - "posthog.capture("
+    must_not_contain:
+      - "email: form"
+      - "email: data.email"
+      - "email: values.email"
+    rationale: |
+      Event properties are copied widely; personal data belongs nowhere in them.
+
+  - id: posthog-analytics-03
+    name: "Identify on login, reset on logout"
+    scenario: |
+      Wire PostHog identity into the app's login and logout handlers.
+      Use the posthog-analytics skill rules.
+    must_contain:
+      - "posthog.identify("
+      - "posthog.reset()"
+    rationale: |
+      Without reset, the next user on a shared device is merged into the previous one.
+
+  - id: posthog-analytics-04
+    name: "Serverless capture flushes before exit"
+    scenario: |
+      Capture a payment_succeeded event from a serverless webhook handler with
+      posthog-node. Use the posthog-analytics skill rules.
+    must_contain:
+      - "shutdown()"
+    rationale: |
+      Serverless runtimes freeze after the response; unflushed events are lost.

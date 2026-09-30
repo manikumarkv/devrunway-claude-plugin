@@ -35,7 +35,7 @@ Inside Claude Code:
 
 - The safety guards (destructive git and `rm`, secrets) are on everywhere.
 - Layer standards load only for files that match your stack.
-- Team policies are **off unless a repo opts in**: "no commits to `main`" and "Conventional Commits only". Opt in through `/setup` (Q38), which writes `"policies"` to `stack.json`. Conventional Commits are also enforced, without opting in, in a repo that already has a commitlint config.
+- Team policies are **off unless a repo opts in**: "no commits to `main`" and "Conventional Commits only". Opt in through `/setup` (Q40), which writes `"policies"` to `stack.json`. Conventional Commits are also enforced, without opting in, in a repo that already has a commitlint config.
 
 To enable devrunway for one repo only, and share it with everyone who clones that repo:
 
@@ -104,12 +104,12 @@ skills/        ← universal slash commands (product-plan, dev-code, pr, eval, f
 agents/        ← code-reviewer, security-reviewer, debugger, stack-dispatcher, layer-consultant
 hooks/         ← 35 active safety + quality hooks (destructive-git-guard, secrets-leak-guard, …)
 
-layers/        ← 135 technology layers, auto-loaded by file pattern
-  frontend/      react | vue | angular | nextjs
+layers/        ← 149 technology layers, auto-loaded by file pattern
+  frontend/      react | vue | angular | nextjs | astro
   backend/       node-express | python-fastapi | python-django | dotnet
   cloud/         aws | gcp | azure
   database/      postgres-prisma | neon | dynamodb | mongodb | sqlalchemy
-  auth/          cognito | firebase | auth0 | azure-ad
+  auth/          cognito | firebase | auth0 | azure-ad | clerk
   css/           tailwind | styled-components | css-modules | bootstrap
   ui-components/ shadcn | mui | ant-design | chakra
   state/         zustand | redux-toolkit | jotai | pinia
@@ -127,13 +127,15 @@ layers/        ← 135 technology layers, auto-loaded by file pattern
   design/        figma | sketch | adobe-xd
   payment/       stripe | paypal | braintree
   storage/       s3 | cloudinary | gcs | uploadthing
-  search/        algolia | elasticsearch | typesense
+  search/        algolia | elasticsearch | typesense | pagefind
+  analytics/     posthog
+  cms/           keystatic
   realtime/      socketio | pusher | ably
   cache-queue/   redis | bullmq | sqs | rabbitmq
   feature-flags/ launchdarkly | aws-appconfig | flagsmith | posthog
   secrets/       aws-secrets-manager | vault | doppler | env-only
   source-control/ github | gitlab | bitbucket | azure-devops
-  ... and more (135 layers total)
+  ... and more (149 layers total)
 
 setup/         ← /setup wizard
 ```

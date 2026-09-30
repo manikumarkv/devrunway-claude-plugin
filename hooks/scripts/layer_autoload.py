@@ -31,12 +31,12 @@ CATCHALL = re.compile(r"^(?:\*\*/)?\*(?:\.[A-Za-z0-9]+)?$")
 # app/models.py, no Express rules on error_view.dart. Languages with no layers
 # (Go, Ruby, Java, Rust, ...) map to their own family, so they get none.
 EXT_LANG = {
-    "ts": "js", "tsx": "js", "js": "js", "jsx": "js", "mjs": "js", "cjs": "js", "vue": "js", "svelte": "js",
+    "ts": "js", "tsx": "js", "js": "js", "jsx": "js", "mjs": "js", "cjs": "js", "vue": "js", "svelte": "js", "astro": "js",
     "py": "python", "dart": "dart", "cs": "dotnet",
     "go": "go", "rb": "ruby", "java": "java", "kt": "kotlin", "rs": "rust", "php": "php", "swift": "swift",
 }
 # Extensions that settle a stack slot on their own (a .vue file is Vue, not React).
-EXT_SLOT = {"vue": ("frontend", "vue"), "svelte": ("frontend", "svelte")}
+EXT_SLOT = {"vue": ("frontend", "vue"), "svelte": ("frontend", "svelte"), "astro": ("frontend", "astro")}
 
 
 def glob_to_regex(pattern):
@@ -82,7 +82,8 @@ def specificity(pattern):
 # layer for an npm-identifiable tech loads only if one of its packages is a
 # dependency (no zod layer without zod, no Vue layer in a React app).
 NPM_SIGNALS = {
-    "frontend": {"react": ["react"], "vue": ["vue"], "angular": ["@angular/core"], "nextjs": ["next"]},
+    "frontend": {"react": ["react"], "vue": ["vue"], "angular": ["@angular/core"], "nextjs": ["next"],
+                 "astro": ["astro"]},
     "ui-components": {"shadcn": ["@radix-ui/react-slot", "class-variance-authority"], "mui": ["@mui/material"],
                       "ant-design": ["antd"], "chakra": ["@chakra-ui/react"]},
     "state": {"zustand": ["zustand"], "redux-toolkit": ["@reduxjs/toolkit"], "jotai": ["jotai"], "pinia": ["pinia"]},
@@ -92,6 +93,12 @@ NPM_SIGNALS = {
     "css": {"tailwind": ["tailwindcss"], "styled-components": ["styled-components"]},
     "database": {"postgres-prisma": ["@prisma/client", "prisma"], "neon": ["@neondatabase/serverless"],
                  "mongodb": ["mongodb", "mongoose"], "dynamodb": ["@aws-sdk/client-dynamodb", "@aws-sdk/lib-dynamodb", "dynamoose"]},
+    # Only npm-only techs here: Firebase, Cognito, Algolia etc. are also used from
+    # Python, Dart and .NET, where a missing npm package proves nothing.
+    "auth": {"clerk": ["@clerk/nextjs", "@clerk/clerk-react", "@clerk/astro", "@clerk/express", "@clerk/backend"]},
+    "search": {"pagefind": ["pagefind", "astro-pagefind", "@pagefind/default-ui"]},
+    "cms": {"keystatic": ["@keystatic/core", "@keystatic/astro", "@keystatic/next"]},
+    "analytics": {"posthog": ["posthog-js", "posthog-node"]},
 }
 
 

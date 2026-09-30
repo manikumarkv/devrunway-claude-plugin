@@ -1,0 +1,37 @@
+skill: pagefind
+skill_files:
+  - layers/search/pagefind/SKILL.md
+  - layers/search/pagefind/pagefind.md
+version: 1
+
+cases:
+  - id: pagefind-01
+    name: "Index runs after the build"
+    scenario: |
+      Add Pagefind search to an Astro site. Show the package.json build script.
+      Use the pagefind skill rules.
+    must_contain:
+      - "pagefind --site"
+    rationale: |
+      Pagefind indexes built HTML; running it before the build indexes nothing.
+
+  - id: pagefind-02
+    name: "Only main content is indexed"
+    scenario: |
+      Mark up an Astro article layout (header nav, main content, footer) so
+      Pagefind indexes the right text. Use the pagefind skill rules.
+    must_contain:
+      - "data-pagefind-body"
+      - "data-pagefind-ignore"
+    rationale: |
+      Indexing nav and footer makes every page match common words.
+
+  - id: pagefind-03
+    name: "Filters use data attributes"
+    scenario: |
+      Let users filter glossary search results by difficulty level.
+      Use the pagefind skill rules.
+    must_contain:
+      - "data-pagefind-filter"
+    rationale: |
+      Filters declared in markup are indexed at build time and cost nothing at runtime.

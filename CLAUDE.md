@@ -10,7 +10,7 @@ This repo IS the Claude Code plugin — not an app. Files here define skills, ag
 skills/      ← universal slash commands + background reference skills (auto-discovered by Claude Code)
 agents/      ← code-reviewer, security-reviewer, stack-dispatcher, layer-consultant
 hooks/       ← hook scripts + hooks.json registration
-layers/      ← 135 technology-specific layers (auto-load by paths: globs)
+layers/      ← 149 technology-specific layers (auto-load by paths: globs)
 setup/       ← stack.schema.json (validation schema for stack.json)
 ```
 

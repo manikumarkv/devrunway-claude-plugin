@@ -33,9 +33,7 @@ Full standards in [posthog.md](posthog.md). Always-on summary:
 - Always expose control and variant to equivalent user cohorts — never split by time
 - Track the primary metric event the same way in both control and variant code paths
 
-**Analytics integration:**
-- PostHog automatically links feature flag evaluations to events — don't add manual flag properties to every event
-- Group events by `$group_id` for B2B analytics (organisation-level metrics)
+**Analytics:** event capture, naming, consent and PII rules are in `layers/analytics/posthog` (`posthog-analytics`). Flags are linked to events automatically; don't add flag properties by hand.
 
 **Flag naming:**
 - Same `kebab-case` convention: `new-onboarding-flow`, `checkout-variant-b`
@@ -46,4 +44,4 @@ Full standards in [posthog.md](posthog.md). Always-on summary:
 - Evaluate flags inside a loop or hot render path — evaluate once, store the result
 - Forget to `posthog.shutdown()` in Node.js scripts — events may be lost if the process exits before flush
 
-**Related skills:** `feature-flags/launchdarkly` (dedicated flag platform), `core/api-conventions`
+**Related skills:** `analytics/posthog` (event capture), `feature-flags/launchdarkly` (dedicated flag platform), `core/api-conventions`
