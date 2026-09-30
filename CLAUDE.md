@@ -83,7 +83,7 @@ Claude Code only registers `skills/<name>/SKILL.md`. Layers are loaded by the `l
 2. It skips layers that contradict the project's stack: `stack.json` first; for slots it doesn't set, `package.json` dependencies, or a non-Node manifest (`pyproject.toml`, `go.mod`, …) keeps npm-only layers out.
 3. It injects the matching layers' `SKILL.md` body as `additionalContext`, with the absolute path of the detail file: at most 3 layers per call, each at most once per session, specific globs before extension-only ones.
 
-**After adding or changing a layer's frontmatter, run `python3 scripts/build_layer_index.py`.** CI fails if `layers/index.json` is stale.
+**After adding or changing a layer's frontmatter, run `python3 scripts/build_layer_index.py` and `python3 scripts/build_layer_readmes.py`.** CI fails if `layers/index.json` or a layer README is stale. Layer READMEs are generated; never edit them by hand.
 
 Registering all layers as skills was evaluated and rejected: plugin skills are listed in every session regardless of `paths:`, which added ~11k tokens per session for every user (#80).
 

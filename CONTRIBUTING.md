@@ -210,11 +210,12 @@ Sometimes a failing case is telling you the guidance has a hole rather than a ty
    # Create SKILL.md and jest-standards.md
    ```
 
-4. **Rebuild the routing index** so the `layer-autoload` hook can find the layer:
+4. **Rebuild the routing index and the layer READMEs** so the `layer-autoload` hook can find the layer and GitHub shows what it does:
    ```bash
    python3 scripts/build_layer_index.py
+   python3 scripts/build_layer_readmes.py
    ```
-   CI fails if `layers/index.json` is stale.
+   CI fails if `layers/index.json` or a layer README is stale. Never edit a layer's README by hand; change `SKILL.md` and rerun.
 
 5. **Test it locally** — open a project that uses this tech, load the plugin (`claude --plugin-dir <path-to-repo>`), read a file matching `paths:`, and check that Claude received the layer's standards
 
@@ -257,6 +258,7 @@ A layer PR will be merged when:
 claude plugin validate .                 # official manifest validator
 python3 scripts/ci/validate_plugin.py    # frontmatter, hooks.json refs, duplicate names, agent/skill refs
 python3 scripts/build_layer_index.py --check   # layers/index.json matches the layers' frontmatter
+python3 scripts/build_layer_readmes.py --check # layer READMEs match the layers' frontmatter
 bash scripts/ci/test_hooks.sh            # blocking hooks block what they should, allow what they should
 shellcheck -S error hooks/scripts/*.sh
 ```
