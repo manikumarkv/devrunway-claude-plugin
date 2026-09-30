@@ -25,7 +25,7 @@ INDEX = "layers/index.json"
 # Source-file extension -> language family. Shared with the hook, which only
 # loads a layer for a source file when the file's family is one of the layer's.
 EXT_LANG = {
-    "ts": "js", "tsx": "js", "js": "js", "jsx": "js", "mjs": "js", "cjs": "js", "vue": "js", "svelte": "js",
+    "ts": "js", "tsx": "js", "js": "js", "jsx": "js", "mjs": "js", "cjs": "js", "vue": "js", "svelte": "js", "astro": "js",
     "py": "python", "dart": "dart", "cs": "dotnet", "csproj": "dotnet",
 }
 # Layers whose globs name no source extension but whose rules are for one language.

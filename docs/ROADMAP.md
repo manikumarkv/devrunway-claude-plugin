@@ -26,7 +26,7 @@ core/                            ← always install; works for any stack
 layers/
   source-control/  github | gitlab | bitbucket | azure-devops
   package-manager/ npm | yarn | pnpm | bun
-  frontend/        react | vue | angular | nextjs
+  frontend/        react | vue | angular | nextjs | astro
   state/           zustand | redux-toolkit | jotai | pinia | none
   ui-components/   shadcn | mui | ant-design | chakra
   css/             tailwind | styled-components | css-modules | bootstrap
@@ -38,7 +38,7 @@ layers/
   realtime/        socketio | pusher | ably | none
   cloud/           aws | gcp | azure
   database/        postgres-prisma | neon | mongodb | dynamodb | sqlalchemy
-  auth/            cognito | firebase | azure-ad | auth0
+  auth/            cognito | firebase | azure-ad | auth0 | clerk
   storage/         s3 | cloudinary | uploadthing | gcs
   cache-queue/     redis | bullmq | sqs | rabbitmq
   container/       serverless | docker | kubernetes | vercel | railway
@@ -50,7 +50,9 @@ layers/
   feature-flags/   launchdarkly | aws-appconfig | flagsmith | posthog
   payment/         stripe | paypal | braintree | none
   email/           sendgrid | ses | resend | none
-  search/          algolia | elasticsearch | typesense | none
+  search/          algolia | elasticsearch | typesense | pagefind | none
+  analytics/       posthog
+  cms/             keystatic
   design/          figma | sketch | adobe-xd
   project-management/ github | jira | linear | huly
   ci/              github-actions | gitlab-ci | circleci | azure-pipelines | neon-branching
