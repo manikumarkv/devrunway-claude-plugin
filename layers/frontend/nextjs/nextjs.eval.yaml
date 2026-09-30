@@ -2,7 +2,7 @@ skill: nextjs-standards
 skill_files:
   - layers/frontend/nextjs/SKILL.md
   - layers/frontend/nextjs/nextjs.md
-version: 1
+version: 2
 
 cases:
   - id: next-01
@@ -56,3 +56,37 @@ cases:
     rationale: |
       Server Actions handle form mutations without client-side fetch calls.
       revalidatePath invalidates the cache so the UI reflects the mutation.
+
+  - id: next-07
+    name: "Dynamic route awaits params (Next.js 15)"
+    scenario: |
+      Write app/products/[id]/page.tsx for Next.js 15 that loads one product by
+      its id. Use the nextjs-standards skill rules.
+    must_contain:
+      - "await params"
+      - "Promise<"
+    rationale: |
+      In Next.js 15, params is a promise. Reading params.id synchronously is
+      deprecated and will break.
+
+  - id: next-08
+    name: "Caching is chosen explicitly"
+    scenario: |
+      Write a Next.js 15 page that shows a blog post list from a CMS API. The
+      list changes about once an hour. Use the nextjs-standards skill rules.
+    must_contain:
+      - "revalidate"
+    rationale: |
+      fetch is not cached by default in Next.js 15; without an explicit
+      revalidate every request hits the CMS.
+
+  - id: next-09
+    name: "Server Action validates input and checks auth"
+    scenario: |
+      Write a Next.js Server Action that updates the signed-in user's display
+      name. Use the nextjs-standards skill rules.
+    must_contain:
+      - "'use server'"
+      - "safeParse"
+    rationale: |
+      Server Actions are public endpoints; unvalidated input is an injection risk.

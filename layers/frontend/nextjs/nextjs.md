@@ -1,465 +1,116 @@
-# Next.js App Router Standards
+# Next.js standards (v15, App Router)
 
----
+Short rules for Next.js apps. When the project is on the Pages Router, see section 9.
 
-## Project structure
+## 1. Server and Client Components
 
-```
-src/
-  app/
-    layout.tsx           ← root layout — ThemeProvider, auth context, fonts
-    page.tsx             ← homepage
-    loading.tsx          ← root loading UI (optional)
-    error.tsx            ← root error boundary (must be 'use client')
-    not-found.tsx        ← 404 page
-    globals.css
+- Every component in `app/` is a Server Component unless the file starts with `'use client'`.
+- Server Components can be `async`, read the database and use secrets. They send no JS to the browser.
+- Add `'use client'` only when a component needs state, effects, event handlers or browser APIs. Put it on the smallest leaf (a button, not the page).
+- Props passed from a Server to a Client Component must be serialisable, and must never contain secrets.
+- A Client Component can render Server Components passed in as `children`.
 
-    (marketing)/         ← route group (no URL segment)
-      about/page.tsx
-      pricing/page.tsx
+## 2. Request APIs are async (Next.js 15)
 
-    (app)/               ← authenticated app shell
-      layout.tsx         ← auth check, sidebar, header
-      dashboard/
-        page.tsx
-        loading.tsx
-      orders/
-        page.tsx
-        [id]/
-          page.tsx
-          edit/page.tsx
-
-    api/
-      webhooks/
-        stripe/route.ts  ← webhook handler (external)
-      auth/[...nextauth]/route.ts
-
-  components/            ← shared Client Components
-  lib/                   ← utilities, DB client, auth helpers
-  actions/               ← Server Actions
-  types/
-```
-
----
-
-## Server Components (default)
+`params`, `searchParams`, `cookies()`, `headers()` and `draftMode()` return promises. Await them:
 
 ```tsx
-// app/orders/page.tsx — Server Component (no 'use client')
-import { getOrders } from '@/lib/orders'
-import { OrderList } from '@/components/OrderList'
-import { getCurrentUser } from '@/lib/auth'
-import { redirect } from 'next/navigation'
+// app/products/[id]/page.tsx
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> };
 
-// generateMetadata — SEO
-export const metadata = {
-  title:       'Orders | MyApp',
-  description: 'View and manage your orders',
-}
-
-export default async function OrdersPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; page?: string }
-}) {
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
-
-  const orders = await getOrders({
-    userId: user.id,
-    status: searchParams.status,
-    page:   Number(searchParams.page ?? 1),
-  })
-
-  return (
-    <main>
-      <h1>Your Orders</h1>
-      {/* OrderList is a Client Component if it needs interactivity */}
-      <OrderList initialOrders={orders} />
-    </main>
-  )
+export default async function ProductPage({ params, searchParams }: Props) {
+  const { id } = await params;
+  const { tab = 'details' } = await searchParams;
+  const product = await getProduct(id);
+  if (!product) notFound();
+  return <Product product={product} tab={tab} />;
 }
 ```
 
----
+In a Client Component, unwrap them with `use(params)`, or use `useParams()` / `useSearchParams()`.
 
-## Client Components
+## 3. Data fetching and caching
 
-```tsx
-// src/components/OrderList.tsx
-'use client'
+- Fetch in the Server Component that needs the data: the page, not the layout.
+- Run independent requests in parallel: `const [a, b] = await Promise.all([getA(), getB()])`.
+- Nothing is cached by default in Next.js 15. Choose per request:
 
-import { useState } from 'react'
-import type { Order } from '@/types'
-
-interface Props {
-  initialOrders: Order[]
-}
-
-// Keep 'use client' boundary as far down the tree as possible
-export function OrderList({ initialOrders }: Props) {
-  const [orders, setOrders] = useState(initialOrders)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-
-  return (
-    <ul>
-      {orders.map((order) => (
-        <li
-          key={order.id}
-          onClick={() => setSelectedId(order.id)}
-          aria-selected={selectedId === order.id}
-        >
-          Order #{order.id} — {order.status}
-        </li>
-      ))}
-    </ul>
-  )
-}
-```
-
----
-
-## Data fetching patterns
-
-```tsx
-// Real-time data (no cache)
-async function getOrder(id: string) {
-  const res = await fetch(`/api/orders/${id}`, { cache: 'no-store' })
-  if (!res.ok) throw new Error('Failed to fetch order')
-  return res.json()
-}
-
-// Revalidated data (ISR — fresh every 60 seconds)
-async function getProducts() {
-  const res = await fetch('/api/products', { next: { revalidate: 60 } })
-  return res.json()
-}
-
-// Static data (build-time, never stale)
-async function getConfig() {
-  const res = await fetch('/api/config', { cache: 'force-cache' })
-  return res.json()
-}
-
-// Tag-based revalidation (invalidate on demand)
-async function getOrderById(id: string) {
-  const res = await fetch(`/api/orders/${id}`, {
-    next: { tags: [`order-${id}`] },
-  })
-  return res.json()
-}
-
-// Deduplication: same URL fetched multiple times in one render = one HTTP request
-async function UserAvatar() {
-  const user = await getUser()  // safe to call in multiple components
-  return <img src={user.avatar} alt={user.name} />
-}
-```
-
----
-
-## Parallel data fetching
-
-```tsx
-// ❌ Sequential — each awaits the previous
-const user    = await getUser(id)
-const orders  = await getOrders(user.id)
-
-// ✅ Parallel — start both simultaneously
-const [user, orders] = await Promise.all([
-  getUser(id),
-  getOrders(id),
-])
-```
-
----
-
-## Server Actions
-
-```typescript
-// src/actions/orders.ts
-'use server'
-
-import { revalidatePath, revalidateTag } from 'next/cache'
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth'
-import { createOrderSchema } from '@/lib/schemas'
-import { db } from '@/lib/db'
-
-export async function createOrder(formData: FormData) {
-  // 1. Auth check — Server Actions are API endpoints
-  const user = await getCurrentUser()
-  if (!user) throw new Error('Unauthorised')
-
-  // 2. Validate input — never trust FormData
-  const raw = Object.fromEntries(formData)
-  const parsed = createOrderSchema.safeParse(raw)
-  if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors }
-  }
-
-  // 3. Perform mutation
-  const order = await db.orders.create({
-    data: { ...parsed.data, userId: user.id },
-  })
-
-  // 4. Invalidate cache
-  revalidatePath('/orders')
-  revalidateTag(`user-${user.id}-orders`)
-
-  // 5. Redirect to new resource
-  redirect(`/orders/${order.id}`)
-}
-```
-
-```tsx
-// Using a Server Action in a form (no JS needed for basic submit)
-import { createOrder } from '@/actions/orders'
-
-export function CreateOrderForm() {
-  return (
-    <form action={createOrder}>
-      <input name="customerId" required />
-      <input name="total" type="number" required />
-      <button type="submit">Create Order</button>
-    </form>
-  )
-}
-
-// Using with useActionState for error display (React 19 / Next.js 14.3+)
-'use client'
-import { useActionState } from 'react'
-import { createOrder } from '@/actions/orders'
-
-export function CreateOrderForm() {
-  const [state, action, isPending] = useActionState(createOrder, null)
-
-  return (
-    <form action={action}>
-      <input name="customerId" required />
-      {state?.error?.customerId && <p>{state.error.customerId[0]}</p>}
-      <button type="submit" disabled={isPending}>
-        {isPending ? 'Creating…' : 'Create Order'}
-      </button>
-    </form>
-  )
-}
-```
-
----
-
-## Route Handlers
-
-```typescript
-// src/app/api/orders/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/auth'
-import { db } from '@/lib/db'
-
-export async function GET(request: NextRequest) {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
-
-  const { searchParams } = new URL(request.url)
-  const status = searchParams.get('status')
-
-  const orders = await db.orders.findMany({
-    where: { userId: user.id, ...(status && { status }) },
-    orderBy: { createdAt: 'desc' },
-  })
-
-  return NextResponse.json({ data: orders })
-}
-
-// src/app/api/orders/[id]/route.ts
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
-
-  const body = await request.json()
-
-  const order = await db.orders.update({
-    where: { id: params.id, userId: user.id },
-    data:  body,
-  })
-
-  return NextResponse.json({ data: order })
-}
-```
-
----
-
-## Layouts and loading states
-
-```tsx
-// src/app/(app)/layout.tsx — authenticated layout
-import { getCurrentUser } from '@/lib/auth'
-import { redirect } from 'next/navigation'
-import { Sidebar } from '@/components/Sidebar'
-
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
-
-  return (
-    <div className="flex h-screen">
-      <Sidebar user={user} />
-      <main className="flex-1 overflow-auto p-6">{children}</main>
-    </div>
-  )
-}
-```
-
-```tsx
-// src/app/(app)/orders/loading.tsx — automatic Suspense boundary
-export default function Loading() {
-  return (
-    <div>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="skeleton h-16 mb-2 rounded" />
-      ))}
-    </div>
-  )
-}
-```
-
-```tsx
-// src/app/(app)/orders/error.tsx — must be a Client Component
-'use client'
-
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string }
-  reset: () => void
-}) {
-  return (
-    <div>
-      <h2>Something went wrong</h2>
-      <p>{error.message}</p>
-      <button onClick={reset}>Try again</button>
-    </div>
-  )
-}
-```
-
----
-
-## Metadata API
-
-```typescript
-// Static metadata
-export const metadata = {
-  title:       'Orders',
-  description: 'View and manage your orders',
-  openGraph: {
-    title:       'Orders | MyApp',
-    description: 'View and manage your orders',
-    images:      ['/og-image.png'],
-  },
-}
-
-// Dynamic metadata (e.g., for a product page)
-export async function generateMetadata(
-  { params }: { params: { id: string } }
-): Promise<Metadata> {
-  const order = await getOrder(params.id)
-
-  return {
-    title:       `Order #${order.id}`,
-    description: `View order details for #${order.id}`,
-  }
-}
-```
-
----
-
-## Middleware
-
-```typescript
-// src/middleware.ts — runs on the Edge before every request
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { verifyToken } from './lib/auth'
-
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  // Public routes — no auth needed
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/webhooks')) {
-    return NextResponse.next()
-  }
-
-  const token = request.cookies.get('auth-token')?.value
-  if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  try {
-    const payload = await verifyToken(token)
-    // Pass user info to headers for Server Components
-    const response = NextResponse.next()
-    response.headers.set('x-user-id', payload.sub)
-    return response
-  } catch {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-}
-
-export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
-}
-```
-
----
-
-## next.config.ts
-
-```typescript
-import type { NextConfig } from 'next'
-
-const nextConfig: NextConfig = {
-  images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'your-cdn.com' },
-    ],
-  },
-  experimental: {
-    serverActions: { allowedOrigins: ['localhost:3000'] },
-  },
-  // Security headers
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          { key: 'X-Content-Type-Options',  value: 'nosniff' },
-          { key: 'X-Frame-Options',          value: 'DENY' },
-          { key: 'Referrer-Policy',          value: 'strict-origin-when-cross-origin' },
-        ],
-      },
-    ]
-  },
-}
-
-export default nextConfig
-```
-
----
-
-## Common mistakes
-
-| Mistake | Fix |
+| Need | Write |
 |---|---|
-| `'use client'` on every component | Default is Server Component — only add `'use client'` when you need hooks/events |
-| Fetching data in `layout.tsx` for a specific page | Fetch in `page.tsx` — layouts don't know which page will render |
-| `useEffect` + `fetch` in a Server Component | Server Components are async — `await fetch()` directly |
-| `getServerSideProps` in the App Router | Not supported — fetch in Server Components instead |
-| Passing secrets as props to Client Components | Secrets stay in Server Components — never cross the server/client boundary |
-| `<head>` tags in JSX | Use the Metadata API — `export const metadata = { ... }` |
-| Sequential awaits for independent data | Use `Promise.all()` for parallel fetching |
-| Not checking auth in Server Actions | Server Actions are API endpoints — always auth-check at the top |
+| Always fresh | Default (or `cache: 'no-store'`) |
+| Static until redeploy | `fetch(url, { cache: 'force-cache' })` |
+| Refresh every N seconds | `fetch(url, { next: { revalidate: N } })` or `export const revalidate = N` |
+| Invalidate on demand | `fetch(url, { next: { tags: ['products'] } })` + `revalidateTag('products')` |
+| Cache a DB query | `unstable_cache(fn, keys, { tags, revalidate })` |
+
+- Wrap slow parts in `<Suspense>` (or add `loading.tsx`) so the rest of the page streams first.
+- Use `after(() => ...)` for work that shouldn't delay the response (logging, analytics).
+
+## 4. Server Actions
+
+- Use them for form submissions and mutations from your own UI.
+- They are public HTTP endpoints. Always, at the top: check auth, then validate input (Zod).
+- After a write, call `revalidatePath()` or `revalidateTag()`, or `redirect()`.
+- Use `useActionState` (React 19) for pending state and errors.
+
+```ts
+'use server';
+import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
+
+const Input = z.object({ name: z.string().min(1), price: z.coerce.number().positive() });
+
+export async function createProduct(_prev: unknown, formData: FormData) {
+  const session = await auth();
+  if (!session) return { error: 'Not signed in' };
+  const parsed = Input.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors };
+  await db.product.create({ data: parsed.data });
+  revalidatePath('/products');
+  return { error: null };
+}
+```
+
+## 5. Route handlers
+
+- `app/api/**/route.ts`, exporting `GET`, `POST`, etc. Return `Response` / `NextResponse`.
+- Use them for webhooks, external clients and streaming. Your own pages call Server Actions or fetch data directly.
+- GET handlers are not cached by default. Add `export const dynamic = 'force-static'` to cache one.
+
+## 6. Layouts and special files
+
+| File | Purpose |
+|---|---|
+| `layout.tsx` | Shared UI that persists across navigations. Server Component. |
+| `loading.tsx` | Suspense fallback for the segment |
+| `error.tsx` | Error boundary. Must be `'use client'`. |
+| `not-found.tsx` | Rendered by `notFound()` |
+| `route.ts` | API endpoint (no `page.tsx` in the same folder) |
+
+## 7. Metadata and SEO
+
+- Export `metadata` or `async generateMetadata({ params })` from `layout.tsx` / `page.tsx`.
+- Never write `<head>` tags by hand. Add `sitemap.ts` and `robots.ts` in `app/`.
+- Use `next/image` for images (with `alt`), `next/font` for fonts, `next/link` for internal links.
+
+## 8. Middleware and config
+
+- `middleware.ts` runs on every matched request: keep it to redirects, rewrites and auth gating. Set `config.matcher` so it skips static files.
+- Middleware is not the only auth check. Check again where the data is read.
+- Keep `next.config.ts` typed (`NextConfig`). Set security headers there.
+- Env vars: only `NEXT_PUBLIC_*` reaches the browser.
+
+## 9. Pages Router (`pages/`)
+
+- Sections 2–5 do not apply. Use `getServerSideProps` / `getStaticProps` (with `revalidate`) and `pages/api/*` handlers.
+- Never mix the two data models in one route: no `getServerSideProps` in `app/`, no Server Actions in `pages/`.
+- For new routes in a mixed project, prefer `app/`.
+
+## Never
+
+- `'use client'` on pages or layouts to make one button work.
+- Reading `params.id` without awaiting `params` (Next.js 15).
+- Assuming `fetch` is cached; say what you want.
+- A Server Action without auth and input validation.
+- Secrets in Client Components or `NEXT_PUBLIC_*` variables.
+- Fetching page data in `layout.tsx`.

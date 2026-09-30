@@ -200,6 +200,13 @@ SJA="$TMP/stackjson-astro"; mkdir -p "$SJA"; echo '{"frontend":["astro","react"]
 expect_layers "stack.json frontend array keeps React islands" "$SJA" "$(sid)" src/components/Quiz.tsx react-standards
 not_layer     "stack.json frontend array still skips vue" "$SJA" "$(sid)" src/components/Quiz.tsx vue
 
+# Next.js 15 layer (#100)
+NX="$TMP/next-app"; mkdir -p "$NX"; echo '{"dependencies":{"next":"15","react":"19"}}' > "$NX/package.json"
+expect_layers "Next.js dynamic page gets nextjs" "$NX" "$(sid)" "app/products/[id]/page.tsx" nextjs
+expect_layers "Pages Router file gets nextjs" "$NX" "$(sid)" pages/index.tsx nextjs
+not_layer     "no nextjs rules on Astro src/pages" "$AST" "$(sid)" src/pages/about.astro nextjs
+not_layer     "no nextjs rules in a React app without next" "$REACT" "$(sid)" pages/index.tsx nextjs
+
 DET=$(jq -nc --arg f "$REACT/src/components/Det.tsx" --arg d "$REACT" --arg s "$(sid)" '{tool_input:{file_path:$f},cwd:$d,session_id:$s}' \
       | bash "$HOOKS/layer-autoload.sh" | jq -r '.hookSpecificOutput.additionalContext')
 if printf '%s' "$DET" | grep -q "Detected in this project: package.json: .*@mui/material"; then

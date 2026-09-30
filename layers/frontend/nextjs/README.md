@@ -1,8 +1,9 @@
 # layers/frontend/nextjs/
 
-> 🚧 This layer is not yet implemented.
+Next.js 15 standards (App Router, with a Pages Router note): Server Components, async request APIs, caching, Server Actions, route handlers, metadata.
 
-**What it will cover:** Next.js 14 App Router standards, server components, server actions, route handlers, metadata API.
+- `SKILL.md`: the summary the `layer-autoload` hook injects
+- `nextjs.md`: the full standards
+- `nextjs.eval.yaml`: eval cases
 
-**Contribute:** See [CONTRIBUTING.md](../../../CONTRIBUTING.md) for how to build a layer.
-**Vote / track:** [github.com/yamani/devrunway/issues](https://github.com/yamani/devrunway/issues)
+**Contribute:** See [CONTRIBUTING.md](../../../CONTRIBUTING.md).
