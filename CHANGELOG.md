@@ -2,6 +2,19 @@
 
 All notable changes to devrunway are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## [5.1.0] — 2026-09-30
+
+### Features
+
+- **layers**: add `frontend/astro`, `auth/clerk`, `search/pagefind`, and two new categories: `cms/keystatic` and `analytics/posthog` (`posthog-analytics`) (03dc370)
+- **setup**: Q5 accepts several frontends (e.g. Astro with React islands, written as `"frontend": ["astro", "react"]`); Q19 adds `clerk`, Q28 adds `pagefind`; new Q31 analytics and Q32 CMS. Later questions are renumbered Q33–Q40; existing `stack.json` files stay valid (03dc370)
+- **hooks**: `layer-autoload` treats `.astro` as a frontend file and detects the new layers from `package.json` (03dc370)
+- **layers**: `frontend/nextjs` targets Next.js 15: awaited `params`/`cookies()`, opt-in caching, `after()`, `useActionState`, a Pages Router section; 465 lines down to 116 (8f4636e)
+
+### Documentation
+
+- **layers**: every layer README is generated from its `SKILL.md` and checked in CI; 84 no longer claim the layer is unimplemented (59d585b)
+
 ## [5.0.0] — 2026-09-30
 
 ### Breaking changes
@@ -110,5 +123,6 @@ All notable changes to devrunway are documented here. This project follows [Sema
 - **dispatcher**: add regression cases for depth cap and unroutable layers (b3204d7)
 - **layer**: close a coverage gap in the mobile/flutter theming eval (7e9030b)
 
+[5.1.0]: https://github.com/manikumarkv/devrunway-claude-plugin/compare/v5.0.0...v5.1.0
 [5.0.0]: https://github.com/manikumarkv/devrunway-claude-plugin/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/manikumarkv/devrunway-claude-plugin/compare/v4.0.5...v4.1.0
