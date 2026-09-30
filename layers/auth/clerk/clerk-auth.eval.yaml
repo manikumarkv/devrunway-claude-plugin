@@ -1,0 +1,52 @@
+skill: clerk-auth
+skill_files:
+  - layers/auth/clerk/SKILL.md
+  - layers/auth/clerk/clerk-auth.md
+version: 1
+
+cases:
+  - id: clerk-01
+    name: "Middleware denies by default"
+    scenario: |
+      Protect every page of a Next.js app with Clerk except the home page
+      and the sign-in pages. Use the clerk-auth skill rules.
+    must_contain:
+      - "clerkMiddleware"
+      - "createRouteMatcher"
+      - "auth.protect()"
+    rationale: |
+      A public-route allowlist fails closed: a new page is protected by default.
+
+  - id: clerk-02
+    name: "API route checks auth on the server"
+    scenario: |
+      Write a Next.js route handler that returns the signed-in user's orders.
+      Use the clerk-auth skill rules.
+    must_contain:
+      - "await auth()"
+      - "401"
+    must_not_contain:
+      - "req.body.userId"
+      - "searchParams.get('userId')"
+    rationale: |
+      The user ID must come from the verified session, never from the request.
+
+  - id: clerk-03
+    name: "Webhook signature is verified"
+    scenario: |
+      Write a Clerk webhook handler that saves new users to the database.
+      Use the clerk-auth skill rules.
+    must_contain:
+      - "verifyWebhook"
+    rationale: |
+      An unverified webhook lets anyone create or delete users.
+
+  - id: clerk-04
+    name: "Secret key never public"
+    scenario: |
+      Set up environment variables for a Next.js app using Clerk.
+      Use the clerk-auth skill rules.
+    must_not_contain:
+      - "NEXT_PUBLIC_CLERK_SECRET_KEY"
+    rationale: |
+      NEXT_PUBLIC_ variables are bundled into the browser.
