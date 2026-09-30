@@ -51,7 +51,7 @@ Plus utility commands: `/branch`, `/task`, `/release`, `/security-review`, `/deb
 
 Result: Claude knows your stack on day one. No prompt engineering required.
 
-### 3. 140 technology layers across 37 categories
+### 3. 149 technology layers across 43 categories
 
 Each layer is a self-contained skill bundle with code examples, "always do this / never do that" rules, and a test suite. Layers cover:
 
@@ -135,7 +135,7 @@ GitHub · GitLab · Bitbucket · Azure DevOps · Jira · Linear · Huly · Confl
 
 ## Quality numbers
 
-- **140 layers** across 37 categories — full-stack coverage
+- **149 layers** across 43 categories — full-stack coverage
 - **93 eval files** with hundreds of assertion-based test cases
 - **5 review agents** (code, security, debug, eval-runner, skill-forge)
 - **4 active safety hooks**
@@ -158,7 +158,7 @@ GitHub · GitLab · Bitbucket · Azure DevOps · Jira · Linear · Huly · Confl
 1. **Hero** — tagline + one-liner + "Install" CTA
 2. **The problem** — "AI code that works but doesn't follow your team's rules"
 3. **How it works** — `/setup` → declare stack → standards auto-apply → verified output (3-step diagram)
-4. **The 140 layers** — searchable/filterable grid by category
+4. **The 149 layers** — searchable/filterable grid by category
 5. **The eval harness** — animated example of `must_contain` assertions catching a bug
 6. **SDLC flow** — vertical timeline from `/product-brainstorm` to `/deploy prod`
 7. **Sub-agent architecture** — small diagram showing main thread + dispatcher + consultants

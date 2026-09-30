@@ -104,7 +104,7 @@ skills/        ← universal slash commands (product-plan, dev-code, pr, eval, f
 agents/        ← code-reviewer, security-reviewer, debugger, stack-dispatcher, layer-consultant
 hooks/         ← 35 active safety + quality hooks (destructive-git-guard, secrets-leak-guard, …)
 
-layers/        ← 140 technology layers, auto-loaded by file pattern
+layers/        ← 149 technology layers, auto-loaded by file pattern
   frontend/      react | vue | angular | nextjs | astro
   backend/       node-express | python-fastapi | python-django | dotnet
   cloud/         aws | gcp | azure
@@ -135,7 +135,7 @@ layers/        ← 140 technology layers, auto-loaded by file pattern
   feature-flags/ launchdarkly | aws-appconfig | flagsmith | posthog
   secrets/       aws-secrets-manager | vault | doppler | env-only
   source-control/ github | gitlab | bitbucket | azure-devops
-  ... and more (140 layers total)
+  ... and more (149 layers total)
 
 setup/         ← /setup wizard
 ```
