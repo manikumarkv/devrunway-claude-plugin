@@ -2,6 +2,37 @@
 
 All notable changes to devrunway are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## [5.0.0] — 2026-09-30
+
+### Breaking changes
+
+- **hooks**: `no-commit-to-main` and `conventional-commit-check` are opt-in per repo. Set `"policies": {"protect-main": true, "conventional-commits": true}` in `stack.json` (`/setup` Q38); Conventional Commits are also enforced automatically in a repo with a commitlint config (8c69166)
+- **plugin**: bundles no MCP servers and asks for no tokens at install; `/setup` writes the project's `.mcp.json` (189aa7d)
+- **hooks**: guards deny the single offending tool call with a reason Claude can act on, instead of ending the turn (189aa7d)
+- **layers**: the `ci/flutter-release` layer skill is now named `flutter-release-standards`; `/flutter-release` stays the command (e78ab50)
+
+### Features
+
+- **hooks**: layer standards auto-load when Claude reads or edits a matching file, filtered by `stack.json`, `package.json` and the file's language; before this, no layer ever loaded (fa2e665)
+- **plugin**: `/cognito-auth`, `/scaffold`, `/deploy`, `/validate`, `/logs`, `/feature-flag`, `/synthetic`, `/test-load` and `/test-smoke` are registered and can be invoked (7cb9a47)
+- **setup**: Q38 "Team policies" writes a `policies` block to `stack.json` (8c69166)
+- **ci**: CI validates manifests, frontmatter, hook behaviour, layer index freshness, doc path references, `/setup` output against the schema, and command registration (1252fbd)
+
+### Bug Fixes
+
+- **hooks**: `conventional-commit-check` accepts Claude Code's heredoc commit form and `-am` (189aa7d)
+- **hooks**: `destructive-git-guard` catches `push -f`, `+refspec`, `branch -D` and ignores quoted text; `destructive-rm-guard` handles every flag order and allows deletes inside the project and `/tmp` (189aa7d)
+- **hooks**: `tsc-check` no longer downloads the squatted `tsc` package, reports errors it used to drop, and runs in the background (189aa7d, 8c69166)
+- **layers**: `react-standards` follows the project's component library instead of mandating shadcn; shadcn and i18n rules moved to their own layers (8aab3ac)
+- **layers**: jest config keys (`setupFilesAfterEnv`, `coverageThreshold`), deprecated shadcn toast advice, and six broken file references (8aab3ac)
+- **setup**: generated `stack.json` now validates against `setup/stack.schema.json` (8c69166)
+- **marketplace**: use `"./"` so the plugin entry passes path validation (ae1a6f8)
+
+### Documentation
+
+- **plugin**: keep the product site (devrunway.dev) in sync with user-visible changes (1f77e7f)
+- **readme**: user vs project install scope (8c69166)
+
 ## [4.1.0] — 2026-09-19
 
 ### Features
@@ -79,4 +110,5 @@ All notable changes to devrunway are documented here. This project follows [Sema
 - **dispatcher**: add regression cases for depth cap and unroutable layers (b3204d7)
 - **layer**: close a coverage gap in the mobile/flutter theming eval (7e9030b)
 
+[5.0.0]: https://github.com/manikumarkv/devrunway-claude-plugin/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/manikumarkv/devrunway-claude-plugin/compare/v4.0.5...v4.1.0
