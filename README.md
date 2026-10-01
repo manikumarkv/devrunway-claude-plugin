@@ -35,7 +35,7 @@ Inside Claude Code:
 
 - The safety guards (destructive git and `rm`, secrets) are on everywhere.
 - Layer standards load only for files that match your stack.
-- Team policies are **off unless a repo opts in**: "no commits to `main`" and "Conventional Commits only". Opt in through `/setup` (Q40), which writes `"policies"` to `stack.json`. Conventional Commits are also enforced, without opting in, in a repo that already has a commitlint config.
+- Team policies are **off unless a repo opts in**: "no commits to `main`" and "Conventional Commits only". Opt in through `/setup` (its last question), which writes `"policies"` to `stack.json`. Conventional Commits are also enforced, without opting in, in a repo that already has a commitlint config.
 
 To enable devrunway for one repo only, and share it with everyone who clones that repo:
 
@@ -49,12 +49,12 @@ To keep a user-level install but switch it off in one repo:
 claude plugin disable devrunway --scope project
 ```
 
-`/setup` asks 35 questions across 6 screens and generates:
+`/setup` detects your stack from the project's files (`package.json`, lockfiles, Python and Flutter manifests, CI config, the git remote), shows what it found for you to confirm, and asks only what files can't show: where you track work, where docs live, your design tool, and team policies. Then it generates:
 
 | Output | What it does |
 |---|---|
-| `stack.json` | Declares which tech layers you use |
-| `.mcp.json` | Pre-configures MCP servers (Figma, GitHub, Jira…) |
+| `stack.json` | Declares which tech layers you use. Slots it couldn't detect are left out and inferred later. |
+| `.mcp.json` | Adds the official remote MCP servers for your tools (GitHub, GitLab, Linear, Jira/Confluence, Figma, Notion, Neon). They sign in through `/mcp`; nothing to install. |
 
 All layers are bundled with the plugin; there is no per-layer install step. When Claude reads or edits a file, the `layer-autoload` hook matches it against each layer's `paths:` globs and gives Claude the matching layers' short standards summary, once per session, with a pointer to the full standards file. Layers that don't fit your project are skipped, based on `stack.json` and, where it doesn't say, your `package.json` or other manifests. Nothing is loaded until a relevant file is touched.
 
@@ -90,9 +90,9 @@ Layers activated for your stack (auto-load on matching files):
   layers/mocking/msw
   layers/design/figma
 
-MCP servers configured in .mcp.json (written by /setup; the plugin itself needs no tokens):
-  figma  → @figma/mcp-server (FIGMA_ACCESS_TOKEN)
-  github → @modelcontextprotocol/server-github (GITHUB_PERSONAL_ACCESS_TOKEN)
+MCP servers configured in .mcp.json (official remote servers; the plugin itself needs no tokens):
+  figma  → https://mcp.figma.com/mcp            (run /mcp to sign in)
+  github → https://api.githubcopilot.com/mcp/   (set GITHUB_PERSONAL_ACCESS_TOKEN)
 ```
 
 ---

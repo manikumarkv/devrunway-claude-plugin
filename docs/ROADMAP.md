@@ -197,72 +197,9 @@ Asking 32 questions at once is overwhelming. `/setup` asks them in 6 grouped scr
 }
 ```
 
-### Output 2 — `.mcp.json` (auto-generated, ready to use)
+### Output 2 — `.mcp.json`
 
-`/setup` scans each chosen layer's `SKILL.md` for `mcp:` frontmatter blocks and assembles this automatically:
-
-```json
-{
-  "mcpServers": {
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": { "GITHUB_TOKEN": "${GITHUB_TOKEN}" }
-    },
-    "figma": {
-      "command": "npx",
-      "args": ["-y", "@figma/mcp-server"],
-      "env": { "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}" }
-    },
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp"]
-    },
-    "postgres": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres"],
-      "env": { "DATABASE_URL": "${DATABASE_URL}" }
-    },
-    "sentry": {
-      "command": "npx",
-      "args": ["-y", "@sentry/mcp-server"],
-      "env": { "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}" }
-    },
-    "stripe": {
-      "command": "npx",
-      "args": ["-y", "@stripe/mcp-server"],
-      "env": { "STRIPE_SECRET_KEY": "${STRIPE_SECRET_KEY}" }
-    },
-    "aws": {
-      "command": "npx",
-      "args": ["-y", "@aws/mcp-server-core"],
-      "env": {
-        "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
-        "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
-        "AWS_REGION": "${AWS_REGION}"
-      }
-    }
-  }
-}
-```
-
-Then prints:
-```
-✅ .mcp.json generated — 7 MCP servers configured.
-
-Set these environment variables before starting Claude Code:
-  GITHUB_TOKEN          → github.com/settings/tokens (repo + issues scope)
-  FIGMA_ACCESS_TOKEN    → figma.com → Account → Personal access tokens
-  DATABASE_URL          → your postgres connection string
-  SENTRY_AUTH_TOKEN     → sentry.io → Settings → Auth Tokens
-  STRIPE_SECRET_KEY     → dashboard.stripe.com → Developers → API keys
-  AWS_ACCESS_KEY_ID     → AWS IAM console
-  AWS_SECRET_ACCESS_KEY → AWS IAM console
-  AWS_REGION            → e.g. us-east-1
-
-⚠️  No MCP available yet for: tailwind, pino, cognito, zustand, zod, msw, redis
-    These use skill-based guidance only.
-```
+`/setup` adds the vendors' official remote MCP servers for the tools the project uses (GitHub, GitLab, Linear, Atlassian for Jira/Confluence, Figma, Notion, Neon). They sign in through `/mcp`; GitHub reads `GITHUB_PERSONAL_ACCESS_TOKEN`. The current list lives in `skills/setup/SKILL.md` → "Output 2".
 
 ### Output 3 — Layer install commands
 ```
@@ -281,10 +218,10 @@ Each layer declares its MCP in `SKILL.md` frontmatter. `/setup` reads these to b
 
 | Tool | Layer | MCP package | Env vars | Status |
 |---|---|---|---|---|
-| `github` | source-control | `@modelcontextprotocol/server-github` | `GITHUB_TOKEN` | ✅ Official |
-| `gitlab` | source-control | `@gitlab/mcp-server` | `GITLAB_TOKEN` | ⚠️ Verify |
+| `github` | source-control | remote HTTP — `https://api.githubcopilot.com/mcp/` | `GITHUB_PERSONAL_ACCESS_TOKEN` (header) | ✅ Official |
+| `gitlab` | source-control | remote HTTP — `https://gitlab.com/api/v4/mcp` | OAuth (no env var) | ✅ Official |
 | `bitbucket` | source-control | community | `BITBUCKET_TOKEN` | ⚠️ Community |
-| `figma` | design | `@figma/mcp-server` | `FIGMA_ACCESS_TOKEN` | ✅ Official |
+| `figma` | design | remote HTTP — `https://mcp.figma.com/mcp` | OAuth (no env var) | ✅ Official |
 | `playwright` | testing/e2e | `@playwright/mcp` | none | ✅ Official |
 | `postgres-prisma` | database | `@modelcontextprotocol/server-postgres` | `DATABASE_URL` | ✅ Official |
 | `mongodb` | database | `mongodb-mcp-server` | `MONGODB_URI` | ✅ Official |
@@ -292,9 +229,9 @@ Each layer declares its MCP in `SKILL.md` frontmatter. `/setup` reads these to b
 | `aws` | cloud | `@aws/mcp-server-core` | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` | ✅ Official |
 | `sentry` | error-monitoring | `@sentry/mcp-server` | `SENTRY_AUTH_TOKEN` | ✅ Official |
 | `stripe` | payment | `@stripe/mcp-server` | `STRIPE_SECRET_KEY` | ✅ Official |
-| `linear` | project-management | `@linear/mcp-server` | `LINEAR_API_KEY` | ✅ Official |
+| `linear` | project-management | remote HTTP — `https://mcp.linear.app/mcp` | OAuth (no env var) | ✅ Official |
 | `datadog` | logging-provider | `@datadog/mcp-server` | `DD_API_KEY` | ⚠️ Verify |
-| `jira` | project-management | community | `JIRA_TOKEN`, `JIRA_HOST` | ⚠️ Community |
+| `jira` / `confluence` | project-management / documents | remote HTTP — `https://mcp.atlassian.com/v1/mcp` (server name `atlassian`) | OAuth (no env var) | ✅ Official |
 | `algolia` | search | community | `ALGOLIA_APP_ID`, `ALGOLIA_API_KEY` | ⚠️ Community |
 | `splunk` | logging-provider | community | `SPLUNK_TOKEN` | ⚠️ Community |
 | `launchdarkly` | feature-flags | community | `LD_API_KEY` | ⚠️ Community |
@@ -350,7 +287,7 @@ Layers without an MCP omit the `mcp:` field entirely.
 |---|---|---|---|---|
 | `core/` | ✅ Done | 32 universal skills (principle-only, zero stack refs) | — | Session 7 |
 | **Source Control** | | | | |
-| `layers/source-control/github` | ✅ Done | pr, branch, task, release skills | `server-github` | Move from skills/ |
+| `layers/source-control/github` | ✅ Done | pr, branch, task, release skills | remote `api.githubcopilot.com/mcp` | Move from skills/ |
 | `layers/source-control/gitlab` | 🫥 Stub | — | `@gitlab/mcp-server` | Community |
 | `layers/source-control/bitbucket` | 🫥 Stub | — | community | Community |
 | `layers/source-control/azure-devops` | 🫥 Stub | — | — | Community |
@@ -473,13 +410,13 @@ Layers without an MCP omit the `mcp:` field entirely.
 | `layers/search/elasticsearch` | 🫥 Stub | — | — | Community |
 | `layers/search/typesense` | 🫥 Stub | — | — | Community |
 | **Design** | | | | |
-| `layers/design/figma` | ✅ Done | Figma MCP wiring, token conventions, handoff checklist | `@figma/mcp-server` | New skill |
+| `layers/design/figma` | ✅ Done | Figma MCP wiring, token conventions, handoff checklist | remote `mcp.figma.com/mcp` | New skill |
 | `layers/design/sketch` | 🫥 Stub | — | — | Community |
 | `layers/design/adobe-xd` | 🫥 Stub | — | — | Community |
 | **Project Management** | | | | |
-| `layers/project-management/github` | ✅ Done | Issues, milestones, labels, gh CLI | `server-github` | Move from task/pr/release |
+| `layers/project-management/github` | ✅ Done | Issues, milestones, labels, gh CLI | remote `api.githubcopilot.com/mcp` | Move from task/pr/release |
 | `layers/project-management/jira` | 🫥 Stub | — | community | Community |
-| `layers/project-management/linear` | 🫥 Stub | — | `@linear/mcp-server` | Community |
+| `layers/project-management/linear` | 🫥 Stub | — | remote `mcp.linear.app/mcp` | Community |
 | `layers/project-management/huly` | 🫥 Stub | — | — | Community |
 | **CI/CD** | | | | |
 | `layers/ci/github-actions` | ✅ Done | pipeline skill, workflow templates | — | Move from skills/ |

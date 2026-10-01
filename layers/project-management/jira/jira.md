@@ -251,19 +251,11 @@ When the Jira MCP server is configured (via `/setup`), Claude can:
 - Update status: `move MYPROJ-123 to In Review`
 - Search with JQL: `find all unestimated backlog items`
 
-Configuration in `.mcp.json`:
+Configuration in `.mcp.json` (Atlassian's remote server covers Jira and Confluence; sign in with `/mcp`, no API token):
 ```json
 {
   "mcpServers": {
-    "jira": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-jira"],
-      "env": {
-        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}",
-        "JIRA_BASE_URL":  "${JIRA_BASE_URL}",
-        "JIRA_EMAIL":     "${JIRA_EMAIL}"
-      }
-    }
+    "atlassian": { "type": "http", "url": "https://mcp.atlassian.com/v1/mcp" }
   }
 }
 ```

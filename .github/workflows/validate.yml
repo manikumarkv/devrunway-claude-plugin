@@ -37,13 +37,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pyyaml
+      - run: pip install pyyaml jsonschema
       - name: Validate plugin tree
         run: python3 scripts/ci/validate_plugin.py
       - name: Layer index is up to date
         run: python3 scripts/build_layer_index.py --check
       - name: Layer READMEs are up to date
         run: python3 scripts/build_layer_readmes.py --check
+      - name: /setup detector and stack.json schema
+        run: python3 scripts/ci/test_setup.py
 
   hooks:
     name: Hook scripts

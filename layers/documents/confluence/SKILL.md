@@ -42,7 +42,7 @@ Full standards in [confluence.md](confluence.md). Always-on summary:
 - Every Postmortem links to the incident ticket and any follow-up issues
 
 **MCP usage:**
-- Prefer `mcp__confluence__*` tools (search_pages, create_page, update_page, get_page) over manual REST API calls
+- Prefer the Atlassian MCP server's tools (`mcp__atlassian__*`: `searchConfluenceUsingCql`, `getConfluencePage`, `createConfluencePage`, `updateConfluencePage`) over manual REST API calls
 - Cache page IDs locally when traversing a tree; never refetch in a loop
 
 **Never:**

@@ -206,17 +206,11 @@ When the Linear MCP server is configured (via `/setup`), Claude can:
 - Update status: `mark ENG-123 as done`
 - Search issues: `find all blocked issues in the current cycle`
 
-Configuration in `.mcp.json`:
+Configuration in `.mcp.json` (Linear's remote server; sign in with `/mcp`, no API key):
 ```json
 {
   "mcpServers": {
-    "linear": {
-      "command": "npx",
-      "args": ["-y", "@linear/mcp-server"],
-      "env": {
-        "LINEAR_API_KEY": "${LINEAR_API_KEY}"
-      }
-    }
+    "linear": { "type": "http", "url": "https://mcp.linear.app/mcp" }
   }
 }
 ```

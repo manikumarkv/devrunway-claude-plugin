@@ -4,9 +4,9 @@ description: GitHub project management standards — issue templates, label taxo
 user-invocable: false
 stack: source-control/github
 mcp:
-  package: "@modelcontextprotocol/server-github"
-  env:
-    GITHUB_PERSONAL_ACCESS_TOKEN: "github.com → Settings → Developer settings → Personal access tokens → Fine-grained → Create"
+  type: http
+  url: "https://api.githubcopilot.com/mcp/"
+  auth: "header Authorization: Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN} (github.com → Settings → Developer settings → Personal access tokens)"
 paths:
   - ".github/**"
   - "**/CODEOWNERS"

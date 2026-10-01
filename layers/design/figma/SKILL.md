@@ -4,9 +4,9 @@ description: Figma workflow standards — MCP integration, design token handoff,
 user-invocable: false
 stack: design/figma
 mcp:
-  package: "@figma/mcp-server"
-  env:
-    FIGMA_ACCESS_TOKEN: "figma.com → Account Settings → Personal access tokens → Create new token"
+  type: http
+  url: "https://mcp.figma.com/mcp"
+  auth: oauth
 paths:
   - "src/styles/**"
   - "src/tokens/**"
@@ -16,7 +16,7 @@ paths:
 
 Full standards in [figma-design.md](figma-design.md). Always-on summary:
 
-**MCP:** `claude mcp add figma npx -y @figma/mcp-server` — set `FIGMA_ACCESS_TOKEN` env var first. Use MCP to inspect component specs directly from a Figma URL rather than asking for screenshots.
+**MCP:** Figma's remote server (`/setup` adds it, or `claude mcp add --transport http figma https://mcp.figma.com/mcp`), then `/mcp` to sign in. No token needed. Use MCP to inspect component specs directly from a Figma URL rather than asking for screenshots.
 
 **Design token naming:** match Tailwind config keys — `color/brand/primary`, `spacing/4`, `radius/md`
 
