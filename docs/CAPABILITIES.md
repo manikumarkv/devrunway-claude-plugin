@@ -43,11 +43,10 @@ Plus utility commands: `/branch`, `/task`, `/release`, `/security-review`, `/deb
 
 ### 2. Stack configuration that adapts to *your* tools
 
-`/setup` is a one-time wizard (35 questions across 6 screens) that asks what frontend, backend, database, auth, cloud, CI, etc. you use. It outputs:
+`/setup` detects your frontend, backend, database, auth, CI, testing and more from the project's files, confirms it with you, and asks only what files can't show (about 4 questions). It outputs:
 
 - `stack.json` — your declared stack
-- `.mcp.json` — MCP servers pre-wired for your tools (Figma, GitHub, Jira, Stripe, Sentry, ...)
-- Install commands for the matching layer plugins
+- `.mcp.json` — official remote MCP servers for your tools (GitHub, GitLab, Linear, Jira/Confluence, Figma, Notion, Neon)
 
 Result: Claude knows your stack on day one. No prompt engineering required.
 

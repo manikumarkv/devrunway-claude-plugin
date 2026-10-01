@@ -1,676 +1,194 @@
 ---
 name: setup
-description: Interactive stack configuration wizard. Asks 40 questions across 6 screens to configure your full tech stack, then generates stack.json and .mcp.json so the right layer skills auto-load when you edit matching files.
+description: Configure devrunway for this project. Detects the stack from the project's files, confirms it with you, asks only what files can't show (about 4 questions), then writes stack.json and .mcp.json so the right layer standards auto-load.
 user-invocable: true
 effort: medium
 allowed-tools:
   - Read
   - Write
+  - Glob
+  - Bash(python3 *)
+  - Bash(git remote *)
   - Bash(ls *)
   - Bash(find *)
-  - Bash(mkdir *)
 ---
 
-# Setup Wizard
+# Setup
 
-Configure the devrunway plugin for this project by running a 6-screen interactive wizard. Each screen covers a different layer of the stack. After all screens, two outputs are generated: `stack.json` (declares your tech choices) and `.mcp.json` (pre-wired MCP servers for the tools you picked, if any). All layers come bundled with the plugin — the `layer-autoload` hook loads only the relevant ones, based on `stack.json` and the files Claude reads or edits.
+Configure devrunway for this project in four steps: **detect → confirm → ask the rest → write**. A typical repo needs about 4 questions.
 
----
-
-## How to run this wizard
-
-Use the `AskUserQuestion` tool for every question. **Do not** print the questions as plain text and wait for the user to type — that's the wrong UX. Instead, batch each screen's questions into one or more `AskUserQuestion` calls so the user can click to select.
-
-Rules for the AskUserQuestion calls:
-
-- **Up to 4 questions per call.** If a screen has more than 4, make multiple calls.
-- **Up to 4 options per question.** Each option has a short `label` (the tech name, e.g. "GitHub") and a 1-line `description` (what it means / when to pick it). If a question has more than 4 documented choices, list the 4 most-common; the user can pick "Other" to type a different value.
-- **Include "None / skip" as the last option** when the question allows skipping (most do — only Source Control, Frontend framework, Backend framework, and Package Manager are usually required).
-- **`header`** for each question is a short chip-tag, max 12 chars (e.g. "Git host", "CI", "Pkg mgr", "Frontend").
-- **`multiSelect: false`** for every question — pick one option each.
-
-Briefly announce each screen before the call(s):
-
-```
-─────────────────────────────────────────────────
-  devrunway /setup  ·  Screen N of 6
-  <Screen title>
-─────────────────────────────────────────────────
-```
-
-After Screen 6, generate the two outputs (`stack.json` and `.mcp.json`) and the summary without further prompting.
+Use the `AskUserQuestion` tool for every question (up to 4 questions per call, up to 4 options per question; the user can always pick "Other"). Never print questions as plain text and wait.
 
 ---
 
-## Screen 1 of 6 — Source Control & CI/CD
+## Step 0 — Existing config
 
-Announce the screen header, then call `AskUserQuestion` once with these four questions:
+If `stack.json` already exists in the project root, read it and ask: **Update it** (keep its values, re-detect and fill gaps) or **Start over** or **Cancel**.
 
-```
-questions: [
-  {
-    question: "Git provider — where does your source code live?",
-    header: "Git host",
-    multiSelect: false,
-    options: [
-      { label: "GitHub",      description: "github.com or GitHub Enterprise" },
-      { label: "GitLab",      description: "gitlab.com or self-hosted GitLab" },
-      { label: "Bitbucket",   description: "Atlassian Bitbucket Cloud or Server" },
-      { label: "Azure DevOps", description: "Microsoft Azure DevOps Repos" }
-    ]
-  },
-  {
-    question: "CI/CD platform — what runs your tests and deploys?",
-    header: "CI",
-    multiSelect: false,
-    options: [
-      { label: "GitHub Actions", description: "YAML workflows in .github/workflows" },
-      { label: "GitLab CI",      description: ".gitlab-ci.yml pipelines" },
-      { label: "CircleCI",       description: ".circleci/config.yml" },
-      { label: "None / skip",    description: "Not using CI yet, or hosted in another tool" }
-    ]
-  },
-  {
-    question: "Package manager",
-    header: "Pkg mgr",
-    multiSelect: false,
-    options: [
-      { label: "npm",  description: "Default Node.js package manager" },
-      { label: "pnpm", description: "Fast, disk-efficient (recommended for monorepos)" },
-      { label: "yarn", description: "Classic Yarn 1.x or modern Yarn Berry" },
-      { label: "bun",  description: "Bun's built-in package manager" }
-    ]
-  },
-  {
-    question: "Code quality / security scanning",
-    header: "Scanning",
-    multiSelect: false,
-    options: [
-      { label: "GitHub Security", description: "Dependabot + code scanning + secret scanning" },
-      { label: "SonarQube",       description: "Static analysis platform (Cloud or self-hosted)" },
-      { label: "Snyk",            description: "Snyk Open Source + Code + Container" },
-      { label: "None / skip",     description: "Not using a dedicated scanner" }
-    ]
-  }
-]
+## Step 1 — Detect
+
+Run the detector that ships with this skill, from the project root. Its path is this skill's base directory (shown when the skill loads) plus `detect_stack.py`:
+
+```bash
+python3 "<this skill's base directory>/detect_stack.py" .
 ```
 
-Wait for the user's answers, then proceed to Screen 2.
+It prints JSON:
 
----
-
-## Screen 2 of 6 — Frontend
-
-Announce the screen header, then call `AskUserQuestion` (in batches of ≤4 questions) following the Screen 1 pattern. Each question listed below maps to one AskUserQuestion entry. Use the option keys as `label` values (with proper capitalisation), and add a 1-line `description` for each. Replace any 5th option (often `none`) with "None / skip" as the 4th option; if the question has 5 real options like Git provider, drop the least-common and rely on the auto-"Other" affordance.
-
-For reference, here are the questions to ask:
-
-```
-─────────────────────────────────────────────────
-  devrunway /setup  ·  Screen 2 of 6
-  Frontend
-─────────────────────────────────────────────────
-
-5. Frontend framework (multi-select: Astro sites often add React or Vue islands)
-   react | vue | angular | nextjs | astro | none
-
-6. CSS framework
-   tailwind | styled-components | css-modules | bootstrap | none
-
-7. UI component library
-   shadcn | mui | ant-design | chakra | none
-
-8. State management
-   zustand | redux-toolkit | jotai | pinia | none
-
-9. Internationalisation (i18n)
-   react-i18next | lingui | vue-i18n | none
-
-10. Component documentation
-    storybook | ladle | none
-
-11. Design tool
-    figma | sketch | adobe-xd | none
+```json
+{
+  "detected": { "frontend": "react", "validation": "zod", "testing-unit": "vitest" },
+  "evidence": { "frontend": "package.json: react", "validation": "package.json: zod", "testing-unit": "package.json: vitest" },
+  "ask": ["project-management", "documents", "design", "policies"]
+}
 ```
 
-Ask Q5 with `multiSelect: true`. Write a single pick as a string (`"react"`) and several as an array (`["astro", "react"]`).
+It reads `package.json`, lockfiles, Python and Flutter manifests, CI config, deploy config and the git remote, and only returns values that `setup/stack.schema.json` accepts.
 
-Wait for the user's answers, then proceed to Screen 3.
+If `python3` is not available, detect by hand: read `package.json` (and `pyproject.toml` / `requirements.txt` / `pubspec.yaml`), and map packages to slots with the reference table at the end.
 
----
+## Step 2 — Confirm
 
-## Screen 3 of 6 — Backend & API
+Show what was found as a short table (slot, value, evidence). Then one `AskUserQuestion`:
 
-Announce the screen header, then call `AskUserQuestion` (in batches of ≤4 questions) following the Screen 1 pattern. Each question listed below maps to one AskUserQuestion entry. Use the option keys as `label` values (with proper capitalisation), and add a 1-line `description` for each. Replace any 5th option (often `none`) with "None / skip" as the 4th option; if the question has 5 real options like Git provider, drop the least-common and rely on the auto-"Other" affordance.
+- **Looks right**: go to Step 3.
+- **Change something**: ask which slots in one follow-up, then one question per slot with the values from the reference table.
+- **Add something it missed**: same, for slots it didn't detect.
 
-For reference, here are the questions to ask:
+Never ask about slots the user didn't mention. Slots nobody detected or answered are **left out** of `stack.json`; the `layer-autoload` hook infers them later from `package.json`.
 
-```
-─────────────────────────────────────────────────
-  devrunway /setup  ·  Screen 3 of 6
-  Backend & API
-─────────────────────────────────────────────────
+## Step 3 — Ask what files can't show
 
-12. Backend runtime / framework
-    node-express | python-fastapi | python-django | dotnet | none
+Ask only the slots in `ask`, in one call (two if there are 5):
 
-13. API style
-    rest | graphql | trpc | grpc | none
+| Slot | Question | Options (`header`) |
+|---|---|---|
+| `source-control` (only if no git remote was found) | Where does the code live? | GitHub · GitLab · Bitbucket · Azure DevOps (`Git host`) |
+| `project-management` | Where do you track work? | GitHub Issues · Jira · Linear · None (`Tickets`) |
+| `documents` | Where do specs and docs live? | Confluence · Notion · None (`Docs`) |
+| `design` | Design tool? | Figma · Sketch · None (`Design`) |
+| `policies` | Team rules to enforce in this repo? (`multiSelect: true`) | Protect main: no commits directly on main/master/develop/release · Conventional commits: `type(scope): subject` messages (`Policies`) |
 
-14. Validation library
-    zod | yup | valibot | joi | none
+Policies are off unless picked, because devrunway is often installed at user level and runs in every repo. (Conventional commits are also enforced, without this answer, in a repo that already has a commitlint config.)
 
-15. API documentation
-    swagger-express | openapi-fastapi | none
-```
+**Empty or new project** (fewer than 3 slots detected): also ask, in one more call, frontend, backend, database and unit testing, with the most common values from the reference table.
 
-Wait for the user's answers, then proceed to Screen 4.
+## Step 4 — Write the files
 
----
+### Output 1 — stack.json
 
-## Screen 4 of 6 — Infrastructure
+Write `stack.json` in the project root: `devrunway`, every detected or confirmed slot, every answered slot (`"none"` when the user picked None), and `policies`. Leave out slots nobody detected or answered. `frontend` is a string, or an array when there are several (`["nextjs", "react"]`, `["astro", "react"]`).
 
-Announce the screen header, then call `AskUserQuestion` (in batches of ≤4 questions) following the Screen 1 pattern. Each question listed below maps to one AskUserQuestion entry. Use the option keys as `label` values (with proper capitalisation), and add a 1-line `description` for each. Replace any 5th option (often `none`) with "None / skip" as the 4th option; if the question has 5 real options like Git provider, drop the least-common and rely on the auto-"Other" affordance.
-
-For reference, here are the questions to ask:
-
-```
-─────────────────────────────────────────────────
-  devrunway /setup  ·  Screen 4 of 6
-  Infrastructure
-─────────────────────────────────────────────────
-
-16. Cloud provider
-    aws | gcp | azure | none
-
-17. Container / deployment target
-    serverless | docker | kubernetes | vercel | railway | none
-
-18. Database
-    postgres-prisma | neon | mongodb | dynamodb | sqlalchemy | none
-
-19. Authentication
-    cognito | firebase | auth0 | azure-ad | clerk | none
-
-20. Cache / queue
-    redis | sqs | bullmq | rabbitmq | none
-
-21. File storage
-    s3 | gcs | cloudinary | uploadthing | none
-
-22. Secrets management
-    aws-secrets-manager | doppler | vault | env-only
-
-23. Feature flags
-    aws-appconfig | launchdarkly | posthog | flagsmith | none
-```
-
-Wait for the user's answers, then proceed to Screen 5.
-
----
-
-## Screen 5 of 6 — Observability & Services
-
-Announce the screen header, then call `AskUserQuestion` (in batches of ≤4 questions) following the Screen 1 pattern. Each question listed below maps to one AskUserQuestion entry. Use the option keys as `label` values (with proper capitalisation), and add a 1-line `description` for each. Replace any 5th option (often `none`) with "None / skip" as the 4th option; if the question has 5 real options like Git provider, drop the least-common and rely on the auto-"Other" affordance.
-
-For reference, here are the questions to ask:
-
-```
-─────────────────────────────────────────────────
-  devrunway /setup  ·  Screen 5 of 6
-  Observability & Services
-─────────────────────────────────────────────────
-
-24. Logging framework
-    pino | winston | morgan | none
-
-25. Logging provider / destination
-    cloudwatch | datadog | splunk | grafana-loki | newrelic | none
-
-26. Error monitoring
-    sentry | datadog-apm | bugsnag | none
-
-27. Realtime / websockets
-    socketio | pusher | ably | none
-
-28. Search
-    algolia | typesense | elasticsearch | pagefind | none
-
-29. Payment processing
-    stripe | paypal | braintree | none
-
-30. Transactional email
-    resend | sendgrid | ses | none
-
-31. Product analytics
-    posthog | none
-
-32. Content management (CMS)
-    keystatic | none
-```
-
-Wait for the user's answers, then proceed to Screen 6.
-
----
-
-## Screen 6 of 6 — Developer Tooling
-
-Announce the screen header, then call `AskUserQuestion` (in batches of ≤4 questions) following the Screen 1 pattern. Each question listed below maps to one AskUserQuestion entry. Use the option keys as `label` values (with proper capitalisation), and add a 1-line `description` for each. Replace any 5th option (often `none`) with "None / skip" as the 4th option; if the question has 5 real options like Git provider, drop the least-common and rely on the auto-"Other" affordance.
-
-For reference, here are the questions to ask:
-
-```
-─────────────────────────────────────────────────
-  devrunway /setup  ·  Screen 6 of 6
-  Developer Tooling
-─────────────────────────────────────────────────
-
-33. Unit testing
-    vitest | jest | pytest | none
-
-34. End-to-end testing
-    playwright | cypress | selenium | webdriverio | none
-
-35. API testing
-    bruno | postman | insomnia | none
-
-36. API mocking
-    msw | mirage | json-server | none
-
-37. Project management
-    github | jira | gitlab | linear | huly | none
-
-38. Primary programming language (for language-specific pattern standards)
-    typescript | python | none
-
-39. Documentation / knowledge-base tool (where specs, ADRs, runbooks live)
-    confluence | notion | none
-
-40. Team policies to enforce in this repo (multi-select; both off unless picked)
-    protect-main          — refuse commits directly on main/master/develop/release
-    conventional-commits  — require "type(scope): subject" commit messages
-    none
-```
-
-Ask Q40 with `multiSelect: true`. These are off by default because devrunway is often installed at user level and runs in every repo; only the repo that opts in gets them. (Conventional commits are also enforced, without this answer, in a repo that already has a commitlint config.)
-
-Wait for the user's answers. After receiving answers to Screen 6, generate all outputs.
-
----
-
-## Output 1 — stack.json
-
-Write this file to `stack.json` in the project root (the directory where the user ran `/setup`). Use the user's answers verbatim. Use `"none"` for any question answered `none` or `skip`.
+Example for a Next.js app:
 
 ```json
 {
   "devrunway": "1.0",
-  "source-control": "<answer to Q1>",
-  "ci": "<answer to Q2>",
-  "package-manager": "<answer to Q3>",
-  "code-quality": "<answer to Q4>",
-  "frontend": "<answer to Q5: a string, or an array if several were picked>",
-  "css": "<answer to Q6>",
-  "ui-components": "<answer to Q7>",
-  "state": "<answer to Q8>",
-  "i18n": "<answer to Q9>",
-  "component-docs": "<answer to Q10>",
-  "design": "<answer to Q11>",
-  "backend": "<answer to Q12>",
-  "api-style": "<answer to Q13>",
-  "validation": "<answer to Q14>",
-  "api-docs": "<answer to Q15>",
-  "cloud": "<answer to Q16>",
-  "container": "<answer to Q17>",
-  "database": "<answer to Q18>",
-  "auth": "<answer to Q19>",
-  "cache-queue": "<answer to Q20>",
-  "storage": "<answer to Q21>",
-  "secrets": "<answer to Q22>",
-  "feature-flags": "<answer to Q23>",
-  "logging-framework": "<answer to Q24>",
-  "logging-provider": "<answer to Q25>",
-  "error-monitoring": "<answer to Q26>",
-  "realtime": "<answer to Q27>",
-  "search": "<answer to Q28>",
-  "payment": "<answer to Q29>",
-  "email": "<answer to Q30>",
-  "analytics": "<answer to Q31>",
-  "cms": "<answer to Q32>",
-  "testing-unit": "<answer to Q33>",
-  "testing-e2e": "<answer to Q34>",
-  "testing-api": "<answer to Q35>",
-  "mocking": "<answer to Q36>",
-  "project-management": "<answer to Q37>",
-  "language": "<answer to Q38>",
-  "documents": "<answer to Q39>",
+  "source-control": "github",
+  "ci": "github-actions",
+  "package-manager": "pnpm",
+  "frontend": ["nextjs", "react"],
+  "css": "tailwind",
+  "ui-components": "shadcn",
+  "validation": "zod",
+  "database": "postgres-prisma",
+  "auth": "clerk",
+  "testing-unit": "vitest",
+  "testing-e2e": "playwright",
+  "language": "typescript",
+  "project-management": "linear",
+  "documents": "notion",
+  "design": "figma",
   "policies": {
-    "protect-main": <true if Q40 includes protect-main, else false>,
-    "conventional-commits": <true if Q40 includes conventional-commits, else false>
+    "protect-main": true,
+    "conventional-commits": false
   }
 }
 ```
 
----
+The file must validate against `setup/stack.schema.json`; only the values in the reference table are allowed.
 
-## Output 2 — .mcp.json
+### Output 2 — .mcp.json
 
-Only generate `.mcp.json` if the user selected one or more tools that have MCP server support. The tools with MCP support and their configurations are:
+Write `.mcp.json` only if the stack uses a tool below. All are the vendors' official remote servers; nothing is installed locally. If `.mcp.json` exists, merge into its `mcpServers` and keep unrelated servers.
 
-### figma (selected when Q11 = `figma`)
+| Add | When `stack.json` has | Entry |
+|---|---|---|
+| `github` | `source-control` or `project-management` = `github` | `{ "type": "http", "url": "https://api.githubcopilot.com/mcp/", "headers": { "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}" } }` |
+| `gitlab` | `source-control` or `project-management` = `gitlab` | `{ "type": "http", "url": "https://gitlab.com/api/v4/mcp" }` (self-hosted: use your GitLab host) |
+| `linear` | `project-management` = `linear` | `{ "type": "http", "url": "https://mcp.linear.app/mcp" }` |
+| `atlassian` | `project-management` = `jira` or `documents` = `confluence` | `{ "type": "http", "url": "https://mcp.atlassian.com/v1/mcp" }` (one server for Jira and Confluence) |
+| `figma` | `design` = `figma` | `{ "type": "http", "url": "https://mcp.figma.com/mcp" }` |
+| `notion` | `documents` = `notion` | `{ "type": "http", "url": "https://mcp.notion.com/mcp" }` |
+| `neon` | `database` = `neon` | `{ "type": "http", "url": "https://mcp.neon.tech/mcp" }` |
 
-```json
-"figma": {
-  "command": "npx",
-  "args": ["-y", "@figma/mcp-server"],
-  "env": {
-    "FIGMA_ACCESS_TOKEN": "<get from figma.com → Account → Personal access tokens>"
-  }
-}
-```
-
-### github (selected when Q1 = `github` OR Q37 = `github`)
-
-```json
-"github": {
-  "command": "npx",
-  "args": ["-y", "@modelcontextprotocol/server-github"],
-  "env": {
-    "GITHUB_PERSONAL_ACCESS_TOKEN": "<get from github.com → Settings → Developer settings → PATs>"
-  }
-}
-```
-
-### jira (selected when Q37 = `jira`)
-
-```json
-"jira": {
-  "command": "npx",
-  "args": ["-y", "@modelcontextprotocol/server-jira"],
-  "env": {
-    "JIRA_HOST": "<your-org.atlassian.net>",
-    "JIRA_EMAIL": "<your-email>",
-    "JIRA_API_TOKEN": "<get from id.atlassian.com → Security → API tokens>"
-  }
-}
-```
-
-### linear (selected when Q37 = `linear`)
-
-```json
-"linear": {
-  "command": "npx",
-  "args": ["-y", "@modelcontextprotocol/server-linear"],
-  "env": {
-    "LINEAR_API_KEY": "<get from linear.app → Settings → API → Personal API keys>"
-  }
-}
-```
-
-### gitlab (selected when Q1 = `gitlab` OR Q37 = `gitlab`)
-
-```json
-"gitlab": {
-  "command": "npx",
-  "args": ["-y", "@modelcontextprotocol/server-gitlab"],
-  "env": {
-    "GITLAB_PERSONAL_ACCESS_TOKEN": "<get from gitlab.com → User Settings → Access Tokens (scopes: api, read_repository)>",
-    "GITLAB_API_URL": "<https://gitlab.com/api/v4 for SaaS; self-hosted URL otherwise>"
-  }
-}
-```
-
-### confluence (selected when Q39 = `confluence`)
-
-```json
-"confluence": {
-  "command": "npx",
-  "args": ["-y", "@modelcontextprotocol/server-confluence"],
-  "env": {
-    "CONFLUENCE_BASE_URL": "<your-org.atlassian.net/wiki>",
-    "CONFLUENCE_EMAIL": "<your-email>",
-    "CONFLUENCE_API_TOKEN": "<get from id.atlassian.com → Security → API tokens>"
-  }
-}
-```
-
-### notion (selected when Q39 = `notion`)
-
-```json
-"notion": {
-  "command": "npx",
-  "args": ["-y", "@notionhq/notion-mcp-server"],
-  "env": {
-    "NOTION_API_KEY": "<get from notion.so → Settings → Integrations → New internal integration>"
-  }
-}
-```
-
-### neon (selected when Q18 = `neon`)
-
-Neon's MCP server is **remote HTTP with OAuth**, not a local stdio process — it takes no `command`, `args`, or `env`. Authentication happens in the browser on first use.
-
-```json
-"neon": {
-  "type": "http",
-  "url": "https://mcp.neon.tech/mcp"
-}
-```
-
-If none of the above tools are selected, do **not** write `.mcp.json`.
-
-If `.mcp.json` already exists in the project root, read its current contents first and **merge** the new entries into the existing `mcpServers` object rather than overwriting unrelated servers.
-
-Write the complete `.mcp.json` in this shape:
+Shape:
 
 ```json
 {
   "mcpServers": {
-    "<tool>": { ... }
+    "linear": { "type": "http", "url": "https://mcp.linear.app/mcp" }
   }
 }
 ```
 
----
+### Output 3 — Summary
 
-## Output 3 — Install commands and summary
+Print:
 
-Print the following after writing the files. Replace each `<...>` with the actual user selections. Omit lines for any selection that is `none`.
-
-```
-─────────────────────────────────────────────────
-  devrunway /setup complete
-─────────────────────────────────────────────────
-
-Your stack summary:
-  Source Control : <Q1>  |  CI : <Q2>  |  Package Manager : <Q3>
-  Frontend       : <Q5> + <Q6> + <Q7> + <Q8> + <Q9>
-  Backend        : <Q12> + <Q13> + <Q14> + <Q15>
-  Cloud          : <Q16>  |  DB : <Q18>  |  Auth : <Q19>
-  Logging        : <Q24> → <Q25>  |  Errors : <Q26>
-  Content        : Analytics : <Q31>  |  CMS : <Q32>  |  Search : <Q28>
-  Testing        : <Q33> + <Q34> + <Q35> + <Q36>
-  Design         : <Q11>  |  PM : <Q37>  |  Language : <Q38>  |  Docs : <Q39>
-  Policies       : <Q40, or "none">
-
-stack.json written to ./stack.json
-
-Layers activated for your stack — these auto-load when you edit matching files:
-```
-
-All layer skills are bundled with the plugin. There is no per-layer install step. When Claude reads or edits a matching file, the `layer-autoload` hook gives it that layer's standards, skipping layers `stack.json` rules out.
-
-Print the table of layers that will be active for the user's choices, using these mappings:
-
-| Question | Value | Active layer |
-|---|---|---|
-| Q1 | `github` | `layers/source-control/github` |
-| Q1 | `gitlab` | `layers/source-control/gitlab` |
-| Q1 | `bitbucket` | `layers/source-control/bitbucket` |
-| Q1 | `azure-devops` | `layers/source-control/azure-devops` |
-| Q2 | `github-actions` | `layers/ci/github-actions` |
-| Q2 | `gitlab-ci` | `layers/ci/gitlab-ci` |
-| Q2 | `circleci` | `layers/ci/circleci` |
-| Q2 | `azure-pipelines` | `layers/ci/azure-pipelines` |
-| Q3 | `npm` | `layers/package-manager/npm` |
-| Q3 | `pnpm` | `layers/package-manager/pnpm` |
-| Q3 | `yarn` | `layers/package-manager/yarn` |
-| Q3 | `bun` | `layers/package-manager/bun` |
-| Q4 | `github-security` | `layers/code-quality/github-security` |
-| Q4 | `sonarqube` | `layers/code-quality/sonarqube` |
-| Q4 | `snyk` | `layers/code-quality/snyk` |
-| Q5 | `react` | `layers/frontend/react` |
-| Q5 | `vue` | `layers/frontend/vue` |
-| Q5 | `angular` | `layers/frontend/angular` |
-| Q5 | `nextjs` | `layers/frontend/nextjs` |
-| Q5 | `astro` | `layers/frontend/astro` |
-| Q6 | `tailwind` | `layers/css/tailwind` |
-| Q6 | `styled-components` | `layers/css/styled-components` |
-| Q6 | `css-modules` | `layers/css/css-modules` |
-| Q6 | `bootstrap` | `layers/css/bootstrap` |
-| Q7 | `shadcn` | `layers/ui-components/shadcn` |
-| Q7 | `mui` | `layers/ui-components/mui` |
-| Q7 | `ant-design` | `layers/ui-components/ant-design` |
-| Q7 | `chakra` | `layers/ui-components/chakra` |
-| Q8 | `zustand` | `layers/state/zustand` |
-| Q8 | `redux-toolkit` | `layers/state/redux-toolkit` |
-| Q8 | `jotai` | `layers/state/jotai` |
-| Q8 | `pinia` | `layers/state/pinia` |
-| Q9 | `react-i18next` | `layers/i18n/react-i18next` |
-| Q9 | `lingui` | `layers/i18n/lingui` |
-| Q9 | `vue-i18n` | `layers/i18n/vue-i18n` |
-| Q10 | `storybook` | `layers/component-docs/storybook` |
-| Q10 | `ladle` | `layers/component-docs/ladle` |
-| Q11 | `figma` | `layers/design/figma` |
-| Q11 | `sketch` | `layers/design/sketch` |
-| Q11 | `adobe-xd` | `layers/design/adobe-xd` |
-| Q12 | `node-express` | `layers/backend/node-express` |
-| Q12 | `python-fastapi` | `layers/backend/python-fastapi` |
-| Q12 | `python-django` | `layers/backend/python-django` |
-| Q12 | `dotnet` | `layers/backend/dotnet` |
-| Q13 | `rest` | `layers/api-style/rest` |
-| Q13 | `graphql` | `layers/api-style/graphql` |
-| Q13 | `trpc` | `layers/api-style/trpc` |
-| Q13 | `grpc` | `layers/api-style/grpc` |
-| Q14 | `zod` | `layers/validation/zod` |
-| Q14 | `yup` | `layers/validation/yup` |
-| Q14 | `valibot` | `layers/validation/valibot` |
-| Q14 | `joi` | `layers/validation/joi` |
-| Q15 | `swagger-express` | `layers/api-docs/swagger-express` |
-| Q15 | `openapi-fastapi` | `layers/api-docs/openapi-fastapi` |
-| Q16 | `aws` | `layers/cloud/aws` |
-| Q16 | `gcp` | `layers/cloud/gcp` |
-| Q16 | `azure` | `layers/cloud/azure` |
-| Q17 | `serverless` | `layers/container/serverless` |
-| Q17 | `docker` | `layers/container/docker` |
-| Q17 | `kubernetes` | `layers/container/kubernetes` |
-| Q17 | `vercel` | `layers/container/vercel` |
-| Q17 | `railway` | `layers/container/railway` |
-| Q18 | `postgres-prisma` | `layers/database/postgres-prisma` |
-| Q18 | `neon` | `layers/database/neon` |
-| Q18 | `mongodb` | `layers/database/mongodb` |
-| Q18 | `dynamodb` | `layers/database/dynamodb` |
-| Q18 | `sqlalchemy` | `layers/database/sqlalchemy` |
-| Q19 | `cognito` | `layers/auth/cognito` |
-| Q19 | `firebase` | `layers/auth/firebase` |
-| Q19 | `auth0` | `layers/auth/auth0` |
-| Q19 | `azure-ad` | `layers/auth/azure-ad` |
-| Q19 | `clerk` | `layers/auth/clerk` |
-| Q20 | `redis` | `layers/cache-queue/redis` |
-| Q20 | `sqs` | `layers/cache-queue/sqs` |
-| Q20 | `bullmq` | `layers/cache-queue/bullmq` |
-| Q20 | `rabbitmq` | `layers/cache-queue/rabbitmq` |
-| Q21 | `s3` | `layers/storage/s3` |
-| Q21 | `gcs` | `layers/storage/gcs` |
-| Q21 | `cloudinary` | `layers/storage/cloudinary` |
-| Q21 | `uploadthing` | `layers/storage/uploadthing` |
-| Q22 | `aws-secrets-manager` | `layers/secrets/aws-secrets-manager` |
-| Q22 | `doppler` | `layers/secrets/doppler` |
-| Q22 | `vault` | `layers/secrets/vault` |
-| Q22 | `env-only` | _(no install needed — skip)_ |
-| Q23 | `aws-appconfig` | `layers/feature-flags/aws-appconfig` |
-| Q23 | `launchdarkly` | `layers/feature-flags/launchdarkly` |
-| Q23 | `posthog` | `layers/feature-flags/posthog` |
-| Q23 | `flagsmith` | `layers/feature-flags/flagsmith` |
-| Q24 | `pino` | `layers/logging/framework/pino` |
-| Q24 | `winston` | `layers/logging/framework/winston` |
-| Q24 | `morgan` | `layers/logging/framework/morgan` |
-| Q25 | `cloudwatch` | `layers/logging/provider/cloudwatch` |
-| Q25 | `datadog` | `layers/logging/provider/datadog` |
-| Q25 | `splunk` | `layers/logging/provider/splunk` |
-| Q25 | `grafana-loki` | `layers/logging/provider/grafana-loki` |
-| Q25 | `newrelic` | `layers/logging/provider/newrelic` |
-| Q26 | `sentry` | `layers/error-monitoring/sentry` |
-| Q26 | `datadog-apm` | `layers/error-monitoring/datadog-apm` |
-| Q26 | `bugsnag` | `layers/error-monitoring/bugsnag` |
-| Q27 | `socketio` | `layers/realtime/socketio` |
-| Q27 | `pusher` | `layers/realtime/pusher` |
-| Q27 | `ably` | `layers/realtime/ably` |
-| Q28 | `algolia` | `layers/search/algolia` |
-| Q28 | `typesense` | `layers/search/typesense` |
-| Q28 | `elasticsearch` | `layers/search/elasticsearch` |
-| Q28 | `pagefind` | `layers/search/pagefind` |
-| Q29 | `stripe` | `layers/payment/stripe` |
-| Q29 | `paypal` | `layers/payment/paypal` |
-| Q29 | `braintree` | `layers/payment/braintree` |
-| Q30 | `resend` | `layers/email/resend` |
-| Q30 | `sendgrid` | `layers/email/sendgrid` |
-| Q30 | `ses` | `layers/email/ses` |
-| Q31 | `posthog` | `layers/analytics/posthog` |
-| Q32 | `keystatic` | `layers/cms/keystatic` |
-| Q33 | `vitest` | `layers/testing/unit/vitest` |
-| Q33 | `jest` | `layers/testing/unit/jest` |
-| Q33 | `pytest` | `layers/testing/unit/pytest` |
-| Q34 | `playwright` | `layers/testing/e2e/playwright` |
-| Q34 | `cypress` | `layers/testing/e2e/cypress` |
-| Q34 | `selenium` | `layers/testing/e2e/selenium` |
-| Q34 | `webdriverio` | `layers/testing/e2e/webdriverio` |
-| Q35 | `bruno` | `layers/testing/api/bruno` |
-| Q35 | `postman` | `layers/testing/api/postman` |
-| Q35 | `insomnia` | `layers/testing/api/insomnia` |
-| Q36 | `msw` | `layers/mocking/msw` |
-| Q36 | `mirage` | `layers/mocking/mirage` |
-| Q36 | `json-server` | `layers/mocking/json-server` |
-| Q37 | `github` | `layers/project-management/github` |
-| Q37 | `jira` | `layers/project-management/jira` |
-| Q37 | `gitlab` | `layers/project-management/gitlab` |
-| Q37 | `linear` | `layers/project-management/linear` |
-| Q37 | `huly` | `layers/project-management/huly` |
-| Q38 | `typescript` | `layers/language/typescript` |
-| Q38 | `python` | _(no layer yet — python patterns covered in backend layers)_ |
-| Q39 | `confluence` | `layers/documents/confluence` |
-| Q39 | `notion` | `layers/documents/notion` |
-
-After the layer table, if `.mcp.json` was written, append:
-
-```
-MCP servers configured: <comma-separated list of server names>
-
-These were auto-registered when you installed the plugin. Set the
-required tokens in Claude Code's plugin settings if you haven't already
-(e.g. GITHUB_TOKEN, FIGMA_TOKEN, JIRA_API_TOKEN, etc. — see the install
-prompt or run /plugin to manage).
-```
-
-End with:
-
-```
-─────────────────────────────────────────────────
-Your stack is configured. Layers auto-load when you edit matching files.
-
-Next steps:
-  • Set any required tokens via /plugin (GitHub PAT is required)
-  • Try /product-brainstorm to start a new feature
-  • Or /dev-design <issue-number> if you already have a ticket
-  • Or just start writing code — hooks and layers activate automatically
-
-Happy building.
-─────────────────────────────────────────────────
-```
+1. The stack, one line per slot.
+2. The layers that will auto-load: for each slot and value, `layers/<slot>/<value>`, where `logging-framework`, `logging-provider` and `testing-*` map to `logging/framework`, `logging/provider` and `testing/<kind>`. Skip `none`, `env-only` and `language: python` (no layer). They load when Claude reads or edits a matching file.
+3. If `.mcp.json` was written, the next step for each server:
+   - **github:** set `GITHUB_PERSONAL_ACCESS_TOKEN` in your shell (github.com → Settings → Developer settings → Personal access tokens). GitHub's server does not support browser sign-in for Claude Code.
+   - **Every other server:** run `/mcp` in Claude Code, pick the server, and sign in in the browser. No tokens needed.
+4. Next steps: `/product-brainstorm` for a new feature, `/dev-design <issue>` for an existing ticket, or just start coding.
 
 ---
 
-## Error handling
+## Reference — slots and values
 
-- If the user provides an answer that is not in the allowed options for a question, respond: `"<value>" is not a valid option for question <N>. Valid options are: <list>. Please re-answer question <N>.`
-- If `stack.json` already exists in the project root, read it and ask the user: `stack.json already exists. Overwrite it? (yes / no)` — abort if they say no.
+Every value `stack.json` accepts (`none` is also allowed for every slot):
+
+| Slot | Values |
+|---|---|
+| `source-control` | `github`, `gitlab`, `bitbucket`, `azure-devops` |
+| `ci` | `github-actions`, `gitlab-ci`, `circleci`, `azure-pipelines` |
+| `package-manager` | `npm`, `pnpm`, `yarn`, `bun` |
+| `code-quality` | `github-security`, `sonarqube`, `snyk` |
+| `frontend` | `react`, `vue`, `angular`, `nextjs`, `astro` (one, or an array) |
+| `css` | `tailwind`, `styled-components`, `css-modules`, `bootstrap` |
+| `ui-components` | `shadcn`, `mui`, `ant-design`, `chakra` |
+| `state` | `zustand`, `redux-toolkit`, `jotai`, `pinia` |
+| `i18n` | `react-i18next`, `lingui`, `vue-i18n` |
+| `component-docs` | `storybook`, `ladle` |
+| `design` | `figma`, `sketch`, `adobe-xd` |
+| `backend` | `node-express`, `python-fastapi`, `python-django`, `dotnet` |
+| `api-style` | `rest`, `graphql`, `trpc`, `grpc` |
+| `validation` | `zod`, `yup`, `valibot`, `joi` |
+| `api-docs` | `swagger-express`, `openapi-fastapi` |
+| `cloud` | `aws`, `gcp`, `azure` |
+| `container` | `serverless`, `docker`, `kubernetes`, `vercel`, `railway` |
+| `database` | `postgres-prisma`, `neon`, `mongodb`, `dynamodb`, `sqlalchemy` |
+| `auth` | `cognito`, `firebase`, `auth0`, `azure-ad`, `clerk` |
+| `cache-queue` | `redis`, `sqs`, `bullmq`, `rabbitmq` |
+| `storage` | `s3`, `gcs`, `cloudinary`, `uploadthing` |
+| `secrets` | `aws-secrets-manager`, `doppler`, `vault`, `env-only` |
+| `feature-flags` | `aws-appconfig`, `launchdarkly`, `posthog`, `flagsmith` |
+| `logging-framework` | `pino`, `winston`, `morgan` |
+| `logging-provider` | `cloudwatch`, `datadog`, `splunk`, `grafana-loki`, `newrelic` |
+| `error-monitoring` | `sentry`, `datadog-apm`, `bugsnag` |
+| `realtime` | `socketio`, `pusher`, `ably` |
+| `search` | `algolia`, `typesense`, `elasticsearch`, `pagefind` |
+| `payment` | `stripe`, `paypal`, `braintree` |
+| `email` | `resend`, `sendgrid`, `ses` |
+| `analytics` | `posthog` |
+| `cms` | `keystatic` |
+| `testing-unit` | `vitest`, `jest`, `pytest` |
+| `testing-e2e` | `playwright`, `cypress`, `selenium`, `webdriverio` |
+| `testing-api` | `bruno`, `postman`, `insomnia` |
+| `mocking` | `msw`, `mirage`, `json-server` |
+| `project-management` | `github`, `jira`, `gitlab`, `linear`, `huly` |
+| `documents` | `confluence`, `notion` |
+| `language` | `typescript`, `python` |
+| `mobile` | `flutter` |
+| `notifications` | `fcm` |

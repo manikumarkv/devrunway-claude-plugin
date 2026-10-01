@@ -16,7 +16,7 @@ setup/       ← stack.schema.json (validation schema for stack.json)
 
 All layers come bundled with the plugin. There is no per-layer install step. Claude Code does **not** register `layers/` as skills; the `layer-autoload` hook loads them (see "How layers load" below).
 
-**First time in a project?** Run `/setup` to configure your stack. It generates:
+**First time in a project?** Run `/setup`. It detects the stack from the project's files (`skills/setup/detect_stack.py`), confirms it, asks only what files can't show, and generates:
 1. `stack.json` — declares which technologies you use
 2. `.mcp.json` — pre-configures MCP servers for your tools (Figma, GitHub, Jira, etc.)
 
@@ -25,7 +25,7 @@ All layers come bundled with the plugin. There is no per-layer install step. Cla
 ## Starting a session
 
 ```
-/setup          ← first-time project setup (generates stack.json + .mcp.json)
+/setup          ← first-time project setup: detects the stack, asks ~4 questions, writes stack.json + .mcp.json
 /goal <task>    ← orient Claude for this session (Claude Code built-in)
 ```
 
@@ -115,14 +115,17 @@ Within a forked skill, layer standards are loaded on demand via two agents:
 
 ## MCP auto-configuration
 
-The plugin itself bundles **no** MCP servers and asks for **no** tokens at install. `/setup` generates the project's `.mcp.json` for the tools you pick. Currently wired (package names being corrected in #75):
+The plugin itself bundles **no** MCP servers and asks for **no** tokens at install. `/setup` writes the project's `.mcp.json` with the vendors' official remote servers for the tools the project uses. All sign in through `/mcp` in the browser except GitHub, which reads a token from the environment:
 
-| Layer | MCP package | Env var |
-|---|---|---|
-| `design/figma` | `@figma/mcp-server` | `FIGMA_ACCESS_TOKEN` |
-| `source-control/github` | `@modelcontextprotocol/server-github` | `GITHUB_PERSONAL_ACCESS_TOKEN` |
-| `project-management/jira` | `@modelcontextprotocol/server-jira` | `JIRA_API_TOKEN`, `JIRA_BASE_URL` |
-| `project-management/linear` | `@linear/mcp-server` | `LINEAR_API_KEY` |
+| Server | When | URL | Auth |
+|---|---|---|---|
+| `github` | source control or tickets on GitHub | `https://api.githubcopilot.com/mcp/` | `GITHUB_PERSONAL_ACCESS_TOKEN` header |
+| `gitlab` | source control or tickets on GitLab | `https://gitlab.com/api/v4/mcp` | OAuth |
+| `linear` | tickets in Linear | `https://mcp.linear.app/mcp` | OAuth |
+| `atlassian` | Jira or Confluence | `https://mcp.atlassian.com/v1/mcp` | OAuth |
+| `figma` | Figma | `https://mcp.figma.com/mcp` | OAuth |
+| `notion` | Notion | `https://mcp.notion.com/mcp` | OAuth |
+| `neon` | Neon database | `https://mcp.neon.tech/mcp` | OAuth |
 
 ---
 

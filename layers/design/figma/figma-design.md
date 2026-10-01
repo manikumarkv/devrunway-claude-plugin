@@ -5,12 +5,11 @@
 The Figma MCP server lets Claude read design specs directly from Figma URLs without screenshots or manual copy-paste.
 
 ```bash
-# Add to project MCP config (or let /setup generate .mcp.json)
-claude mcp add figma npx -y @figma/mcp-server
-
-# Required env var
-export FIGMA_ACCESS_TOKEN="<token from figma.com → Account Settings → Personal access tokens>"
+# Add Figma's remote server (or let /setup write .mcp.json)
+claude mcp add --transport http figma https://mcp.figma.com/mcp
 ```
+
+Then run `/mcp` in Claude Code and sign in to Figma in the browser. No token or desktop app needed.
 
 Once connected, Claude can use `mcp__figma__*` tools to fetch component specs, styles, and assets directly from a Figma file URL.
 

@@ -141,11 +141,11 @@ Domain: frontend | backend | infra | data | security
 
 ## MCP tools
 
-Prefer:
-- `mcp__confluence__search_pages`
-- `mcp__confluence__get_page`
-- `mcp__confluence__create_page`
-- `mcp__confluence__update_page`
+Atlassian's remote server (`atlassian` in `.mcp.json`, one server for Jira and Confluence). Prefer:
+- `mcp__atlassian__searchConfluenceUsingCql`
+- `mcp__atlassian__getConfluencePage`
+- `mcp__atlassian__createConfluencePage`
+- `mcp__atlassian__updateConfluencePage`
 
 ## Never
 
